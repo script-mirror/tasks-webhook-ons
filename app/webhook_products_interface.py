@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from middle import s3
-from middle.utils import setup_logger 
+from middle.utils import setup_logger, extract_zip
 logger = setup_logger()
 
 
@@ -11,7 +11,7 @@ class WebhookProductsInterface(ABC):
     """
 
     @abstractmethod
-    def run_workflow(self):
+    def run_workflow(self, payload_webhook: dict):
         """
         Ponto de entrada da execucao do etl.
         Deve implementar a logica de execucao para cada produto.
@@ -33,8 +33,11 @@ class WebhookProductsInterface(ABC):
         path_download = "/tmp"
         
         try: 
-            s3.download_from_s3(id_produto, file_name, path_download)
+            path_download = s3.download_from_s3(id_produto, file_name, path_download)
+            if ".zip" in file_name:
+                path_download = extract_zip(path_download, file_name, path_download)
+            return path_download
         except Exception as e:
             logger.error(f"Erro ao baixar arquivo do S3: {e}")
-            return {"status": "error", "message": str(e)}
+            raise Exception(f"Erro ao baixar arquivo do S3: {e}")
         
