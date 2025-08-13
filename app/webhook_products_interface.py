@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from middle import s3
-from middle.utils import setup_logger 
+from middle.utils import setup_logger, extract_zip
 from typing import Optional,Dict, Any
 logger = setup_logger()
 
 
 class WebhookProductsInterface(ABC):
     """
-    Interface for webhook products.
-    This interface defines the methods that must be implemented by any class that handles webhook products.
+    Interface para os produtos do webhook ONS.
+    Define os metodos base que devem ser implementados no ETL dos produtos do webhook.
     """
     
     def __init__(self, conf: Optional[Dict[str, Any]] = None):
@@ -23,10 +23,10 @@ class WebhookProductsInterface(ABC):
         self.workflow_results = {}
 
     @abstractmethod
-    def run_workflow(self):
+    def run_workflow(self, payload_webhook: dict):
         """
-        Execute the flow for processing webhook products.
-        This method should be implemented to handle the specific logic for processing webhook products.
+        Ponto de entrada da execucao do etl.
+        Deve implementar a logica de execucao para cada produto.
         """
         pass
 
@@ -65,11 +65,14 @@ class WebhookProductsInterface(ABC):
         try: 
             filepath_to_extract = s3.download_from_s3(id_produto, file_name, path_to_send)
             logger.info(f"Arquivo {file_name} baixado com sucesso para {path_to_send}")
+            if ".zip" in file_name:
+                filepath_to_extract = extract_zip(filepath_to_extract, file_name, path_to_send)
+            
             
             return {"status": "success", "filepath": filepath_to_extract}
         
         except Exception as e:
             
             logger.error(f"Erro ao baixar arquivo do S3: {e}")
-            return {"status": "error", "message": str(e)}
+            raise Exception(f"Erro ao baixar arquivo do S3: {e}")
         
