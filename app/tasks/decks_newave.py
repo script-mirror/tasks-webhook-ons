@@ -169,8 +169,6 @@ class DecksNewave(WebhookProductsInterface):
                 logger.info(f"- Valores do Cadic: ({len(nw_cadic_records)} registros)")
             
             return {
-                    "status": "success", 
-                    "message": "DECK Newave e C_ADIC processados com sucesso.",
                     "nw_cadic_records": nw_cadic_records,
                     "data_produto": data_produto_str,
                     }
@@ -303,8 +301,6 @@ class DecksNewave(WebhookProductsInterface):
             logger.info(f"- Valores do Sistema: ({len(nw_sistema_records)} registros)")
             
             return {
-                    "status": "success",
-                    "message": "Valores de carga do Sistema do DECK Newave processados com sucesso.",
                     "nw_sistema_records": nw_sistema_records,
                     "data_produto": data_produto_str,
                     }
@@ -543,8 +539,6 @@ class DecksNewave(WebhookProductsInterface):
             
             
             return {
-                "status": "success",
-                "message": "PATAMAR.DAT processado com sucesso.",
                 "patamar_carga_usinas_records": patamar_carga_usinas_records,
                 "patamar_intercambio_records": patamar_intercambio_records,
                 "data_produto": data_produto_str,
@@ -648,8 +642,6 @@ class DecksNewave(WebhookProductsInterface):
             nw_sistema_records = nw_sistema_df.to_dict('records')
             
             return {
-                    "status": "success",
-                    "message": "SISTEMA atualizado com sucesso com WEOL.",
                     "nw_sistema_records": nw_sistema_records,
                     "data_produto": data_produto_str,
                     }
@@ -736,11 +728,6 @@ class DecksNewave(WebhookProductsInterface):
             
             if request_patamar_intercambio.status_code != 200:
                 raise ValueError(f"Erro ao enviar patamar do newave de intercambio para API: {request_patamar_intercambio.text}")
-            
-            return {
-                "status": "success",
-                "message": "Dados enviados para a API com sucesso."
-                }
         
         except Exception as e:
             logger.error(f"Erro ao enviar dados para a API: {e}")
@@ -875,8 +862,6 @@ class DecksNewave(WebhookProductsInterface):
             logger.info(f"Imagem salva em: {image_path}")
             
             return {
-                "status": "success",
-                "message": "Tabela de diferença de cargas gerada com sucesso.",
                 "image_path": image_path
                 }
         
@@ -916,8 +901,6 @@ class DecksNewave(WebhookProductsInterface):
             if request_whatsapp.status_code != 200:
                 raise ValueError(f"Erro ao enviar mensagem por WhatsApp: {request_whatsapp.text}")
                     
-            return {"status": "success", "message": "Tabela enviada com sucesso por WhatsApp e email."}
-        
         except Exception as e:
             error_msg = f"Erro ao enviar tabela por WhatsApp e email: {e}"
             logger.error(error_msg)
