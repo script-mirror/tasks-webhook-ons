@@ -44,7 +44,7 @@ class DecksNewave(WebhookProductsInterface):
                
         
     # Main method 
-    def run_workflow(self) -> Dict[str, Any]:
+    def run_workflow(self, filepath:Optional[str] = None) -> Dict[str, Any]:
         """
         Executa o fluxo completo de processamento de forma sequencial.
         Cada etapa depende do resultado da etapa anterior.
@@ -55,10 +55,9 @@ class DecksNewave(WebhookProductsInterface):
         try:
             
             product_details = self.payload
-            file_path = self.filepath
             
-            if file_path:
-                download_extract_files_result = file_path
+            if filepath:
+                download_extract_files_result = filepath
             elif product_details:
                 download_extract_files_result = self.download_extract_files(product_details)
             else:

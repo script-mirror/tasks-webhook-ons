@@ -15,11 +15,10 @@ class WebhookProductsInterface(ABC):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema] = None, filepath: Optional[str] = None):
         self.payload:WebhookSintegreSchema = payload
-        self.filepath = filepath
         self.workflow_results:dict = {}
 
     @abstractmethod
-    def run_workflow(self):
+    def run_workflow(self, filepath:Optional[str] = None):
         """
         Ponto de entrada da execucao do etl.
         Deve implementar a logica de execucao para cada produto.
