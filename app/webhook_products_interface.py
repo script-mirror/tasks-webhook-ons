@@ -45,7 +45,7 @@ class WebhookProductsInterface(ABC):
                 filepath_to_extract = extract_zip(filepath_to_extract, filename, path_to_send)
             
             
-            return {"status": "success", "filepath": filepath_to_extract}
+            return filepath_to_extract
         
         except Exception as e:
             

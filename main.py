@@ -2,7 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from app.controller import router as webhook_router
 
-app = FastAPI()
+app = FastAPI(
+    title="API Tasks webhook ONS",
+)
 app.include_router(webhook_router, prefix="/api", tags=["webhook"])
 
 
