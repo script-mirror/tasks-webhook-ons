@@ -13,8 +13,9 @@ class WebhookProductsInterface(ABC):
     Define os metodos base que devem ser implementados no ETL dos produtos do webhook.
     """
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None, filepath: Optional[str] = None):
         self.payload:WebhookSintegreSchema = payload
+        self.filepath = filepath
         self.workflow_results:dict = {}
 
     @abstractmethod

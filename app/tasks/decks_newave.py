@@ -20,7 +20,7 @@ from inewave.newave import Patamar, Cadic, Sistema
 
 class DecksNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None, filepath: Optional[str] = None) -> None:
         """
         Inicializa a classe com o payload iguração fornecida.
         
@@ -28,40 +28,6 @@ class DecksNewave(WebhookProductsInterface):
             conf: Dicionário com a configuração do produto.
         """
         super().__init__(payload)
-        
-    # Private methods
-    def _validate_and_store_result(self, result: Dict[str, Any], step_name: str, error_message: str) -> None:
-        """
-        Método privado para validar e armazenar resultados de cada etapa do workflow.
-        
-        Args:
-            result: Resultado da etapa executada
-            step_name: Nome da etapa para armazenamento
-            error_message: Mensagem de erro personalizada
-            
-        Raises:
-            ValueError: Se o resultado indicar erro
-        """
-        self.workflow_results[step_name] = result
-        if result.get("status") == "error":
-            raise ValueError(f"{error_message}: {result.get('message')}")
-    
-    def _execute_workflow_step(self, func, *args, step_name: str, error_message: str) -> Dict[str, Any]:
-        """
-        Executa uma etapa do workflow e valida o resultado.
-        
-        Args:
-            func: Função a ser executada
-            *args: Argumentos para a função
-            step_name: Nome da etapa
-            error_message: Mensagem de erro
-            
-        Returns:
-            Resultado da execução
-        """
-        result = func(*args)
-        self._validate_and_store_result(result, step_name, error_message)
-        return result
         
     def _get_version_by_filename(self, filename: str) -> str:
         try:
@@ -77,7 +43,6 @@ class DecksNewave(WebhookProductsInterface):
             raise
                
         
-        
     # Main method 
     def run_workflow(self) -> Dict[str, Any]:
         """
@@ -90,24 +55,18 @@ class DecksNewave(WebhookProductsInterface):
         try:
             
             product_details = self.payload
+            file_path = self.filepath
             
-            download_extract_files_result = self._execute_workflow_step(
-                self.download_extract_files, product_details,
-                step_name="download_extract",
-                error_message="Falha no download"
-            )
+            if file_path:
+                download_extract_files_result = file_path
+            elif product_details:
+                download_extract_files_result = self.download_extract_files(product_details)
+            else:
+                raise ValueError("Nenhum caminho de arquivo ou detalhes do produto fornecidos.")
+    
+            processar_deck_nw_cadic_result = self.processar_deck_nw_cadic(download_extract_files_result)
             
-            processar_deck_nw_cadic_result = self._execute_workflow_step(
-                self.processar_deck_nw_cadic, download_extract_files_result,
-                step_name="process_cadic", 
-                error_message="Falha no processamento"
-            )
-            
-            processar_deck_nw_sistema_result = self._execute_workflow_step(
-                self.processar_deck_nw_sist, download_extract_files_result,
-                step_name="process_sist",
-                error_message="Falha no processamento do SISTEMA.DAT"
-            )
+            processar_deck_nw_sistema_result = self.processar_deck_nw_sist(download_extract_files_result)
             
             processar_deck_nw_patamar_result = self._execute_workflow_step(
                 self.processar_deck_nw_patamar, download_extract_files_result,
@@ -116,37 +75,15 @@ class DecksNewave(WebhookProductsInterface):
             )
             
             if "preliminar" in product_details.get("nome").lower():
-                processar_deck_nw_sistema_result = self._execute_workflow_step(
-                    self.atualizar_sist_com_weol, processar_deck_nw_sistema_result, download_extract_files_result,
-                    step_name="update_sist",
-                    error_message="Falha na atualização do SISTEMA com WEOL"
-                )
+                processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(processar_deck_nw_sistema_result, download_extract_files_result)
             
-            self._execute_workflow_step(
-                self.enviar_dados_para_api, 
-                processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result,
-                step_name="api",
-                error_message="Falha no envio dos dados para a API"
-            )
+            self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result)
             
-            gerar_tabela_diferenca_cargas_result = self._execute_workflow_step(
-                self.gerar_tabela_diferenca_cargas, 
-                download_extract_files_result,
-                step_name="diff_table",
-                error_message="Falha na geração da tabela de diferença de cargas"
-            )
+            gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(download_extract_files_result)
             
-            self._execute_workflow_step(
-                self.enviar_tabela_whatsapp_email, gerar_tabela_diferenca_cargas_result, download_extract_files_result,
-                step_name="notify",
-                error_message="Falha no envio da tabela por WhatsApp e email"
-            )
+            self.enviar_tabela_whatsapp_email(gerar_tabela_diferenca_cargas_result, download_extract_files_result)
             
-            return {
-                "status": "success", 
-                "message": "Processamento completo do DECK Newave realizado com sucesso",
-                "details": self.workflow_results
-            }
+            return self.workflow_results
         
         except Exception as e:
             error_msg = f"Erro no fluxo de processamento do DECK Newave: {str(e)}"
@@ -989,25 +926,4 @@ class DecksNewave(WebhookProductsInterface):
         
     
 if __name__ == "__main__":
-    from app.debug_helper import Debugger
-    
-    method_to_debug = "processar_deck_nw_sist"  
-    
-    payload = {
-        "dataProduto":"08/2025",
-        "dt_ref":"08/2025",
-        "enviar":True,
-        "filename":"Deck NEWAVE Preliminar.zip",
-        "macroProcesso":"Programação da Operação",
-        "nome":"Deck NEWAVE Preliminar",
-        "periodicidade":"2025-08-01T03:00:00.000Z",
-        "periodicidadeFinal":"2025-09-01T02:59:59.000Z",
-        "processo":"Médio Prazo",
-        "s3Key":"webhooks/Deck NEWAVE Preliminar/6890c1e194f9e32e8e7989f1_Deck NEWAVE Preliminar.zip",
-        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjEtMDctMjAyNV8xMjAxMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NDQwMzkyMSwibmJmIjoxNzU0MzE3MjgxfQ.82TBWIRXT2C43hCY3PqVkz6avWOo-Z95Qw7u3EEJc3M",
-        "webhookId":"6890c1e194f9e32e8e7989f1",
-    }
-    
-    debugger = Debugger()
-    
-    debugger.testar_metodo(DecksNewave, method_to_debug, payload)
+   pass
