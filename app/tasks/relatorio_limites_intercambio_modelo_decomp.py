@@ -1,15 +1,16 @@
 import pdb
-import pdfplumber
-import pandas as pd
 import requests
 import datetime
-from middle.utils import setup_logger, Constants
+import pdfplumber
+import pandas as pd
+from typing import Optional
+from ..schema import WebhookSintegreSchema
+from middle.utils import setup_logger, Constants, get_auth_header
 from app.webhook_products_interface import WebhookProductsInterface
 
 logger = setup_logger()
 constants = Constants()
 
-# Dicionário para mapear meses em português para números
 MONTHS = {
     1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
     7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
@@ -17,10 +18,14 @@ MONTHS = {
 
 class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     
-    def run_workflow(self, payload_webhook: dict):
-        path_produto = self.download_files(payload_webhook)
-        data_produto = datetime.datetime.strptime(payload_webhook['dataProduto'], '%m/%Y').date()
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
+        super().__init__(payload)
+    
+    def run_workflow(self):
+        path_produto = self.download_files(self.payload)['filepath']
+        data_produto = datetime.datetime.strptime(self.payload.dataProduto, '%m/%Y').date()
         self.read_table(path_produto, data_produto)
+
 
     def get_months_from_path(self, pdf_path: str):
         month_year_part = pdf_path.split("PMO_")[1].split(".pdf")[0]
@@ -59,7 +64,9 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
                 return None
 
 
-    def reformat_df_database(self, df:pd.DataFrame, dict_num, first_month_year, second_month_year):
+    def reformat_df_database(self, df:pd.DataFrame, dict_num, data_produto: datetime.date):
+        first_month_year, second_month_year = data_produto, (data_produto + datetime.timedelta(days=31)).replace(day=1)
+
         reformatted_data = []    
         data = df.iloc[2:, :].copy()
         col_indices = {
@@ -71,16 +78,31 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
             f"{second_month_year} Leve": 17
         }
         # Iterar sobre as linhas
+        # data[[x for x in data.columns if x is not None]]
+        # teste = [x for i, x in data.iterrows()]
         for index, row in data.iterrows():
             limite = row.iloc[1].strip() if pd.notna(row.iloc[1]) else None
             re_value = dict_num.get(limite)
             
             if re_value is not None:
                 # Processar os valores para o primeiro mês
-                for patamar, col_idx in [("Pesada", col_indices[f"{first_month_year} Pesada"]),
+                patamares_indices = [("Pesada", col_indices[f"{first_month_year} Pesada"]),
                                     ("Media", col_indices[f"{first_month_year} Média"]),
-                                    ("Leve", col_indices[f"{first_month_year} Leve"])]:
+                                    ("Leve", col_indices[f"{first_month_year} Leve"]),
+                                    
+                                    ("Pesada", col_indices[f"{second_month_year} Pesada"]),
+                                    ("Media", col_indices[f"{second_month_year} Média"]),
+                                    ("Leve", col_indices[f"{second_month_year} Leve"])]
+                for i, patamares_indice in enumerate(patamares_indices):
+                    if limite == 'IPU50':
+                        pdb.set_trace()
+                    patamar, col_idx = patamares_indice
                     value = row.iloc[col_idx].strip() if pd.notna(row.iloc[col_idx]) else None
+                    i_aux = i - 1
+                    while not value and i_aux > 0 and i_aux < len(patamares_indices) - 1:
+                        patamar, col_idx = patamares_indices[i_aux]
+                        value = row.iloc[col_idx].strip() if pd.notna(row.iloc[col_idx]) else None
+                        i_aux -= 1
                     if value and value.strip():
                         reformatted_data.append({
                             "RE": re_value,
@@ -90,23 +112,13 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
                             "Valor": float(value) * 1000
                         })
                 
-                # Processar os valores para o segundo mês
-                for patamar, col_idx in [("Pesada", col_indices[f"{second_month_year} Pesada"]),
-                                    ("Media", col_indices[f"{second_month_year} Média"]),
-                                    ("Leve", col_indices[f"{second_month_year} Leve"])]:
-                    value = row.iloc[col_idx].strip() if pd.notna(row.iloc[col_idx]) else None
-                    if value and value.strip():
-                        reformatted_data.append({
-                            "RE": re_value,
-                            "Limite": limite,
-                            "Data": second_month_year,
-                            "Patamar": patamar,
-                            "Valor": float(value) * 1000
-                        })
         
         reformatted_df = pd.DataFrame(reformatted_data)    
         reformatted_df.dropna(subset=['RE', 'Valor'], inplace=True)    
         reformatted_df['RE'] = reformatted_df['RE'].astype(int)    
+        reformatted_df['data_produto'] = data_produto.strftime('%Y-%m-%d')
+        pdb.set_trace()
+        
         return reformatted_df
 
 
@@ -129,19 +141,25 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         else:
             df = self.extract_table_from_pdf(pdf_path, table_page)
             if df is not None:
-                first_month_year, second_month_year = data_produto, data_produto.replace(month=data_produto.month+1)
-                return self.reformat_df_database(df, dict_num, first_month_year, second_month_year)
+                return self.reformat_df_database(df, dict_num, data_produto)
             return None
+
 
     def sanitaze_dataframe(self, df: pd.DataFrame):
         df.rename(columns=lambda x: x.lower(), inplace=True)
         df.rename(columns={'data': 'mes_ano'}, inplace=True)
         df['patamar'] = df['patamar'].str.lower()
+        df['mes_ano'] = df['mes_ano'].astype(str)
+        df['data_produto'] = df['data_produto'].astype(str)
+        
         return df
+
 
     def post_data(self, df: pd.DataFrame):
         res = requests.post(
-            f"{constants.BASE_URL}/api/v2/decks/restricoes-eletricas"
+            f"{constants.BASE_URL}/api/v2/decks/restricoes-eletricas",
+            headers=get_auth_header(),
+            json=df.to_dict(orient='records'),
         )
         if res.status_code == 200:
             logger.info("Dados enviados com sucesso.")
@@ -149,8 +167,3 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
             logger.error(f"Erro ao enviar dados: {res.status_code} - {res.text}")
             res.raise_for_status()
         pass
-if __name__ == "__main__":
-    preliminar_path = "/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/trading-middle-tasks-webhook-ons/RT-ONS DPL 0298-2025_Limites PMO_Agosto-2025.pdf"
-    webhook_prod = RelatorioLimitesIntercambioDecomp()
-    preliminar = webhook_prod.run_workflow(preliminar_path, datetime.date(2025, 8, 1))
-    pdb.set_trace()

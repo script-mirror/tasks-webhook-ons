@@ -1,0 +1,3 @@
+from .relatorio_limites_intercambio_modelo_decomp import RelatorioLimitesIntercambioDecomp
+
+__all__ = ["RelatorioLimitesIntercambioDecomp"]
