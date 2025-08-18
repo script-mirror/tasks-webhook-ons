@@ -42,6 +42,8 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         df = self.read_table(filepath, data_produto)
         df = self.sanitaze_dataframe(df)
         self.post_data(df)
+        analyzer = IntercambioAnalyzer()
+        analyzer.run_workflow()
         
 
     def get_data_produto(self, path_produto: str) -> datetime.date:
@@ -49,14 +51,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
             data_produto = extrair_mes_ano(pdf.pages[0].extract_text())
         return data_produto
 
-    def run_workflow(self):
-        path_produto = self.download_files()
-        data_produto = datetime.datetime.strptime(self.payload.dataProduto, '%m/%Y').date()
-        self.read_table(path_produto, data_produto)
-        
-        analyzer = IntercambioAnalyzer()
-        analyzer.run_workflow()        
-        
+
     def get_months_from_path(self, pdf_path: str):
         month_year_part = pdf_path.split("PMO_")[1].split(".pdf")[0]
         if "_" in month_year_part:
