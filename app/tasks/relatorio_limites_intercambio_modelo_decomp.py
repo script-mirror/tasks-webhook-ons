@@ -1,18 +1,26 @@
 import sys
 import pdb
+import io
 import requests
 import datetime
 import pdfplumber
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.table as tbl
 from typing import Optional
 from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema  # noqa: E402
-from middle.utils import setup_logger, Constants, get_auth_header  # noqa: E402
+from middle.utils import ( # noqa: E402
+    setup_logger,
+    Constants,
+    get_auth_header,
+    extrair_mes_ano,
+)
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
-
+from middle.message import send_whatsapp_message
 logger = setup_logger()
 constants = Constants()
 
@@ -26,10 +34,22 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
     
-    def run_workflow(self):
-        path_produto = self.download_files()
-        data_produto = datetime.datetime.strptime(self.payload.dataProduto, '%m/%Y').date()
-        self.read_table(path_produto, data_produto)
+    def run_workflow(self, filepath: Optional[str] = None):
+        if not filepath:
+            filepath = self.download_extract_files()
+    
+        data_produto = self.get_data_produto(filepath)
+        df = self.read_table(filepath, data_produto)
+        df = self.sanitaze_dataframe(df)
+        self.post_data(df)
+        analyzer = IntercambioAnalyzer()
+        analyzer.run_workflow()
+        
+
+    def get_data_produto(self, path_produto: str) -> datetime.date:
+        with pdfplumber.open(path_produto) as pdf:
+            data_produto = extrair_mes_ano(pdf.pages[0].extract_text())
+        return data_produto
 
 
     def get_months_from_path(self, pdf_path: str):
@@ -82,38 +102,32 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
             f"{second_month_year} Média": 14,
             f"{second_month_year} Leve": 17
         }
-        # Iterar sobre as linhas
-        # data[[x for x in data.columns if x is not None]]
-        # teste = [x for i, x in data.iterrows()]
+
         for index, row in data.iterrows():
             limite = row.iloc[1].strip() if pd.notna(row.iloc[1]) else None
             re_value = dict_num.get(limite)
             
             if re_value is not None:
-                # Processar os valores para o primeiro mês
-                patamares_indices = [("Pesada", col_indices[f"{first_month_year} Pesada"]),
-                                    ("Media", col_indices[f"{first_month_year} Média"]),
-                                    ("Leve", col_indices[f"{first_month_year} Leve"]),
+                patamares_indices = [("Pesada", col_indices[f"{first_month_year} Pesada"], first_month_year),
+                                    ("Media", col_indices[f"{first_month_year} Média"], first_month_year),
+                                    ("Leve", col_indices[f"{first_month_year} Leve"], first_month_year),
                                     
-                                    ("Pesada", col_indices[f"{second_month_year} Pesada"]),
-                                    ("Media", col_indices[f"{second_month_year} Média"]),
-                                    ("Leve", col_indices[f"{second_month_year} Leve"])]
+                                    ("Pesada", col_indices[f"{second_month_year} Pesada"], second_month_year),
+                                    ("Media", col_indices[f"{second_month_year} Média"], second_month_year),
+                                    ("Leve", col_indices[f"{second_month_year} Leve"], second_month_year)]
                 for i, patamares_indice in enumerate(patamares_indices):
-                    # if limite == 'IPU50':
-                        # pdb.set_trace()
-                    patamar, col_idx = patamares_indice
+                    patamar, col_idx, mes_ano = patamares_indice
                     value = row.iloc[col_idx].strip() if pd.notna(row.iloc[col_idx]) else None
                     i_aux = i - 1
                     while not value and i_aux >= 0 and i_aux < len(patamares_indices) - 1:
-                        _, col_idx = patamares_indices[i_aux]
+                        _, col_idx, _ = patamares_indices[i_aux]
                         value = row.iloc[col_idx].strip() if pd.notna(row.iloc[col_idx]) else None
                         i_aux -= 1
                     if value and value.strip():
-                        pdb.set_trace()
                         reformatted_data.append({
                             "RE": re_value,
                             "Limite": limite,
-                            "Data": first_month_year,
+                            "Data": mes_ano,
                             "Patamar": patamar,
                             "Valor": float(value) * 1000
                         })
@@ -123,7 +137,6 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         reformatted_df.dropna(subset=['RE', 'Valor'], inplace=True)    
         reformatted_df['RE'] = reformatted_df['RE'].astype(int)    
         reformatted_df['data_produto'] = data_produto.strftime('%Y-%m-%d')
-        pdb.set_trace()
         
         return reformatted_df
 
@@ -175,18 +188,158 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         pass
 
 
+class IntercambioAnalyzer:
+    def __init__(self):
+        """Inicializa a classe com constantes e cabeçalhos de autenticação."""
+        logger.info("Inicializando IntercambioAnalyzer")
+        self.consts = Constants()
+        self.header = get_auth_header()
+        self.base_url_api = self.consts.BASE_URL + '/api/v2/decks/'
+        logger.debug(f"Base URL da API: {self.base_url_api}")
+
+    def run_workflow(self):
+        """Método principal para executar a análise."""
+        logger.info("Executando análise principal")
+        try:
+            self.calculate_differences()
+            logger.info("Análise concluída com sucesso")
+        except Exception as e:
+            logger.error(f"Erro na execução da análise: {str(e)}")
+            raise
+      
+    def get_dados_banco(self, produto: str, date: str = "") -> pd.DataFrame:
+        """Obtém dados da API para o produto e data especificados."""
+        logger.info(f"Obtendo dados da API para produto: {produto}, data: {date}")
+        try:
+            res = requests.get(
+                f"{self.base_url_api}{produto}",
+                params={'data_produto': date},
+                headers=self.header
+            )
+            if res.status_code != 200:
+                logger.error(f"Erro na requisição à API: status {res.status_code}, response: {res.text}")
+                res.raise_for_status()
+            logger.debug("Dados da API obtidos com sucesso")
+            return pd.DataFrame(res.json())
+        except requests.RequestException as e:
+            logger.error(f"Erro ao acessar a API: {str(e)}")
+            raise
+
+    def res_to_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Converte os dados brutos em um DataFrame pivotado."""
+        logger.info("Convertendo dados brutos em DataFrame pivotado")
+        try:
+            df['mes_ano_formatted'] = pd.to_datetime(df['mes_ano']).dt.strftime('%m/%y')
+            df_pivot = df.pivot_table(
+                index=['re', 'limite'],
+                columns=['mes_ano_formatted', 'patamar'],
+                values='valor',
+                aggfunc='first'
+            )
+            df_pivot.columns = [
+                f"{mes} {patamar.capitalize()}"
+                for mes, patamar in df_pivot.columns
+            ]
+            df_pivot = df_pivot.reset_index().rename(columns={'re': 'RE', 'limite': 'Limite'})
+            df_pivot = df_pivot.set_index('RE')
+            logger.debug("DataFrame pivotado criado com sucesso")
+            return df_pivot
+        except Exception as e:
+            logger.error(f"Erro ao converter DataFrame: {str(e)}")
+            raise
+
+    def df_to_image(self, df: pd.DataFrame) -> bytes:
+        """Converte um DataFrame em uma imagem de tabela."""
+        logger.info("Convertendo DataFrame em imagem")
+        try:
+            df = df.reset_index()
+            df = df.rename(columns={"RE": "Índice"})
+            col_widths = []
+            for col in df.columns:
+                max_len = max(
+                    len(str(col)),
+                    df[col].astype(str).str.len().max()
+                )
+                col_widths.append(max_len * 0.015)
+
+            total_width = sum(col_widths)
+            col_widths = [w / total_width for w in col_widths]
+            fig_width = len(df.columns) * 2
+            fig_height = len(df) * 0.4
+            fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+            ax.axis('off')
+            table = tbl.table(
+                ax,
+                cellText=df.values,
+                colLabels=df.columns,
+                loc='center',
+                cellLoc='center',
+                colWidths=col_widths
+            )
+            table.auto_set_font_size(False)
+            table.set_fontsize(10)
+            table.scale(1, 1.5)
+            plt.tight_layout(pad=0)
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+            buf.seek(0)
+            binary_image = buf.getvalue()
+            plt.close(fig)  # Fecha a figura para liberar memória
+            logger.debug("Imagem gerada com sucesso")
+            return binary_image
+        except Exception as e:
+            logger.error(f"Erro ao gerar imagem: {str(e)}")
+            raise
+
+    def calculate_differences(self) -> None:
+        """Calcula as diferenças entre os limites de intercâmbio de duas datas e envia mensagens."""
+        logger.info("Iniciando cálculo de diferenças")
+        try:
+            df_datas = self.get_dados_banco('restricoes-eletricas/historico')
+            df_datas = sorted(list(df_datas[0]), reverse=True)
+            if len(df_datas) < 2:
+                logger.warning("Não há dados suficientes para comparar")
+                return
+
+            logger.info(f"Comparando datas: {df_datas[0]} e {df_datas[1]}")
+            df1 = self.res_to_df(self.get_dados_banco(produto='restricoes-eletricas', date=df_datas[0]))
+            df2 = self.res_to_df(self.get_dados_banco(produto='restricoes-eletricas', date=df_datas[1]))
+            df1_months = [col for col in df1.columns if col != "Limite"]
+            df2_months = [col for col in df2.columns if col != "Limite"]
+            common_months = sorted(set(df1_months).intersection(df2_months))
+
+            if not common_months:
+                logger.warning("Nenhum mês comum encontrado entre os dois relatórios")
+                return
+
+            diff_df = pd.DataFrame(index=df1.index)
+            diff_df["Limite"] = df1["Limite"]
+            for month in common_months:
+                diff_df[month] = df2[month] - df1[month]
+            diff_df.dropna(how="all", subset=common_months, inplace=True)
+            diff_df = diff_df.reset_index()
+
+            data_pmo = datetime.strptime(df_datas[0], '%Y-%m-%d')
+            data_ant = datetime.strptime(df_datas[1], '%Y-%m-%d')
+
+            logger.info(f"Enviando mensagem com limites para {data_pmo.month}/{data_pmo.year}")
+            send_whatsapp_message(
+                self.consts.WHATSAPP_DECKS,
+                f"Limites de Intercambio para {str(data_pmo.month).zfill(2)}/{data_pmo.year}",
+                self.df_to_image(df1)
+            )
+            logger.info(f"Enviando mensagem com diferença para {data_pmo.month}/{data_pmo.year} - {data_ant.month}/{data_ant.year}")
+            send_whatsapp_message(
+                self.consts.WHATSAPP_DECKS,
+                f"Diferença dos Limites ({str(data_pmo.month).zfill(2)}/{data_pmo.year}- {str(data_ant.month).zfill(2)}/{data_ant.year})",
+                self.df_to_image(diff_df)
+            )
+            logger.info("Cálculo de diferenças concluído e mensagens enviadas")
+        except Exception as e:
+            logger.error(f"Erro ao calcular diferenças: {str(e)}")
+            raise
+
+
 if __name__ == "__main__":
-    teste = RelatorioLimitesIntercambioDecomp(WebhookSintegreSchema.construct(**{
-  "nome": "relatorio_mensal_de_limites_de_intercambio_para_o_modelo_decomp",
-  "processo": "Programação mensal da operação energética",
-  "dataProduto": "08/2025",
-  "macroProcesso": "Programação da Operação",
-  "periodicidade": "2025-08-01T00:00:00",
-  "periodicidadeFinal": "2025-08-31T23:59:59",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS81Mi9Qcm9kdXRvcy8zMDIvUlQtT05TIERQTCAwMjk4LTIwMjVfTGltaXRlcyBQTU9fQWdvc3RvLTIwMjUucGRmIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IlJlbGF0w7NyaW8gTWVuc2FsIGRlIExpbWl0ZXMgZGUgSW50ZXJjw6JtYmlvIHBhcmEgbyBNb2RlbG8gREVDT01QIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTM0NTI3MjEsIm5iZiI6MTc1MzM2NjA4MX0._Ni1aOw2HCpY1KvDmmOpkcitc6XssQ8yt4xDIFE46c4",
-  "s3Key": "webhooks/Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP/68823e41d49e380e81e2ab3c_RT-ONS DPL 0298-2025_Limites PMO_Agosto-2025.pdf",
-  "filename": "RT-ONS DPL 0298-2025_Limites PMO_Agosto-2025.pdf",
-  "webhookId": "68823e41d49e380e81e2ab3c"
-}
-))
-    teste.run_workflow()
+    teste = RelatorioLimitesIntercambioDecomp({})
+    teste.run_workflow("/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/trading-middle-tasks-webhook-ons/RT-ONS DPL 0298-2025_Limites PMO_Agosto-2025.pdf")

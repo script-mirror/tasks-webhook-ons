@@ -37,16 +37,18 @@ class CargaPatamarDecomp(WebhookProductsInterface):
             base_path = handle_webhook_file(payload, constants.PATH_ARQUIVOS_TEMP)
             logger.info("Webhook file handled, base path: %s", base_path)
             
-            df_load = self.read_week_load(base_path)
-            logger.info("Successfully processed load data with %d rows", len(df_load))
-            
-            self.post_load_to_database(df_load)
+            self.run_process( base_path)
             logger.info("Workflow completed successfully")
             
         except Exception as e:
             logger.error("Workflow failed: %s", str(e), exc_info=True)
             raise
-    
+    def run_process(self, base_path):
+        df_load = self.read_week_load(base_path)
+        logger.info("Successfully processed load data with %d rows", len(df_load))
+        self.post_load_to_database(df_load)
+        
+        
     def read_week_load(self, base_path):
         logger.info("Reading week load data from base path: %s", base_path)
         try:
