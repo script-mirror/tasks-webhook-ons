@@ -21,7 +21,7 @@ from inewave.newave import Patamar, Cadic, Sistema
 
 class DecksNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None, filepath: Optional[str] = None) -> None:
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
         """
         Inicializa a classe com o payload iguração fornecida.
         
@@ -51,8 +51,6 @@ class DecksNewave(WebhookProductsInterface):
         Executa o fluxo completo de processamento de forma sequencial.
         Cada etapa depende do resultado da etapa anterior.
         
-        Returns:
-            Dicionário com o resultado final do processamento.
         """
         try:
             
@@ -79,14 +77,11 @@ class DecksNewave(WebhookProductsInterface):
             gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(payload)
             
             self.enviar_tabela_whatsapp_email(payload, gerar_tabela_diferenca_cargas_result)
-            
-            return self.workflow_results
         
         except Exception as e:
             error_msg = f"Erro no fluxo de processamento do DECK Newave: {str(e)}"
             logger.error(error_msg)
-            return {"status": "error", "message": error_msg}   
-        
+            raise
     
     # Tasks
     def extrair_arquivos_dat(
