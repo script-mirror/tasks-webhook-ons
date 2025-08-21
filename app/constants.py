@@ -1,5 +1,6 @@
 from .tasks import (
-   RelatorioLimitesIntercambioDecomp
+   RelatorioLimitesIntercambioDecomp,
+   CargaPatamarDecomp,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -20,7 +21,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "rdh": None,
    "historico_de_precipitacao_por_satelite": None,
    "modelo_eta": None,
-   "carga_por_patamar_decomp": None,
+   "carga_por_patamar_decomp": CargaPatamarDecomp,
    "deck_preliminar_decomp_valor_esperado": None,
    "decks_de_entrada_e_saida_modelo_dessem": None,
    "arquivos_de_previsao_de_carga_para_o_dessem": None,
