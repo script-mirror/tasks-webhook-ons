@@ -1,6 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 from app.controller import router as webhook_router
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(
     title="API Tasks webhook ONS",

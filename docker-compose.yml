@@ -1,0 +1,14 @@
+services:
+  app:
+    build: 
+      context: .
+      args:
+        - GIT_USERNAME=${git_username}
+        - GIT_TOKEN=${git_token}
+    volumes:
+      - .:/app
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
