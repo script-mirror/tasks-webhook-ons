@@ -69,10 +69,12 @@ class DecksNewave(WebhookProductsInterface):
             
             processar_deck_nw_patamar_result = self.processar_deck_nw_patamar(payload, extract_dat_files_result)
           
+            flag_enviar = True
             if "preliminar" in payload.nome.lower():
                 processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(payload, processar_deck_nw_sistema_result, extract_dat_files_result)
+                flag_enviar = False
             
-            self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result)
+            self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result, flag_enviar)
             
             gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(payload)
             
@@ -676,7 +678,8 @@ class DecksNewave(WebhookProductsInterface):
         self,
         processar_deck_nw_patamar_result: Dict[str, Any],
         processar_deck_nw_cadic_result: Dict[str, Any],
-        processar_deck_nw_sist_result: Dict[str, Any]
+        processar_deck_nw_sist_result: Dict[str, Any],
+        flag_enviar: Optional[bool] = None
     ) -> Dict[str, Any]:
         """
         Envia os dados processados para a API.
@@ -693,7 +696,7 @@ class DecksNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            api_url = constants.BASE_URL
+            base_url = constants.BASE_URL
             api_url += "/api/v2"
             
             nw_cadic_records = processar_deck_nw_cadic_result.get('nw_cadic_records', [])
@@ -706,16 +709,19 @@ class DecksNewave(WebhookProductsInterface):
             patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
             patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
             
-            logger.info(f"Enviando dados para: {sistema_url}")
             
-            request_sistema = requests.post(
-                sistema_url,
-                headers=headers,
-                json=nw_sist_records,
-            )
+            if flag_enviar:
+                
+                logger.info(f"Enviando dados para: {sistema_url}")
+                
+                request_sistema = requests.post(
+                    sistema_url,
+                    headers=headers,
+                    json=nw_sist_records,
+                )
             
-            if request_sistema.status_code != 200:
-                raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
+                if request_sistema.status_code != 200:
+                    raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
 
             logger.info(f"Enviando dados para: {cadic_url}")
 
@@ -926,19 +932,17 @@ class DecksNewave(WebhookProductsInterface):
 if __name__ == "__main__":
    
    payload = {
-        "dataProduto": "08/2025",
-        "dt_ref": "08/2025",
-        "enviar": True,
-        "filename": "Deck NEWAVE Preliminar.zip",
-        "macroProcesso": "Programação da Operação",
-        "nome": "Deck NEWAVE Preliminar",
-        "periodicidade": "2025-08-01T03:00:00.000Z",
-        "periodicidadeFinal": "2025-09-01T02:59:59.000Z",
-        "processo": "Médio Prazo",
-        "s3Key": "webhooks/Deck NEWAVE Preliminar/6890c1e194f9e32e8e7989f1_Deck NEWAVE Preliminar.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjEtMDctMjAyNV8xMjAxMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NDQwMzkyMSwibmJmIjoxNzU0MzE3MjgxfQ.82TBWIRXT2C43hCY3PqVkz6avWOo-Z95Qw7u3EEJc3M",
-        "webhookId": "6890c1e194f9e32e8e7989f1"
-    }
+  "dataProduto": "07/2025",
+  "filename": "Deck NEWAVE Preliminar.zip",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Deck NEWAVE Preliminar",
+  "periodicidade": "2025-07-01T00:00:00",
+  "periodicidadeFinal": "2025-07-31T23:59:59",
+  "processo": "Médio Prazo",
+  "s3Key": "webhooks/Deck NEWAVE Preliminar/68596b2ab1c148748afd166c_Deck NEWAVE Preliminar.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjMtMDYtMjAyNV8xMTU0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc3NzI0MiwibmJmIjoxNzUwNjkwNjAyfQ.BMzBppjFOa47kjJHndtMoTDj00NZJWEJo1n1sQa1btM",
+  "webhookId": "68596b2ab1c148748afd166c"
+}
    
    payload = WebhookSintegreSchema(**payload)
    

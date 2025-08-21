@@ -72,7 +72,7 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
             xlsx_file = os.path.join(filepath, filename)
             
             df_carga = pd.read_excel(xlsx_file)
-    
+            
             df_carga.drop(columns=['WEEK','GAUGE','LOAD_cMMGD', 'Base_CGH', 'Base_EOL', 'Base_UFV', 'Base_UTE','Exp_MMGD','REVISION'], inplace=True, errors='ignore')
             df_carga = df_carga[df_carga['TYPE'] == 'MEDIUM']
             df_carga.drop(columns=['TYPE'], inplace=True, errors='ignore')
@@ -149,9 +149,14 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
             data_produto_str = payload.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
                 
-            df_atualizacao_sist['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
             df_atualizacao_cadic['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
             
+            payload_filename = payload.filename
+            
+            if 'quad' in payload_filename.lower():
+                df_atualizacao_cadic['vl_boa_vista'] = 0
+                df_atualizacao_cadic = df_atualizacao_cadic[['vl_ano', 'vl_mes', 'vl_mmgd_se', 'vl_mmgd_s', 'vl_mmgd_ne', 'vl_mmgd_n', 'vl_boa_vista', 'versao', 'dt_deck']]
+                
             return [df_atualizacao_sist, df_atualizacao_cadic]
             
         except Exception as e:
@@ -175,8 +180,7 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            # base_url = constants.BASE_URL
-            base_url = "http://localhost:8000"
+            base_url = constants.BASE_URL
             api_url = f"{base_url}/api/v2"
             
             url_sistema = f"{api_url}/decks/newave/sistema/mmgd_total"
@@ -229,8 +233,6 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
             logger.info("Gerando tabela de diferença de cargas...")
             
             data_produto_str = payload.dataProduto
-            filename = payload.filename
-            versao = self._get_version_by_filename(filename)
             
             auth_headers = get_auth_header()
             headers = {
@@ -334,7 +336,7 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
             image_dir = "/tmp/deck_newave/images"
             os.makedirs(image_dir, exist_ok=True)
             
-            image_filename = f"tabela_diferenca_cargas_{versao}_{data_produto_str}.png"
+            image_filename = f"tabela_diferenca_cargas_preliminar_atualizado_{data_produto_str}.png"
             
             image_path = os.path.join(image_dir, image_filename)
             
@@ -387,17 +389,17 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
 if __name__ == "__main__":
    
    payload = {
-    "dataProduto": "08/2025",
-    "filename": "CargaMensal_2revquad2529.zip",
-    "macroProcesso": "Programação da Operação",
-    "nome": "Previsões de carga mensal e por patamar - NEWAVE",
-    "periodicidade": "2025-08-01T00:00:00",
-    "periodicidadeFinal": "2025-08-31T23:59:59",
-    "processo": "Previsão de Carga para o PMO",
-    "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/68827d45d49e380e81e2ab74_RV0_PMO_Agosto_2025_carga_mensal.zip",
-    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvUlYwX1BNT19BZ29zdG9fMjAyNV9jYXJnYV9tZW5zYWwuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IlByZXZpc8O1ZXMgZGUgY2FyZ2EgbWVuc2FsIGUgcG9yIHBhdGFtYXIgLSBORVdBVkUiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MzQ2ODg1MiwibmJmIjoxNzUzMzgyMjEyfQ.lKy4WJKXEPLLbNePWr6rJjp9esueWYwO7KZ8SmYL-ME",
-    "webhookId": "68827d45d49e380e81e2ab74"
-    }
+  "dataProduto": "07/2025",
+  "filename": "RV0_PMO_Julho_2025_carga_mensal.zip",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Previsões de carga mensal e por patamar - NEWAVE",
+  "periodicidade": "2025-07-01T00:00:00",
+  "periodicidadeFinal": "2025-07-31T23:59:59",
+  "processo": "Previsão de Carga para o PMO",
+  "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/6859b987b1c148748afd1715_RV0_PMO_Julho_2025_carga_mensal.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvUlYwX1BNT19KdWxob18yMDI1X2NhcmdhX21lbnNhbC56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUHJldmlzw7VlcyBkZSBjYXJnYSBtZW5zYWwgZSBwb3IgcGF0YW1hciAtIE5FV0FWRSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzUwNzk3MzAzLCJuYmYiOjE3NTA3MTA2NjN9.gVtPlXEt8plvqdoYO0_SqVFybpbCvyuslLlexoBoO7Q",
+  "webhookId": "6859b987b1c148748afd1715"
+}
    
    payload = WebhookSintegreSchema(**payload)
    
