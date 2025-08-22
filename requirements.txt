@@ -3,3 +3,7 @@ uvicorn
 pandas
 requests
 pdfplumber
+git+https://github.com/wx-middle/inewave.git
+git+https://github.com/wx-middle/libs-middle.git
+matplotlib
+openpyxl

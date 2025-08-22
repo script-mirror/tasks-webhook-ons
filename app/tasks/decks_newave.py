@@ -16,11 +16,12 @@ import pandas as pd
 import numpy as np
 import datetime
 import requests
+import zipfile as zipFile
 from inewave.newave import Patamar, Cadic, Sistema
 
 class DecksNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None, filepath: Optional[str] = None) -> None:
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
         """
         Inicializa a classe com o payload iguração fornecida.
         
@@ -29,6 +30,7 @@ class DecksNewave(WebhookProductsInterface):
         """
         super().__init__(payload)
         
+    # Private methods
     def _get_version_by_filename(self, filename: str) -> str:
         try:
             if 'preliminar' in filename.lower():
@@ -49,51 +51,85 @@ class DecksNewave(WebhookProductsInterface):
         Executa o fluxo completo de processamento de forma sequencial.
         Cada etapa depende do resultado da etapa anterior.
         
-        Returns:
-            Dicionário com o resultado final do processamento.
         """
         try:
             
-            product_details = self.payload
-            
             if filepath:
-                download_extract_files_result = filepath
-            elif product_details:
-                download_extract_files_result = self.download_extract_files(product_details)
+                download_extract_filepath = filepath
+            elif payload:
+                download_extract_filepath = self.download_extract_files()
             else:
                 raise ValueError("Nenhum caminho de arquivo ou detalhes do produto fornecidos.")
+            
+            extract_dat_files_result = self.extrair_arquivos_dat(download_extract_filepath)
     
-            processar_deck_nw_cadic_result = self.processar_deck_nw_cadic(download_extract_files_result)
+            processar_deck_nw_cadic_result = self.processar_deck_nw_cadic(payload, extract_dat_files_result)
             
-            processar_deck_nw_sistema_result = self.processar_deck_nw_sist(download_extract_files_result)
+            processar_deck_nw_sistema_result = self.processar_deck_nw_sist(payload, extract_dat_files_result)
             
-            processar_deck_nw_patamar_result = self._execute_workflow_step(
-                self.processar_deck_nw_patamar, download_extract_files_result,
-                step_name="process_patamar",
-                error_message="Falha no processamento do PATAMAR.DAT"
-            )
+            processar_deck_nw_patamar_result = self.processar_deck_nw_patamar(payload, extract_dat_files_result)
+          
+            flag_enviar = True
+            if "preliminar" in payload.nome.lower():
+                processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(payload, processar_deck_nw_sistema_result, extract_dat_files_result)
+                flag_enviar = False
             
-            if "preliminar" in product_details.get("nome").lower():
-                processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(processar_deck_nw_sistema_result, download_extract_files_result)
+            self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result, flag_enviar)
             
-            self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result)
+            gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(payload)
             
-            gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(download_extract_files_result)
-            
-            self.enviar_tabela_whatsapp_email(gerar_tabela_diferenca_cargas_result, download_extract_files_result)
-            
-            return self.workflow_results
+            self.enviar_tabela_whatsapp_email(payload, gerar_tabela_diferenca_cargas_result)
         
         except Exception as e:
             error_msg = f"Erro no fluxo de processamento do DECK Newave: {str(e)}"
             logger.error(error_msg)
-            return {"status": "error", "message": error_msg}   
-        
-        
+            raise
+    
     # Tasks
+    def extrair_arquivos_dat(
+        self,
+        download_extract_filepath: Dict[str, Any]
+    ) -> list:
+        """
+        Extrai os arquivos .DAT do diretório especificado.
+        
+        :param download_extract_filepath: Dicionário com o caminho do arquivo a ser extraído.
+        :return: Dicionário com o status e mensagem da extração.
+        """
+        try:
+            file_path = download_extract_filepath
+            
+            dat_files = []
+            target_files = ['C_ADIC.DAT', 'SISTEMA.DAT', 'PATAMAR.DAT']
+            path_to_send = '/tmp/Deck NEWAVE Preliminar'
+            
+            for root, _, files in os.walk(file_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    
+                    if file.lower().endswith('.zip'):
+                        with zipFile.ZipFile(file_path, 'r') as zip_ref:
+                            zip_ref.extractall(path_to_send)
+                            
+            for target in target_files:
+                for root, _, files in os.walk(path_to_send):
+                    for filename in files:
+                        if filename.upper() == target:
+                            dat_files.append(os.path.join(root, filename))
+                            
+            if not dat_files:
+                raise ValueError(f"Nenhum arquivo DAT encontrado em {download_extract_filepath}")
+                            
+            return dat_files
+        
+        except Exception as e:
+            logger.error(f"Erro ao extrair arquivos .DAT: {e}")
+            raise
+    
     def processar_deck_nw_cadic( 
         self,
-        download_extract_files_result:Dict[str, Any]
+        payload: WebhookSintegreSchema,
+        extract_dat_files_result: list
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do C_ADIC.DAT.
@@ -105,26 +141,22 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Processando o C_ADIC.DAT do Deck Newave...")
             
-            file_path = download_extract_files_result.get('filepath')
-            data_produto_str = download_extract_files_result.get('data_produto')
-            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-            filename = download_extract_files_result.get('filename')
-            versao = self._get_version_by_filename(filename)
+            files_paths = extract_dat_files_result
+            file_path = None
             
-            if not file_path:
-                raise ValueError("Nenhum filepath recuperado.")
-            
-            cadic_file = None
-            for root, dirs, files in os.walk(file_path):
-                for file in files:
-                    if file.upper() == 'C_ADIC.DAT':
-                        cadic_file = os.path.join(root, file)
-                        break
-                if cadic_file:
+            for path in files_paths:
+                if  'C_ADIC.DAT' in path:
+                    cadic_file = path
                     break
             
             if not cadic_file or not os.path.exists(cadic_file):
                 raise ValueError(f"Arquivo C_ADIC.DAT não encontrado em {file_path}")
+            
+        
+            data_produto_str = payload.dataProduto
+            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
+            filename = payload.filename
+            versao = self._get_version_by_filename(filename)
             
             cadic_object = Cadic.read(cadic_file)
             nw_cadic_df = cadic_object.cargas.copy()
@@ -167,7 +199,7 @@ class DecksNewave(WebhookProductsInterface):
                 nw_cadic_records = nw_cadic_df.to_dict('records')
                 
                 logger.info(f"- Valores do Cadic: ({len(nw_cadic_records)} registros)")
-            
+                
             return {
                     "nw_cadic_records": nw_cadic_records,
                     "data_produto": data_produto_str,
@@ -177,10 +209,10 @@ class DecksNewave(WebhookProductsInterface):
             logger.error(f"Erro ao processar C_ADIC do Deck Newave: {e}")
             return {"status": "error", "message": str(e)}
     
-    
     def processar_deck_nw_sist(
         self, 
-        download_extract_files_result: Dict[str, Any]
+        payload: WebhookSintegreSchema,
+        extract_dat_files_result: list
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do SISTEMA.DAT.
@@ -191,25 +223,21 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Processando o SISTEMA.DAT do Deck Newave...")
             
-            file_path = download_extract_files_result.get('filepath')
-            data_produto_str = download_extract_files_result.get('data_produto')
-            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-            filename = download_extract_files_result.get('filename')
-            versao = self._get_version_by_filename(filename)
+            files_paths = extract_dat_files_result
+            file_path = None
             
-            pdb.set_trace()
-            
-            sistema_file = None
-            for root, dirs, files in os.walk(file_path):
-                for file in files:
-                    if file.upper() == 'SISTEMA.DAT':
-                        sistema_file = os.path.join(root, file)
-                        break
-                if sistema_file:
+            for path in files_paths:
+                if 'SISTEMA.DAT' in path:
+                    sistema_file = path
                     break
             
             if not sistema_file or not os.path.exists(sistema_file):
                 raise ValueError(f"Arquivo SISTEMA.DAT não encontrado em {file_path}")
+            
+            data_produto_str = payload.dataProduto
+            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
+            filename = payload.filename
+            versao = self._get_version_by_filename(filename)
             
             sistema_object = Sistema.read(sistema_file)
             sistema_mercado_energia_df = sistema_object.mercado_energia.copy()   
@@ -307,12 +335,12 @@ class DecksNewave(WebhookProductsInterface):
         
         except Exception as e:
             logger.error(f"Erro ao processar os valores de carga do Sistema do DECK Newave : {e}")
-            return {"status": "error", "message": str(e)}
-    
+            raise
     
     def processar_deck_nw_patamar(
         self,
-        download_extract_files_result: Dict[str, Any]
+        payload: WebhookSintegreSchema,
+        extract_dat_files_result: list
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do PATAMAR.DAT.
@@ -323,23 +351,21 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Processando o PATAMAR.DAT do Deck Newave...")
             
-            file_path = download_extract_files_result.get('filepath')
-            data_produto_str = download_extract_files_result.get('data_produto')
-            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-            filename = download_extract_files_result.get('filename')
-            versao = self._get_version_by_filename(filename)
+            files_paths = extract_dat_files_result
+            file_path = None
             
-            patamar_file = None
-            for root, dirs, files in os.walk(file_path):
-                for file in files:
-                    if file.upper() == 'PATAMAR.DAT':
-                        patamar_file = os.path.join(root, file)
-                        break
-                if patamar_file:
+            for path in files_paths:
+                if 'PATAMAR.DAT' in path:
+                    patamar_file = path
                     break
-            
+                
             if not patamar_file or not os.path.exists(patamar_file):
                 raise ValueError(f"Arquivo PATAMAR.DAT não encontrado em {file_path}")
+            
+            data_produto_str = payload.dataProduto
+            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
+            filename = payload.filename
+            versao = self._get_version_by_filename(filename)
             
             patamar_object = Patamar.read(patamar_file)
 
@@ -537,7 +563,6 @@ class DecksNewave(WebhookProductsInterface):
             logger.info(f"- Carga e usinas: ({len(patamar_carga_usinas_records)} registros)")
             logger.info(f"- Intercâmbio:({len(patamar_intercambio_records)} registros)")
             
-            
             return {
                 "patamar_carga_usinas_records": patamar_carga_usinas_records,
                 "patamar_intercambio_records": patamar_intercambio_records,
@@ -546,12 +571,11 @@ class DecksNewave(WebhookProductsInterface):
         
         except Exception as e:
             logger.error(f"Erro ao processar PATAMAR.DAT: {e}")
-            return {"status": "error", "message": str(e)}
-    
+            raise
     
     def atualizar_sist_com_weol(
         self,
-        download_extract_files_result: Dict[str, Any],
+        payload: WebhookSintegreSchema,
         processar_deck_nw_sistema_result: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -573,7 +597,7 @@ class DecksNewave(WebhookProductsInterface):
             base_url = constants.BASE_URL
             api_url = f"{base_url}/api/v2"
             
-            data_produto_str = download_extract_files_result.get('data_produto')
+            data_produto_str = payload.dataProduto
             
             nw_sistema_records = processar_deck_nw_sistema_result.get('nw_sistema_records', [])
             nw_sistema_df = pd.DataFrame(nw_sistema_records)
@@ -648,14 +672,14 @@ class DecksNewave(WebhookProductsInterface):
         
         except Exception as e:
             logger.error(f"Erro ao atualizar SISTEMA com WEOL: {e}")
-            return {"status": "error", "message": str(e)}
-        
+            raise
         
     def enviar_dados_para_api(
         self,
         processar_deck_nw_patamar_result: Dict[str, Any],
         processar_deck_nw_cadic_result: Dict[str, Any],
-        processar_deck_nw_sist_result: Dict[str, Any]
+        processar_deck_nw_sist_result: Dict[str, Any],
+        flag_enviar: Optional[bool] = None
     ) -> Dict[str, Any]:
         """
         Envia os dados processados para a API.
@@ -672,7 +696,7 @@ class DecksNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            api_url = constants.BASE_URL
+            base_url = constants.BASE_URL
             api_url += "/api/v2"
             
             nw_cadic_records = processar_deck_nw_cadic_result.get('nw_cadic_records', [])
@@ -685,16 +709,19 @@ class DecksNewave(WebhookProductsInterface):
             patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
             patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
             
-            logger.info(f"Enviando dados para: {sistema_url}")
             
-            request_sistema = requests.post(
-                sistema_url,
-                headers=headers,
-                json=nw_sist_records,
-            )
+            if flag_enviar:
+                
+                logger.info(f"Enviando dados para: {sistema_url}")
+                
+                request_sistema = requests.post(
+                    sistema_url,
+                    headers=headers,
+                    json=nw_sist_records,
+                )
             
-            if request_sistema.status_code != 200:
-                raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
+                if request_sistema.status_code != 200:
+                    raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
 
             logger.info(f"Enviando dados para: {cadic_url}")
 
@@ -731,12 +758,11 @@ class DecksNewave(WebhookProductsInterface):
         
         except Exception as e:
             logger.error(f"Erro ao enviar dados para a API: {e}")
-            return {"status": "error", "message": str(e)}
-    
+            raise
     
     def gerar_tabela_diferenca_cargas(
         self,
-        download_extract_files_result
+        payload: WebhookSintegreSchema,
     ) -> Dict[str, Any]:
         """
         Gera uma tabela de diferença de cargas.
@@ -746,8 +772,8 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Gerando tabela de diferença de cargas...")
             
-            data_produto_str = download_extract_files_result.get('data_produto')
-            filename = download_extract_files_result.get('filename')
+            data_produto_str = payload.dataProduto
+            filename = payload.filename
             versao = self._get_version_by_filename(filename)
             
             auth_headers = get_auth_header()
@@ -866,14 +892,12 @@ class DecksNewave(WebhookProductsInterface):
                 }
         
         except Exception as e:
-            error_msg = f"Erro ao gerar tabela de diferença de cargas: {e}"
-            logger.error(error_msg)
-            return {"status": "error", "message": str(e)}
-    
+            logger.error(f"Erro ao gerar tabela de diferença de cargas: {e}")
+            raise
     
     def enviar_tabela_whatsapp_email(
         self,
-        download_extract_files_result: Dict[str, Any],
+        payload: WebhookSintegreSchema,
         gerar_tabela_diferenca_cargas_result: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
@@ -884,8 +908,8 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Enviando tabela de diferença de cargas por WhatsApp e email...")
             
-            data_produto_str = download_extract_files_result.get('data_produto')
-            filename = download_extract_files_result.get('filename')
+            data_produto_str = payload.dataProduto
+            filename = payload.filename
             versao = self._get_version_by_filename(filename)
             
             image_path = gerar_tabela_diferenca_cargas_result.get('image_path')
@@ -902,10 +926,26 @@ class DecksNewave(WebhookProductsInterface):
                 raise ValueError(f"Erro ao enviar mensagem por WhatsApp: {request_whatsapp.text}")
                     
         except Exception as e:
-            error_msg = f"Erro ao enviar tabela por WhatsApp e email: {e}"
-            logger.error(error_msg)
-            return {"status": "error", "message": str(e)}
+            logger.error(f"Erro ao enviar tabela por WhatsApp e email: {e}")
+            raise
         
-    
 if __name__ == "__main__":
-   pass
+   
+   payload = {
+  "dataProduto": "07/2025",
+  "filename": "Deck NEWAVE Preliminar.zip",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Deck NEWAVE Preliminar",
+  "periodicidade": "2025-07-01T00:00:00",
+  "periodicidadeFinal": "2025-07-31T23:59:59",
+  "processo": "Médio Prazo",
+  "s3Key": "webhooks/Deck NEWAVE Preliminar/68596b2ab1c148748afd166c_Deck NEWAVE Preliminar.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjMtMDYtMjAyNV8xMTU0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc3NzI0MiwibmJmIjoxNzUwNjkwNjAyfQ.BMzBppjFOa47kjJHndtMoTDj00NZJWEJo1n1sQa1btM",
+  "webhookId": "68596b2ab1c148748afd166c"
+}
+   
+   payload = WebhookSintegreSchema(**payload)
+   
+   decknewave = DecksNewave(payload)
+   
+   decknewave.run_workflow()
