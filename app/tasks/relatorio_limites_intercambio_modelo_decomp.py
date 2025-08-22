@@ -2,7 +2,8 @@ import sys
 import pdb
 import io
 import requests
-import datetime
+import datetime 
+from datetime import datetime
 import pdfplumber
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -311,7 +312,7 @@ class IntercambioAnalyzer:
             diff_df.dropna(how="all", subset=common_months, inplace=True)
             diff_df = diff_df.reset_index()
 
-            data_pmo = datetime.strptime(df_datas[0], '%Y-%m-%d')
+            data_pmo =   datetime.strptime(df_datas[0], '%Y-%m-%d')
             data_ant = datetime.strptime(df_datas[1], '%Y-%m-%d')
 
             logger.info(f"Enviando mensagem com limites para {data_pmo.month}/{data_pmo.year}")
