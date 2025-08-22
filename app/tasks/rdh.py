@@ -3,6 +3,7 @@ import os
 import requests
 import pandas as pd
 import glob
+import locale
 import openpyxl
 from datetime import datetime, timedelta
 from typing import Optional
@@ -46,9 +47,9 @@ class Rdh(WebhookProductsInterface):
         
     def run_process(self, base_path):
         
-        df_load = self.read_week_load(base_path)
+        df_load = self.read_hydro_data(base_path)
         logger.info("Successfully processed load data with %d rows", len(df_load))
-        self.post_load_to_database(df_load)
+        self.post_rdh_to_database(df_load)
              
 
     def find_header_row(self, file_path: Path, sheet_name: str, 
@@ -102,22 +103,25 @@ class Rdh(WebhookProductsInterface):
             column_mapping = self.simplify_multiindex_columns(df.columns)
             df.columns = [column_mapping[col] for col in df.columns]
             
-            columns_to_read = ['APROVEITAMENTO', 'POSTO', 'RES.', 'ARM.', 'TUR.', 'VER.',  'DFL.',  'AFL.', 'INC.', 'Usos', 'EVP.']            
+            columns_to_read = ['POSTO','VAZÃO NATURAL', 'RES.', 'ARM.', 'TUR.', 'VER.',  'DFL.',  'AFL.', 'INC.', 'Usos', 'EVP.', 'TRA.']            
             missing_columns = [col for col in columns_to_read if col not in df.columns]
             if missing_columns:
                 raise ValueError(f"Missing columns: {missing_columns}")
             
             filtered_df = df[columns_to_read]
-            filtered_df.columns = ['APROVEITAMENTO', 'APROVEITAMENTO2','POSTO', 'RES.', 'ARM.', 'TUR.', 'VER.',  'DFL.',  'AFL.', 'INC.', 'Usos', 'EVP.']
-            filtered_df = filtered_df.drop(filtered_df.columns[1], axis=1)
-            # Tenta converter 'col1' para float e verifica se são inteiros
-            df['col1_numeric'] = pd.to_numeric(filtered_df['POSTO'], errors='coerce')
+            filtered_df.columns = ['cd_posto',  '1','2','VAZ_M','VAZ_M_P','3','4','5','6','vl_vaz_dia', 'vl_cota', 'vl_vol_arm_perc', 'vl_vaz_turb', 'vl_vaz_vert',  'vl_vaz_dfl',
+                                   'vl_vaz_afl', 'vl_vaz_inc', 'vl_vaz_consunt', 'vl_vaz_evp','vl_vaz_transf']  
+            df['col1_numeric'] = pd.to_numeric(filtered_df['cd_posto'], errors='coerce')
             mask = df['col1_numeric'].notna() & (df['col1_numeric'] % 1 == 0)
 
-            # Mantém apenas as linhas válidas e remove a coluna temporária
-            filtered_df = filtered_df[mask].drop(columns='POSTO')
-
-
+            filtered_df = filtered_df[mask].drop(columns='cd_posto')
+            filtered_df['vl_mlt_vaz'] =  filtered_df['VAZ_M']/(filtered_df['VAZ_M_P']/100)
+            filtered_df = filtered_df.drop(columns=['1','2','VAZ_M','VAZ_M_P','3','4','5','6'])
+            locale.setlocale(locale.LC_TIME, "pt_BR.UTF-8")
+            filtered_df['dt_referente'] = pd.to_datetime(os.path.basename(file_path).split('_')[-1].split('.')[0], format='%d%b%Y')
+            filtered_df['cd_posto'] = filtered_df.index
+            filtered_df = filtered_df.reset_index(drop=True)
+ 
             print(f"Read {len(filtered_df)} rows from {file_path}")
             return filtered_df
             
