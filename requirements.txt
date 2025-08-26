@@ -1,4 +1,6 @@
 fastapi[standard]
+pydantic_settings
+fastapi_cognito
 uvicorn
 pandas
 requests
