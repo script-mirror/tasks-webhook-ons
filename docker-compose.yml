@@ -7,14 +7,10 @@ services:
         - GIT_TOKEN=${git_token}
     volumes:
       - .:/app
+      - ~/projetos/arquivos:/home/projetos/arquivos
     ports:
       - "8000:8000"
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
-    networks:
-      - tasks-network
 
-networks:
-  tasks-network:
-    external: true
