@@ -320,8 +320,8 @@ class IntercambioAnalyzer:
             diff_df.dropna(how="all", subset=common_months, inplace=True)
             diff_df = diff_df.reset_index()
 
-            data_pmo =   datetime.strptime(df_datas[0], '%Y-%m-%d')
-            data_ant = datetime.strptime(df_datas[1], '%Y-%m-%d')
+            data_pmo = datetime.datetime.strptime(df_datas[0], '%Y-%m-%d')
+            data_ant = datetime.datetime.strptime(df_datas[1], '%Y-%m-%d')
 
             logger.info(f"Enviando mensagem com limites para {data_pmo.month}/{data_pmo.year}")
             send_whatsapp_message(
