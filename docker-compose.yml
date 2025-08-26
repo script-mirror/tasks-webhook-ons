@@ -8,7 +8,13 @@ services:
     volumes:
       - .:/app
     ports:
-      - "8002:8000"
+      - "8000:8000"
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+    networks:
+      - tasks-network
+
+networks:
+  tasks-network:
+    external: true

@@ -6,19 +6,11 @@ RUN apk add --no-cache \
     git \
     gcc \
     musl-dev \
-    linux-headers && \
+    linux-headers \
+    ffmpeg \
+    xvfb-run && \
     echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen
 
-RUN apk add --no-cache \
-    ffmpeg \
-    tzdata \
-    xvfb-run \
-    && ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
-    && echo "America/Sao_Paulo" > /etc/timezone
-
-ENV LANG=pt_BR.UTF-8 \
-    LC_ALL=pt_BR.UTF-8 \
-    TZ=America/Sao_Paulo
 
 WORKDIR /app
 
@@ -38,4 +30,5 @@ COPY . .
 
 EXPOSE 8000
 
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
