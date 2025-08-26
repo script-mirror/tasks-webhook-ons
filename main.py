@@ -7,7 +7,12 @@ load_dotenv()
 app = FastAPI(
     title="API Tasks webhook ONS",
 )
-app.include_router(webhook_router, prefix="/api", tags=["webhook"])
+app.include_router(webhook_router, prefix="/tasks/api", tags=["webhook"])
+
+
+@app.get("/tasks/api/health")
+def health():
+    return {"status": "ok"}
 
 
 def main() -> None:
