@@ -11,6 +11,10 @@ auth_scheme = HTTPBearer()
 
 app = FastAPI(
     title="API Tasks webhook ONS",
+    docs_url="/tasks/api/docs",
+    redoc_url="/tasks/api/redoc",
+    openapi_url="/tasks/api/openapi.json",
+    description="API para receber webhooks da ONS e disparar workflows correspondentes."
 )
 app.include_router(
     webhook_router, prefix="/tasks/api", tags=["webhook"],
