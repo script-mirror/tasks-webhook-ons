@@ -12,9 +12,10 @@ router = APIRouter()
 @router.post("/webhook")
 def webhook_handler(payload: WebhookSintegreSchema):
     payload.nome = sanitize_string(payload.nome, space_char="_")
-    product_handler: WebhookProductsInterface | None = PRODUCT_MAPPING[payload.nome](payload)
+    product_handler: WebhookProductsInterface | None = PRODUCT_MAPPING[payload.nome]
     if not product_handler:
         logger.error(f"Produto {payload.nome} nao encontrado no mapeamento")
         raise HTTPException(status_code=404, detail="Produto nao mapeado")
+    product_handler = PRODUCT_MAPPING[payload.nome](payload)
     result = product_handler.run_workflow()
     return result
