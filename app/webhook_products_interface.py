@@ -18,7 +18,7 @@ class WebhookProductsInterface(ABC):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
         self.payload:WebhookSintegreSchema = payload
-        self.workflow_results:dict = {}
+        self.run_workflow_results:dict = {}
 
 
 
@@ -26,8 +26,12 @@ class WebhookProductsInterface(ABC):
     def run_workflow(self, filepath:Optional[str] = None):
         """
         Ponto de entrada da execucao do etl.
-        Deve implementar a logica de execucao para cada produto.
+        Deve implementar a logica de execucao para cada produto e invocar o run_process para rodar a lógica.
         """
+        pass
+    
+    @abstractmethod
+    def run_process(self, filepath: str):
         pass
 
     
@@ -48,9 +52,6 @@ class WebhookProductsInterface(ABC):
         try: 
             filepath_to_extract = s3.download_from_s3(id_produto, filename, path_to_send)
             logger.info(f"Arquivo {filename} baixado com sucesso para {path_to_send}")
-            if ".zip" in filename:
-                filepath_to_extract = extract_zip(filepath_to_extract, filename, path_to_send)
-            
             
             return filepath_to_extract
         
@@ -61,7 +62,7 @@ class WebhookProductsInterface(ABC):
      
         
     @abstractmethod
-    def process_file(self, basepath) -> str:
+    def process_file(self, basepath):
         """
         Método responsável pela leitura do arquivo baixado
 
@@ -72,7 +73,7 @@ class WebhookProductsInterface(ABC):
         
         
     @abstractmethod
-    def post_process_result_to_database(self, process_result: pd.DataFrame) -> dict:
+    def post_database(self, process_result: pd.DataFrame) -> dict:
         """
         Método responsável por inserir os dados lidos e processados no banco através da nossa API
 

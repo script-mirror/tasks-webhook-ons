@@ -25,32 +25,35 @@ class CargaPatamarNewave(WebhookProductsInterface):
         super().__init__(payload)
         self.update_nw = UpdateSistemaCadic
         self.gerar_tabela = GerarTabelaDiferenca
+        self.trigger_dag = TriggerDagExterna
         self.url_post = constants.BASE_URL + '/api/v2/decks/newave/previsoes-cargas'
-        #self.read_gerar_tabela = GenerateLoadTable
+        
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
     def run_workflow(self):
-        logger.info("Starting workflow for CargaPatamarNewave")
+        logger.info("Starting run_workflow for CargaPatamarNewave")
         try:
             file_path = self.download_extract_files()
             
             self.run_process(self, file_path)
                         
-            logger.info("Workflow completed successfully")
+            logger.info("Workflow do produto CargaPatamarNewave terminado com sucesso!")
             
         except Exception as e:
-            logger.error("Workflow failed: %s", str(e), exc_info=True)
+            logger.error("Erro no fluxo de processamento das Previsões de Carga Mensal por Patamar do Newave: %s", str(e), exc_info=True)
             raise
         
     def run_process(self, file_path):
         
         process_result = self.process_file(file_path)
         self.post_database(process_result)
+        
         self.update_nw.run_process()
             
-        self.gerar_tabela.run()
+        self.gerar_tabela.run_process()
             
-        self.triggar_dag.run()
+        self.trigger_dag.run_process()
+        
         
     def process_file(self, file_path) -> pd.DataFrame:
         logger.info("Reading week load data from base path: %s", file_path)
@@ -136,23 +139,24 @@ class UpdateSistemaCadic():
     def __init__(self):
         self.consts = Constants()
         self.header = get_auth_header()
+        self.url_previsoes_carga = self.consts.POST_NEWAVE_PREVISOES_CARGAS
         self.url_mmgd_base = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
         self.url_mmgd_total = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/mmgd_total'
         
         logger.info("Initialized update sistema and c_adic" )
     
-    def run(self):
+    def run_process(self):
         self.update_cadic()
         self.update_sistema()
         
         
     def update_sistema(self):
-        df_data = self.get_data('newave/previsoes-cargas')
+        df_data = self.get_data(self.url_previsoes_carga)
         self.put_data(self.url_mmgd_total, df_data )
         pass
         
     def update_cadic(self):
-        df_data = self.get_data('newave/previsoes-cargas')
+        df_data = self.get_data(self.url_previsoes_carga)
         self.put_data(self.url_mmgd_base, df_data )
         pass
         
@@ -183,7 +187,7 @@ class GerarTabelaDiferenca():
         
         logger.info("Initialized generate table" )
     
-    def run(self):
+    def run_process(self):
         self.generate_table()
     
     
