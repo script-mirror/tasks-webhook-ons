@@ -158,6 +158,9 @@ class Rdh(WebhookProductsInterface):
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
+    df_raw = pd.read_excel(Path("C:/Users/cs341053/Downloads/RDH_05AGO2025.xlsx"), sheet_name="Hidroenergética-Subsistemas")
+    
+    
     try:
         rdh = Rdh({})
         rdh.run_process(Path("C:/Users/cs341053/Downloads/RDH_05AGO2025.xlsx"))
