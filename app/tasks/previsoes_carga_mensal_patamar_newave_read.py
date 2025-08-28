@@ -34,21 +34,23 @@ class CargaPatamarNewave(WebhookProductsInterface):
         try:
             file_path = self.download_extract_files()
             
-            process_result = self.process_file(file_path)
-            
-            self.post_result_to_database(process_result)
-            
-            self.update_nw.run()
-            
-            self.gerar_tabela.run()
-            
-            self.triggar_dag.run()
-        
+            self.run_process(self, file_path)
+                        
             logger.info("Workflow completed successfully")
             
         except Exception as e:
             logger.error("Workflow failed: %s", str(e), exc_info=True)
             raise
+        
+    def run_process(self, file_path):
+        
+        process_result = self.process_file(file_path)
+        self.post_database(process_result)
+        self.update_nw.run_process()
+            
+        self.gerar_tabela.run()
+            
+        self.triggar_dag.run()
         
     def process_file(self, file_path) -> pd.DataFrame:
         logger.info("Reading week load data from base path: %s", file_path)
@@ -110,7 +112,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
             logger.error("Failed to read week load data: %s", str(e), exc_info=True)
             raise
 
-    def post_load_to_database(self, process_result: pd.DataFrame) -> dict:
+    def post_database(self, process_result: pd.DataFrame) -> dict:
         logger.info("Posting load data to database, rows: %d", len(process_result))
         try:
             res = requests.post(
