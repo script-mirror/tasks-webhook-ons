@@ -3,7 +3,6 @@ import pdb
 import io
 import requests
 import datetime 
-from datetime import datetime
 import pdfplumber
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -46,7 +45,11 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         analyzer = IntercambioAnalyzer()
         analyzer.run_workflow()
         
-
+    def process_file():
+        pass
+    def post_process_result_to_database():
+        pass
+    
     def get_data_produto(self, path_produto: str) -> datetime.date:
         with pdfplumber.open(path_produto) as pdf:
             data_produto = extrair_mes_ano(pdf.pages[0].extract_text())
