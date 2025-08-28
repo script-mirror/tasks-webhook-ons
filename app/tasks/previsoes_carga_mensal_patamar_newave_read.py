@@ -50,8 +50,8 @@ class CargaPatamarNewave(WebhookProductsInterface):
             logger.error("Workflow failed: %s", str(e), exc_info=True)
             raise
         
-    def process_file(self, file_path):
-        logger.info("Reading week load data from base path: %s", base_path)
+    def process_file(self, file_path) -> pd.DataFrame:
+        logger.info("Reading week load data from base path: %s", file_path)
         try:
             MAP_COLUMNS = {
                 'DATE':       'data_referente',
@@ -140,21 +140,19 @@ class UpdateSistemaCadic():
         logger.info("Initialized update sistema and c_adic" )
     
     def run(self):
+        self.update_cadic()
+        self.update_sistema()
         
         
-        
-        
-        
-        
-        def update_sistema():
-            
-        
-        def update_cadic():
-            
+    def update_sistema(self):
         df_data = self.get_data('newave/previsoes-cargas')
+        self.put_data(self.url_mmgd_total, df_data )
+        pass
         
-        self.put_data('newave/sistema/mmgd_total', df_data )
-        self.put_data('newave/cadic/total_mmgd_base', df_data )
+    def update_cadic(self):
+        df_data = self.get_data('newave/previsoes-cargas')
+        self.put_data(self.url_mmgd_base, df_data )
+        pass
         
     def get_data(self, produto: str) -> pd.DataFrame:
         res = requests.get(self.base_url_api + produto, headers=self.header)
