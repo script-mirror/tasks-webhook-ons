@@ -23,12 +23,12 @@ class CargaPatamarNewave(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
-        self.read_udate_nw = UpdateSistemaCadic
-        self.read_gerar_tabela = GenerateLoadTable
-        logger.info("Initialized CargaPatamarDecomp with payload: %s", payload)
+        #self.read_udate_nw = UpdateSistemaCadic
+        #self.read_gerar_tabela = GenerateLoadTable
+        logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
     def run_workflow(self):
-        logger.info("Starting workflow for CargaPatamarDecomp")
+        logger.info("Starting workflow for CargaPatamarNewave")
         try:
             os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)
             logger.debug("Created temporary directory: %s", constants.PATH_ARQUIVOS_TEMP)
@@ -40,8 +40,8 @@ class CargaPatamarNewave(WebhookProductsInterface):
             logger.info("Webhook file handled, base path: %s", base_path)
             
             self.run_process( base_path)
-            self.read_udate_nw.run_workflow()
-            self.read_gerar_tabela.run_workflow()
+            #self.read_udate_nw.run_workflow()
+            #self.read_gerar_tabela.run_workflow()
             
             logger.info("Workflow completed successfully")
         
@@ -208,8 +208,6 @@ class GenerateLoadTable():
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarNewave script execution")
     try:
-        gerar_tabela = GenerateLoadTable()
-        gerar_tabela.run_process()
         carga = CargaPatamarNewave({})
         carga.run_workflow()
         logger.info("Script execution completed successfully")
