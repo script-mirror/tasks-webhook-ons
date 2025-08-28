@@ -23,7 +23,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
-        #self.read_udate_nw = UpdateSistemaCadic
+        self.url_post = constants.BASE_URL + '/api/v2/decks/newave/previsoes-cargas'
         #self.read_gerar_tabela = GenerateLoadTable
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
@@ -116,7 +116,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         logger.info("Posting load data to database, rows: %d", len(data_in))
         try:
             res = requests.post(
-                constants.BASE_URL + '/api/v2/decks/newave/previsoes-cargas',
+                self.url_post,
                 json=data_in.to_dict('records'),
                 headers=get_auth_header()
             )
@@ -135,20 +135,19 @@ class UpdateSistemaCadic():
     def __init__(self):
         self.consts = Constants()
         self.header = get_auth_header()
-        self.base_url_api = self.consts.BASE_URL + '/api/v2/decks/'
+        self.url_mmgd_base = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
+        self.url_mmgd_total = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/mmgd_total'
+        
         logger.info("Initialized update sistema and c_adic" )
     
     def run_process(self):
         df_data = self.get_data('newave/previsoes-cargas')
+    
+        self.put_data(self.url_mmgd_total, df_data )
+        self.put_data(self.url_mmgd_base, df_data )
         
-        
-        
-        
-        self.put_data('newave/sistema/mmgd_total', df_data )
-        self.put_data('newave/cadic/total_mmgd_base', df_data )
-        
-    def get_data(self, produto: str) -> pd.DataFrame:
-        res = requests.get(self.base_url_api + produto, headers=self.header)
+    def get_data(self, url: str) -> pd.DataFrame:
+        res = requests.get(url, headers=self.header)
         if res.status_code != 200:
             res.raise_for_status()
         return pd.DataFrame(res.json())   
@@ -166,7 +165,13 @@ class GenerateLoadTable():
     def __init__(self):
         self.consts = Constants()
         self.header = get_auth_header()
-        self.base_url_api = self.consts.BASE_URL + '/api/v2/decks/'
+        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
+        self.url_carga_global  = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_global'
+        self.url_carga_liquida = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_liquida'
+        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
+        self.url_mmgd_base     = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
+        self.url_ande          = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_ande'
+        
         logger.info("Initialized generate table" )
     
     def run_workflow(self):
@@ -176,18 +181,15 @@ class GenerateLoadTable():
     def run_process(self):
         self.generate_table()
         
-        
-        
-        
-        
+
         
     def generate_table(self):        
         dados = {
-        'dados_unsi':self.get_data('newave/sistema/total_unsi'),
-        'dados_ande': self.get_data('newave/cadic/total_ande'),
-        'dados_mmgd_total': self.get_data('newave/cadic/total_mmgd_base'),
-        'dados_carga_global': self.get_data('newave/sistema/cargas/total_carga_global'),
-        'dados_carga_liquida': self.get_data('newave/sistema/cargas/total_carga_liquida')
+        'dados_unsi':self.get_data(self.url_unsi),
+        'dados_ande': self.get_data(self.url_ande),
+        'dados_mmgd_total': self.get_data(self.url_mmgd_base),
+        'dados_carga_global': self.get_data(self.url_carga_global),
+        'dados_carga_liquida': self.get_data(self.url_carga_liquida)
             }
         
         html_tabela_diferenca = HtmlBuilder.gerar_html(
@@ -198,8 +200,8 @@ class GenerateLoadTable():
         print(html_tabela_diferenca)
               
         
-    def get_data(self, produto: str) -> pd.DataFrame:
-        res = requests.get(self.base_url_api + produto, headers=self.header)
+    def get_data(self, url: str) -> pd.DataFrame:
+        res = requests.get(url, headers=self.header)
         if res.status_code != 200:
             res.raise_for_status()
         return res.json()
