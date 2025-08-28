@@ -70,9 +70,9 @@ class DecksNewave(WebhookProductsInterface):
             processar_deck_nw_patamar_result = self.processar_deck_nw_patamar(payload, extract_dat_files_result)
           
             flag_enviar = True
-            if "preliminar" in payload.nome.lower():
-                processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(payload, processar_deck_nw_sistema_result, extract_dat_files_result)
-                flag_enviar = False
+            # if "preliminar" in payload.nome.lower():
+            #     processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(payload, processar_deck_nw_sistema_result)
+            #     flag_enviar = False
             
             self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result, flag_enviar)
             
@@ -696,8 +696,9 @@ class DecksNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            base_url = constants.BASE_URL
-            api_url += "/api/v2"
+            # base_url = constants.BASE_URL
+            base_url = "http://localhost:8000"
+            api_url = f"{base_url}/api/v2"
             
             nw_cadic_records = processar_deck_nw_cadic_result.get('nw_cadic_records', [])
             nw_sist_records = processar_deck_nw_sist_result.get('nw_sistema_records', [])
@@ -783,9 +784,10 @@ class DecksNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            base_url = constants.BASE_URL
+            # base_url = constants.BASE_URL
+            base_url = "http://localhost:8000"
             api_url = f"{base_url}/api/v2"
-            image_api_url = f"{base_url}/html-to-img"
+            image_api_url = f"https://tradingenergiarz.com/html-to-img"
             
             
             # Pegando valores do sistema de geração de usinas não simuladas (UNSI)
@@ -849,7 +851,9 @@ class DecksNewave(WebhookProductsInterface):
                 'dados_carga_liquida': carga_liquida_values
             }
             
-            html_tabela_diferenca = HtmlBuilder.gerar_html(
+            html_builder = HtmlBuilder()
+            
+            html_tabela_diferenca = html_builder.gerar_html(
                 'diferenca_cargas', 
                 dados
             )
@@ -878,7 +882,7 @@ class DecksNewave(WebhookProductsInterface):
             image_dir = "/tmp/deck_newave/images"
             os.makedirs(image_dir, exist_ok=True)
             
-            image_filename = f"tabela_diferenca_cargas_{versao}_{data_produto_str}.png"
+            image_filename = f"tabela_diferenca_cargas_{versao}_{data_produto_str.replace("/","_")}.png"
             
             image_path = os.path.join(image_dir, image_filename)
             
@@ -916,13 +920,19 @@ class DecksNewave(WebhookProductsInterface):
             if not image_path or not os.path.exists(image_path):
                 raise ValueError(f"Arquivo de imagem não encontrado: {image_path}")
             
+            msg_whatsapp = ''
+            if 'versao' == 'preliminar':
+                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar Atual x Definitivo anterior) - {data_produto_str}"
+            else:
+                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar Atual x Definitivo anterior) - {data_produto_str}"
+                
             request_whatsapp = send_whatsapp_message(
                 destinatario="Debug",
-                mensagem=f"Diferença de Cargas NEWAVE {versao} - {data_produto_str}",
+                mensagem=msg_whatsapp,
                 arquivo=image_path,
             )
             
-            if request_whatsapp.status_code != 200:
+            if request_whatsapp.status_code < 200 or request_whatsapp.status_code >= 300:
                 raise ValueError(f"Erro ao enviar mensagem por WhatsApp: {request_whatsapp.text}")
                     
         except Exception as e:
@@ -932,16 +942,16 @@ class DecksNewave(WebhookProductsInterface):
 if __name__ == "__main__":
    
    payload = {
-  "dataProduto": "07/2025",
-  "filename": "Deck NEWAVE Preliminar.zip",
+  "dataProduto": "08/2025",
+  "filename": "DECK NEWAVE DEFINITIVO.zip",
   "macroProcesso": "Programação da Operação",
-  "nome": "Deck NEWAVE Preliminar",
-  "periodicidade": "2025-07-01T00:00:00",
-  "periodicidadeFinal": "2025-07-31T23:59:59",
+  "nome": "DECK NEWAVE DEFINITIVO",
+  "periodicidade": "2025-08-01T00:00:00",
+  "periodicidadeFinal": "2025-08-31T23:59:59",
   "processo": "Médio Prazo",
-  "s3Key": "webhooks/Deck NEWAVE Preliminar/68596b2ab1c148748afd166c_Deck NEWAVE Preliminar.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjMtMDYtMjAyNV8xMTU0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc3NzI0MiwibmJmIjoxNzUwNjkwNjAyfQ.BMzBppjFOa47kjJHndtMoTDj00NZJWEJo1n1sQa1btM",
-  "webhookId": "68596b2ab1c148748afd166c"
+  "s3Key": "webhooks/DECK NEWAVE DEFINITIVO/6892aa3794f9e32e8e798bed_DECK NEWAVE DEFINITIVO.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODYvMjQtMDctMjAyNV8xODE5MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiREVDSyBORVdBVkUgREVGSU5JVElWTyIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NDUyODkzNSwibmJmIjoxNzU0NDQyMjk1fQ.SY_Lto-EOxj0SzFE8s2PeATR63IQVg0BPDJzYFZ1Vrc",
+  "webhookId": "6892aa3794f9e32e8e798bed"
 }
    
    payload = WebhookSintegreSchema(**payload)

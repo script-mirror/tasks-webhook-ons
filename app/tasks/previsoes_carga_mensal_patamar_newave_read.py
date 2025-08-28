@@ -23,38 +23,32 @@ class CargaPatamarNewave(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
-        #self.read_udate_nw = UpdateSistemaCadic
-        #self.read_gerar_tabela = GenerateLoadTable
+        self.update_nw = UpdateSistemaCadic
+        self.gerar_tabela = GerarTabelaDiferenca
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
     def run_workflow(self):
         logger.info("Starting workflow for CargaPatamarNewave")
         try:
-            os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)
-            logger.debug("Created temporary directory: %s", constants.PATH_ARQUIVOS_TEMP)
+            file_path = self.download_extract_files()
             
-            payload = get_latest_webhook_product(constants.WEBHOOK_CARGA_PATAMAR_NEWAVE)[0]
-            logger.debug("Retrieved latest webhook product: %s", payload)
+            process_result = self.process_file(file_path)
             
-            base_path = handle_webhook_file(payload, constants.PATH_ARQUIVOS_TEMP)
-            logger.info("Webhook file handled, base path: %s", base_path)
+            self.post_result_to_database(process_result)
             
-            self.run_process( base_path)
-            #self.read_udate_nw.run_workflow()
-            #self.read_gerar_tabela.run_workflow()
+            self.update_nw.run()
             
-            logger.info("Workflow completed successfully")
+            self.gerar_tabela.run()
+            
+            self.triggar_dag.run()
         
+            logger.info("Workflow completed successfully")
+            
         except Exception as e:
             logger.error("Workflow failed: %s", str(e), exc_info=True)
             raise
         
-    def run_process(self, base_path):
-        df_load = self.read_file(base_path)
-        logger.info("Successfully processed load data with %d rows", len(df_load))
-        self.post_load_to_database(df_load)
-        
-    def read_file(self, base_path):
+    def process_file(self, file_path):
         logger.info("Reading week load data from base path: %s", base_path)
         try:
             MAP_COLUMNS = {
@@ -106,18 +100,20 @@ class CargaPatamarNewave(WebhookProductsInterface):
             df_load['data_produto'] = date_produto
             df_load['quadrimestral'] = LOAD_QUADRI
             
+            logger.info("Successfully processed load data with %d rows", len(df_load))
+            
             return df_load
         
         except Exception as e:
             logger.error("Failed to read week load data: %s", str(e), exc_info=True)
             raise
 
-    def post_load_to_database(self, data_in: pd.DataFrame) -> dict:
-        logger.info("Posting load data to database, rows: %d", len(data_in))
+    def post_load_to_database(self, process_result: pd.DataFrame) -> dict:
+        logger.info("Posting load data to database, rows: %d", len(process_result))
         try:
             res = requests.post(
-                constants.BASE_URL + '/api/v2/decks/newave/previsoes-cargas',
-                json=data_in.to_dict('records'),
+
+                json=process_result.to_dict('records'),
                 headers=get_auth_header()
             )
             if res.status_code != 200:
@@ -130,6 +126,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         except Exception as e:
             logger.error("Failed to post data to database: %s", str(e), exc_info=True)
             raise
+            
                    
 class UpdateSistemaCadic():
     def __init__(self):
@@ -138,11 +135,19 @@ class UpdateSistemaCadic():
         self.base_url_api = self.consts.BASE_URL + '/api/v2/decks/'
         logger.info("Initialized update sistema and c_adic" )
     
-    def run_process(self):
+    def run(self):
+        
+        
+        
+        
+        
+        
+        def update_sistema():
+            
+        
+        def update_cadic():
+            
         df_data = self.get_data('newave/previsoes-cargas')
-        
-        
-        
         
         self.put_data('newave/sistema/mmgd_total', df_data )
         self.put_data('newave/cadic/total_mmgd_base', df_data )
@@ -161,26 +166,17 @@ class UpdateSistemaCadic():
             res.raise_for_status()
         return  res  
 
-
-class GenerateLoadTable():
+class GerarTabelaDiferenca():
     def __init__(self):
         self.consts = Constants()
         self.header = get_auth_header()
         self.base_url_api = self.consts.BASE_URL + '/api/v2/decks/'
         logger.info("Initialized generate table" )
     
-    def run_workflow(self):
-        self.run_process()
-    
-    
-    def run_process(self):
+    def run(self):
         self.generate_table()
-        
-        
-        
-        
-        
-        
+    
+    
     def generate_table(self):        
         dados = {
         'dados_unsi':self.get_data('newave/sistema/total_unsi'),
@@ -204,12 +200,23 @@ class GenerateLoadTable():
             res.raise_for_status()
         return res.json()
     
+class TriggerDagExterna():
+    pass
+
+
+
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarNewave script execution")
     try:
-        carga = CargaPatamarNewave({})
-        carga.run_workflow()
+        
+        payload = {}
+        
+        payload = WebhookSintegreSchema(**payload)
+        
+        previsoescarga = CargaPatamarNewave({})
+        previsoescarga.run_workflow()
+        
         logger.info("Script execution completed successfully")
     except Exception as e:
         logger.error("Script execution failed: %s", str(e), exc_info=True)

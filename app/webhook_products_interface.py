@@ -4,11 +4,12 @@ from middle import s3
 from middle.utils import setup_logger, extract_zip
 from typing import Optional, Dict, Any
 from .schema import WebhookSintegreSchema
+import pandas as pd
 # from .webhook_service import get_webhook_payload
 from middle.utils import Constants
 logger = setup_logger()
-
 constants = Constants()
+
 class WebhookProductsInterface(ABC):
     """
     Interface para os produtos do webhook ONS.
@@ -18,6 +19,8 @@ class WebhookProductsInterface(ABC):
     def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
         self.payload:WebhookSintegreSchema = payload
         self.workflow_results:dict = {}
+
+
 
     @abstractmethod
     def run_workflow(self, filepath:Optional[str] = None):
@@ -40,6 +43,7 @@ class WebhookProductsInterface(ABC):
         filename = self.payload.filename
         path_to_send = constants.PATH_ARQUIVOS_TEMP
         os.makedirs(path_to_send, exist_ok=True)
+        logger.debug("Criado caminho temporário para o arquivo: %s", path_to_send)
         
         try: 
             filepath_to_extract = s3.download_from_s3(id_produto, filename, path_to_send)
@@ -54,4 +58,25 @@ class WebhookProductsInterface(ABC):
             
             logger.error(f"Erro ao baixar arquivo do S3: {e}")
             raise Exception(f"Erro ao baixar arquivo do S3: {e}")
+     
+        
+    @abstractmethod
+    def process_file(self, basepath) -> str:
+        """
+        Método responsável pela leitura do arquivo baixado
+
+        Args:
+            basepath: caminho do arquivo extraido do webhook
+        """
+        pass
+        
+        
+    @abstractmethod
+    def post_process_result_to_database(self, process_result: pd.DataFrame) -> dict:
+        """
+        Método responsável por inserir os dados lidos e processados no banco através da nossa API
+
+        Args:
+            process_result: dados processados para inserção
+        """
         
