@@ -32,7 +32,7 @@ class DecksNewave(WebhookProductsInterface):
         logger.info("Inicializado DecksNewave com payload: %s", payload)
                
         
-    def run_workflow(self, filepath:Optional[str] = None) -> Dict[str, Any]:
+    def run_workflow(self) -> Dict[str, Any]:
         try:
             
             file_path = self.download_extract_files()
@@ -51,9 +51,11 @@ class DecksNewave(WebhookProductsInterface):
         
         process_result = self.process_file(file_path)
         
-        self.post_database(process_result)
+        if 'preliminar' in self.filename:
+            process_sist_result = self.update_weol.run_process()
+            process_result['process_sist_result'] = process_sist_result
         
-        self.update_weol.run_process()
+        self.post_database(process_result)
         
         self.gerar_tabela.run_process()
 
@@ -63,9 +65,9 @@ class DecksNewave(WebhookProductsInterface):
             
             dat_files = self.process_functions.extrair_arquivos_dat(file_path)
             
-            process_cadic_result = self.process_functions_processar_deck_nw_cadic(dat_files)
+            process_cadic_result = self.process_functions.processar_deck_nw_cadic(dat_files)
             
-            process_sist_result = self.process_functions_processar_deck_nw_sist(dat_files)
+            process_sist_result = self.process_functions.processar_deck_nw_sist(dat_files)
             
             process_patamar_result = self.process_functions.processar_deck_nw_patamar(dat_files)
             
@@ -91,40 +93,38 @@ class DecksNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            # base_url = constants.BASE_URL
-            base_url = "http://localhost:8000"
+            base_url = constants.BASE_URL
             api_url = f"{base_url}/api/v2"
             
-            nw_cadic_records = process_result.get('nw_cadic_records', [])
-            nw_sist_records = process_result.get('nw_sistema_records', [])
-            nw_patamar_carga_usinas_records = process_result.get('patamar_carga_usinas_records', [])
-            nw_patamar_intercambio_records = process_result.get('patamar_intercambio_records', [])
+            nw_cadic_records = process_result.get('process_cadic_result', [])
+            nw_sist_records = process_result.get('process_sist_result', [])
+            patamar_process_result = process_result.get('process_patamar_result', [])
+            nw_patamar_carga_usinas_records = patamar_process_result.get('patamar_carga_usinas_records', [])
+            nw_patamar_intercambio_records = patamar_process_result.get('patamar_intercambio_records', [])
             
             sistema_url = f"{api_url}/decks/newave/sistema"
             cadic_url = f"{api_url}/decks/newave/cadic"
             patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
             patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
             
-            
-            if flag_enviar:
                 
-                logger.info(f"Enviando dados para: {sistema_url}")
+            logger.info(f"Enviando dados para: {sistema_url}")
                 
-                request_sistema = requests.post(
-                    sistema_url,
-                    headers=headers,
-                    json=nw_sist_records,
-                )
+            request_sistema = requests.post(
+                sistema_url,
+                headers=headers,
+                json=nw_sist_records,
+            )
             
-                if request_sistema.status_code != 200:
-                    raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
+            if request_sistema.status_code != 200:
+                raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
 
             logger.info(f"Enviando dados para: {cadic_url}")
 
             request_cadic = requests.post(
                 cadic_url,
                 headers=headers,
-                json=nw_cadic_records,  # Use json parameter to properly encode the data
+                json=nw_cadic_records,
             )
             
             if request_cadic.status_code != 200:
@@ -285,10 +285,9 @@ class ProcessFunctions():
                 
                 logger.info(f"- Valores do Cadic: ({len(nw_cadic_records)} registros)")
                 
-            return {
-                    "nw_cadic_records": nw_cadic_records,
-                    "data_produto": data_produto_str,
-                    }
+            return nw_cadic_records
+                
+                    
         
         except Exception as e:
             logger.error(f"Erro ao processar C_ADIC do Deck Newave: {e}")
@@ -654,9 +653,8 @@ class UpdateWeol():
         self.url_last_deck_date = self.consts.GET_DECOMP_WEOL_LAST_DECK_DATE
         self.url_weighted_average = self.consts.GET_DECOMP_WEOL_WEIGHTED_AVERAGE
         
-        
     def run_process(self):
-        self.atualizar_sist_com_weol()
+        return self.atualizar_sist_com_weol()
         
     def atualizar_sist_com_weol(
         self,
@@ -677,8 +675,6 @@ class UpdateWeol():
                 'accept': 'application/json'
             }
             
-            data_produto_str = DecksNewave().dataProduto
-        
             nw_sistema_records = requests.get()
         
             nw_sistema_df = pd.DataFrame(nw_sistema_records)
@@ -722,7 +718,7 @@ class UpdateWeol():
             
             weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['cd_submercado'].astype(int)
             
-            # Fazer merge para atualizar os valores de vl_geracao_eol
+            
             nw_sistema_df = nw_sistema_df.merge(
                 weol_mensal_por_submercado[['cd_submercado', 'vl_ano', 'vl_mes', 'vl_geracao_eol']],
                 on=['cd_submercado', 'vl_ano', 'vl_mes'],
@@ -736,10 +732,7 @@ class UpdateWeol():
             
             nw_sistema_records = nw_sistema_df.to_dict('records')
             
-            return {
-                    "nw_sistema_records": nw_sistema_records,
-                    "data_produto": data_produto_str,
-                    }
+            return nw_sistema_records
         
         except Exception as e:
             logger.error(f"Erro ao atualizar SISTEMA com WEOL: {e}")
