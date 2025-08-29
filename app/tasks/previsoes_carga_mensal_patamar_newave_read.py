@@ -10,11 +10,11 @@ from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from app.schema import WebhookSintegreSchema  # noqa: E402
-from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header, sanitize_string  # noqa: E402
-from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
+from app.schema import WebhookSintegreSchema
+from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header
+from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils.file_manipulation import extract_zip
-from middle.s3 import (handle_webhook_file, get_latest_webhook_product,)
+from middle.message.sender import send_whatsapp_message
 
 logger = setup_logger()
 constants = Constants()
@@ -26,9 +26,8 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.update_nw = UpdateSistemaCadic
         self.gerar_tabela = GerarTabelaDiferenca
         self.trigger_dag = TriggerDagExterna
-        self.url_post = constants.BASE_URL + '/api/v2/decks/newave/previsoes-cargas'
-        
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
+    
     
     def run_workflow(self):
         logger.info("Starting run_workflow for CargaPatamarNewave")
@@ -119,7 +118,6 @@ class CargaPatamarNewave(WebhookProductsInterface):
         logger.info("Posting load data to database, rows: %d", len(process_result))
         try:
             res = requests.post(
-
                 json=process_result.to_dict('records'),
                 headers=get_auth_header()
             )
@@ -140,8 +138,8 @@ class UpdateSistemaCadic():
         self.consts = Constants()
         self.header = get_auth_header()
         self.url_previsoes_carga = self.consts.POST_NEWAVE_PREVISOES_CARGAS
-        self.url_mmgd_base = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
-        self.url_mmgd_total = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/mmgd_total'
+        self.url_mmgd_base = self.consts.NEWAVE_CADIC_TOTAL_MMGD_BASE
+        self.url_mmgd_total = self.consts.PUT_NEWAVE_SISTEMA_MMGD_TOTAL
         
         logger.info("Initialized update sistema and c_adic" )
     
@@ -174,39 +172,102 @@ class UpdateSistemaCadic():
             res.raise_for_status()
         return  res  
 
+
 class GerarTabelaDiferenca():
     def __init__(self):
         self.consts = Constants()
         self.header = get_auth_header()
-        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
-        self.url_carga_global  = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_global'
-        self.url_carga_liquida = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_liquida'
-        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
-        self.url_mmgd_base     = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
-        self.url_ande          = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_ande'
+        self.url_html_to_image = self.consts.URL_HTML_TO_IMAGE
+        self.url_carga_global  = self.consts.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
+        self.url_carga_liquida = self.consts.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
+        self.url_unsi          = self.consts.GET_NEWAVE_SISTEMA_TOTAL_UNSI
+        self.url_mmgd_total    = self.consts.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_ande          = self.consts.GET_NEWAVE_CADIC_TOTAL_ANDE
         
         logger.info("Initialized generate table" )
     
     def run_process(self):
-        self.generate_table()
-    
-    
+        html = self.generate_table()
+        image_path = self.transform_html_to_image(html)
+        self.enviar_tabela_whatsapp_email(image_path)
+        
     def generate_table(self):        
         dados = {
-        'dados_unsi':self.get_data(self.url_unsi),
-        'dados_ande': self.get_data(self.url_ande),
-        'dados_mmgd_total': self.get_data(self.url_mmgd_base),
-        'dados_carga_global': self.get_data(self.url_carga_global),
-        'dados_carga_liquida': self.get_data(self.url_carga_liquida)
-            }
+            'dados_unsi':self.get_data(self.url_unsi),
+            'dados_ande': self.get_data(self.url_ande),
+            'dados_mmgd_total': self.get_data(self.url_mmgd_total),
+            'dados_carga_global': self.get_data(self.url_carga_global),
+            'dados_carga_liquida': self.get_data(self.url_carga_liquida)
+        }
         
         html_tabela_diferenca = HtmlBuilder.gerar_html(
-                'diferenca_cargas', 
-                dados
-            )
+            'diferenca_cargas', 
+            dados
+        )
        
         print(html_tabela_diferenca)
-              
+        
+        return html_tabela_diferenca
+    
+    def transform_html_to_image(self,html):
+        
+        api_html_payload = {
+                "html": html,
+                "options": {
+                  "type": "png",
+                  "quality": 100,
+                  "trim": True,
+                  "deviceScaleFactor": 2
+                }
+        }
+            
+        html_api_endpoint = f"{self.url_html_to_image}/convert"
+        
+        request_html_api = requests.post(
+            html_api_endpoint,
+            headers=self.headers,
+            json=api_html_payload,  
+        )
+        
+        if request_html_api.status_code < 200 or request_html_api.status_code >= 300:
+                raise ValueError(f"Erro ao converter HTML em imagem: {request_html_api.text}")
+        
+    def enviar_tabela_whatsapp_email(
+        self,
+        image_path,
+    ):
+        """
+        Envia a tabela de diferença de cargas por WhatsApp e email.
+        
+        :return: Dicionário com o status e mensagem do envio.
+        """
+        try:
+            logger.info("Enviando tabela de diferença de cargas por WhatsApp e email...")
+            
+            data_produto_str = self.dataProduto
+            versao = "preliminar"
+            
+            image_path = image_path
+            if not image_path or not os.path.exists(image_path):
+                raise ValueError(f"Arquivo de imagem não encontrado: {image_path}")
+            
+            if 'quad' in self.filename:
+                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Quadrimestral x Definitivo anterior) - {data_produto_str}"
+            else:
+                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar atual atualizado x Definitivo anterior) - {data_produto_str}"
+            
+            request_whatsapp = send_whatsapp_message(
+                destinatario="Debug",
+                mensagem=msg_whatsapp,
+                arquivo=image_path,
+            )
+            
+            if request_whatsapp.status_code < 200 or request_whatsapp.status_code >= 300:
+                raise ValueError(f"Erro ao enviar mensagem por WhatsApp: {request_whatsapp.text}")
+                    
+        except Exception as e:
+            logger.error(f"Erro ao enviar tabela por WhatsApp e email: {e}")
+            raise 
         
     def get_data(self, url: str) -> pd.DataFrame:
         res = requests.get(url, headers=self.header)
