@@ -61,8 +61,7 @@ class WebhookProductsInterface(ABC):
             raise Exception(f"Erro ao baixar arquivo do S3: {e}")
      
         
-    @abstractmethod
-    def run_process(self, basepath) -> str:
+    def process_file(self, basepath) -> str:
         """
         Método responsável pela leitura do arquivo baixado
 
