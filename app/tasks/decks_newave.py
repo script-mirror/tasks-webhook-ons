@@ -22,16 +22,144 @@ from inewave.newave import Patamar, Cadic, Sistema
 class DecksNewave(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
-        """
-        Inicializa a classe com o payload iguração fornecida.
-        
-        Args:
-            conf: Dicionário com a configuração do produto.
-        """
         super().__init__(payload)
+        self.dataProduto = self.payload.dataProduto
+        self.filename = self.payload.filename
+        self.process_functions = ProcessFunctions
+        self.update_weol = UpdateWeol
+        self.gerar_tabela = GerarTabelaDiferenca
+    
+        logger.info("Inicializado DecksNewave com payload: %s", payload)
+               
         
-    # Private methods
-    def _get_version_by_filename(self, filename: str) -> str:
+    def run_workflow(self) -> Dict[str, Any]:
+        try:
+            
+            file_path = self.download_extract_files()
+            
+            self.run_process(self, file_path)
+
+            logger.info("Workflow do produto DecksNewave terminado com sucesso!")
+        
+        except Exception as e:
+            error_msg = f"Erro no fluxo de processamento do DecksNewave: {str(e)}"
+            logger.error(error_msg)
+            raise
+        
+        
+    def run_process(self, file_path):
+        
+        process_result = self.process_file(file_path)
+        
+        if 'preliminar' in self.filename:
+            process_sist_result = self.update_weol.run_process()
+            process_result['process_sist_result'] = process_sist_result
+        
+        self.post_database(process_result)
+        
+        self.gerar_tabela.run_process()
+
+    
+    def process_file(self, file_path) -> dict:
+        try:
+            
+            dat_files = self.process_functions.extrair_arquivos_dat(file_path)
+            
+            process_cadic_result = self.process_functions.processar_deck_nw_cadic(dat_files)
+            
+            process_sist_result = self.process_functions.processar_deck_nw_sist(dat_files)
+            
+            process_patamar_result = self.process_functions.processar_deck_nw_patamar(dat_files)
+            
+            process_result = {
+                'process_cadic_result': process_cadic_result,
+                'process_sist_result': process_sist_result,
+                'process_patamar_result': process_patamar_result
+            }
+            
+            return process_result 
+            
+        except Exception as e:
+            logger.error("Falha na leitura e processamento do arquivo: %s", str(e), exc_info=True)
+            
+    def post_database(self, process_result:pd.DataFrame) -> dict:
+        try:
+            logger.info("Enviando dados para a API...")
+            
+            auth_headers = get_auth_header()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+            
+            base_url = constants.BASE_URL
+            api_url = f"{base_url}/api/v2"
+            
+            nw_cadic_records = process_result.get('process_cadic_result', [])
+            nw_sist_records = process_result.get('process_sist_result', [])
+            patamar_process_result = process_result.get('process_patamar_result', [])
+            nw_patamar_carga_usinas_records = patamar_process_result.get('patamar_carga_usinas_records', [])
+            nw_patamar_intercambio_records = patamar_process_result.get('patamar_intercambio_records', [])
+            
+            sistema_url = f"{api_url}/decks/newave/sistema"
+            cadic_url = f"{api_url}/decks/newave/cadic"
+            patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
+            patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
+            
+                
+            logger.info(f"Enviando dados para: {sistema_url}")
+                
+            request_sistema = requests.post(
+                sistema_url,
+                headers=headers,
+                json=nw_sist_records,
+            )
+            
+            if request_sistema.status_code != 200:
+                raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
+
+            logger.info(f"Enviando dados para: {cadic_url}")
+
+            request_cadic = requests.post(
+                cadic_url,
+                headers=headers,
+                json=nw_cadic_records,
+            )
+            
+            if request_cadic.status_code != 200:
+                raise ValueError(f"Erro ao enviar carga do CADIC para API: {request_cadic.text}")
+            
+            logger.info(f"Enviando dados para: {patamar_carga_usinas_url}")
+            
+            request_patamar_carga_usinas = requests.post(
+                patamar_carga_usinas_url,
+                headers=headers,
+                json=nw_patamar_carga_usinas_records,  
+            )
+            
+            if request_patamar_carga_usinas.status_code != 200:
+                raise ValueError(f"Erro ao enviar patamar do newave de carga e usina para API: {request_patamar_carga_usinas.text}")
+            
+            logger.info(f"Enviando dados para: {patamar_intercambio_url}")
+            
+            request_patamar_intercambio = requests.post(
+                patamar_intercambio_url,
+                headers=headers,
+                json=nw_patamar_intercambio_records,  
+            )
+            
+            if request_patamar_intercambio.status_code != 200:
+                raise ValueError(f"Erro ao enviar patamar do newave de intercambio para API: {request_patamar_intercambio.text}")
+            
+        
+        except Exception as e:
+            logger.error("Falha no import dos dados ao banco: %s", str(e), exc_info=True)
+              
+              
+               
+class ProcessFunctions():
+    def get_version_by_filename(self, filename: str) -> str:
         try:
             if 'preliminar' in filename.lower():
                 return 'preliminar'
@@ -43,49 +171,7 @@ class DecksNewave(WebhookProductsInterface):
         except Exception as e:
             logger.error(f"Erro ao determinar a versão pelo nome do arquivo: {e}")
             raise
-               
-        
-    # Main method 
-    def run_workflow(self, filepath:Optional[str] = None) -> Dict[str, Any]:
-        """
-        Executa o fluxo completo de processamento de forma sequencial.
-        Cada etapa depende do resultado da etapa anterior.
-        
-        """
-        try:
-            
-            if filepath:
-                download_extract_filepath = filepath
-            elif payload:
-                download_extract_filepath = self.download_extract_files()
-            else:
-                raise ValueError("Nenhum caminho de arquivo ou detalhes do produto fornecidos.")
-            
-            extract_dat_files_result = self.extrair_arquivos_dat(download_extract_filepath)
     
-            processar_deck_nw_cadic_result = self.processar_deck_nw_cadic(payload, extract_dat_files_result)
-            
-            processar_deck_nw_sistema_result = self.processar_deck_nw_sist(payload, extract_dat_files_result)
-            
-            processar_deck_nw_patamar_result = self.processar_deck_nw_patamar(payload, extract_dat_files_result)
-          
-            flag_enviar = True
-            # if "preliminar" in payload.nome.lower():
-            #     processar_deck_nw_sistema_result = self.atualizar_sist_com_weol(payload, processar_deck_nw_sistema_result)
-            #     flag_enviar = False
-            
-            self.enviar_dados_para_api(processar_deck_nw_patamar_result, processar_deck_nw_cadic_result, processar_deck_nw_sistema_result, flag_enviar)
-            
-            gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(payload)
-            
-            self.enviar_tabela_whatsapp_email(payload, gerar_tabela_diferenca_cargas_result)
-        
-        except Exception as e:
-            error_msg = f"Erro no fluxo de processamento do DECK Newave: {str(e)}"
-            logger.error(error_msg)
-            raise
-    
-    # Tasks
     def extrair_arquivos_dat(
         self,
         download_extract_filepath: Dict[str, Any]
@@ -128,8 +214,7 @@ class DecksNewave(WebhookProductsInterface):
     
     def processar_deck_nw_cadic( 
         self,
-        payload: WebhookSintegreSchema,
-        extract_dat_files_result: list
+        dat_files: list
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do C_ADIC.DAT.
@@ -141,7 +226,7 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Processando o C_ADIC.DAT do Deck Newave...")
             
-            files_paths = extract_dat_files_result
+            files_paths = dat_files
             file_path = None
             
             for path in files_paths:
@@ -153,9 +238,9 @@ class DecksNewave(WebhookProductsInterface):
                 raise ValueError(f"Arquivo C_ADIC.DAT não encontrado em {file_path}")
             
         
-            data_produto_str = payload.dataProduto
+            data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-            filename = payload.filename
+            filename = self.filename
             versao = self._get_version_by_filename(filename)
             
             cadic_object = Cadic.read(cadic_file)
@@ -200,10 +285,9 @@ class DecksNewave(WebhookProductsInterface):
                 
                 logger.info(f"- Valores do Cadic: ({len(nw_cadic_records)} registros)")
                 
-            return {
-                    "nw_cadic_records": nw_cadic_records,
-                    "data_produto": data_produto_str,
-                    }
+            return nw_cadic_records
+                
+                    
         
         except Exception as e:
             logger.error(f"Erro ao processar C_ADIC do Deck Newave: {e}")
@@ -211,8 +295,7 @@ class DecksNewave(WebhookProductsInterface):
     
     def processar_deck_nw_sist(
         self, 
-        payload: WebhookSintegreSchema,
-        extract_dat_files_result: list
+        dat_files: list
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do SISTEMA.DAT.
@@ -223,7 +306,7 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Processando o SISTEMA.DAT do Deck Newave...")
             
-            files_paths = extract_dat_files_result
+            files_paths = dat_files
             file_path = None
             
             for path in files_paths:
@@ -234,9 +317,9 @@ class DecksNewave(WebhookProductsInterface):
             if not sistema_file or not os.path.exists(sistema_file):
                 raise ValueError(f"Arquivo SISTEMA.DAT não encontrado em {file_path}")
             
-            data_produto_str = payload.dataProduto
+            data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-            filename = payload.filename
+            filename = self.filename
             versao = self._get_version_by_filename(filename)
             
             sistema_object = Sistema.read(sistema_file)
@@ -328,19 +411,15 @@ class DecksNewave(WebhookProductsInterface):
             
             logger.info(f"- Valores do Sistema: ({len(nw_sistema_records)} registros)")
             
-            return {
-                    "nw_sistema_records": nw_sistema_records,
-                    "data_produto": data_produto_str,
-                    }
-        
+            return nw_sistema_records
+                    
         except Exception as e:
             logger.error(f"Erro ao processar os valores de carga do Sistema do DECK Newave : {e}")
             raise
     
     def processar_deck_nw_patamar(
         self,
-        payload: WebhookSintegreSchema,
-        extract_dat_files_result: list
+        dat_files: list
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do PATAMAR.DAT.
@@ -351,20 +430,16 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Processando o PATAMAR.DAT do Deck Newave...")
             
-            files_paths = extract_dat_files_result
-            file_path = None
+            files_paths = dat_files
             
             for path in files_paths:
                 if 'PATAMAR.DAT' in path:
                     patamar_file = path
                     break
-                
-            if not patamar_file or not os.path.exists(patamar_file):
-                raise ValueError(f"Arquivo PATAMAR.DAT não encontrado em {file_path}")
-            
-            data_produto_str = payload.dataProduto
+
+            data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-            filename = payload.filename
+            filename = self.filename
             versao = self._get_version_by_filename(filename)
             
             patamar_object = Patamar.read(patamar_file)
@@ -566,17 +641,23 @@ class DecksNewave(WebhookProductsInterface):
             return {
                 "patamar_carga_usinas_records": patamar_carga_usinas_records,
                 "patamar_intercambio_records": patamar_intercambio_records,
-                "data_produto": data_produto_str,
-                }
+            }
         
         except Exception as e:
             logger.error(f"Erro ao processar PATAMAR.DAT: {e}")
             raise
     
+class UpdateWeol():
+    def __init__(self):
+        self.consts = Constants()
+        self.url_last_deck_date = self.consts.GET_DECOMP_WEOL_LAST_DECK_DATE
+        self.url_weighted_average = self.consts.GET_DECOMP_WEOL_WEIGHTED_AVERAGE
+        
+    def run_process(self):
+        return self.atualizar_sist_com_weol()
+        
     def atualizar_sist_com_weol(
         self,
-        payload: WebhookSintegreSchema,
-        processar_deck_nw_sistema_result: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Atualiza o SISTEMA com os dados do WEOL.
@@ -594,34 +675,20 @@ class DecksNewave(WebhookProductsInterface):
                 'accept': 'application/json'
             }
             
-            base_url = constants.BASE_URL
-            api_url = f"{base_url}/api/v2"
-            
-            data_produto_str = payload.dataProduto
-            
-            nw_sistema_records = processar_deck_nw_sistema_result.get('nw_sistema_records', [])
+            nw_sistema_records = requests.get()
+        
             nw_sistema_df = pd.DataFrame(nw_sistema_records)
             
             last_deck_date = requests.get(
-                f"{api_url}/decks/weol/last-deck-date",
+                self.url_last_deck_date,
                 headers=headers
             )
             
-            if last_deck_date.status_code != 200:
-                error_msg = f"Erro ao obter a última data do deck WEOL: {last_deck_date.text}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
-            
             weol_decomp = requests.get(
-                f"{api_url}/decks/weol/weighted-average", 
+                self.url_weighted_average, 
                 params={"dataProduto": datetime.datetime.strptime(last_deck_date.json(), '%Y-%m-%d')}, 
                 headers= headers
             )
-            
-            if weol_decomp.status_code != 200:
-                error_msg = f"Erro ao obter o WEOL decomp: {weol_decomp.text}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
             
             weol_decomp_df = pd.DataFrame(weol_decomp.json())
             
@@ -651,7 +718,7 @@ class DecksNewave(WebhookProductsInterface):
             
             weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['cd_submercado'].astype(int)
             
-            # Fazer merge para atualizar os valores de vl_geracao_eol
+            
             nw_sistema_df = nw_sistema_df.merge(
                 weol_mensal_por_submercado[['cd_submercado', 'vl_ano', 'vl_mes', 'vl_geracao_eol']],
                 on=['cd_submercado', 'vl_ano', 'vl_mes'],
@@ -665,105 +732,34 @@ class DecksNewave(WebhookProductsInterface):
             
             nw_sistema_records = nw_sistema_df.to_dict('records')
             
-            return {
-                    "nw_sistema_records": nw_sistema_records,
-                    "data_produto": data_produto_str,
-                    }
+            return nw_sistema_records
         
         except Exception as e:
             logger.error(f"Erro ao atualizar SISTEMA com WEOL: {e}")
             raise
-        
-    def enviar_dados_para_api(
-        self,
-        processar_deck_nw_patamar_result: Dict[str, Any],
-        processar_deck_nw_cadic_result: Dict[str, Any],
-        processar_deck_nw_sist_result: Dict[str, Any],
-        flag_enviar: Optional[bool] = None
-    ) -> Dict[str, Any]:
-        """
-        Envia os dados processados para a API.
-        
-        :return: Dicionário com o status e mensagem do envio.
-        """
-        try:
-            logger.info("Enviando dados para a API...")
-            
-            auth_headers = get_auth_header()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-            
-            # base_url = constants.BASE_URL
-            base_url = "http://localhost:8000"
-            api_url = f"{base_url}/api/v2"
-            
-            nw_cadic_records = processar_deck_nw_cadic_result.get('nw_cadic_records', [])
-            nw_sist_records = processar_deck_nw_sist_result.get('nw_sistema_records', [])
-            nw_patamar_carga_usinas_records = processar_deck_nw_patamar_result.get('patamar_carga_usinas_records', [])
-            nw_patamar_intercambio_records = processar_deck_nw_patamar_result.get('patamar_intercambio_records', [])
-            
-            sistema_url = f"{api_url}/decks/newave/sistema"
-            cadic_url = f"{api_url}/decks/newave/cadic"
-            patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
-            patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
-            
-            
-            if flag_enviar:
-                
-                logger.info(f"Enviando dados para: {sistema_url}")
-                
-                request_sistema = requests.post(
-                    sistema_url,
-                    headers=headers,
-                    json=nw_sist_records,
-                )
-            
-                if request_sistema.status_code != 200:
-                    raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
-
-            logger.info(f"Enviando dados para: {cadic_url}")
-
-            request_cadic = requests.post(
-                cadic_url,
-                headers=headers,
-                json=nw_cadic_records,  # Use json parameter to properly encode the data
-            )
-            
-            if request_cadic.status_code != 200:
-                raise ValueError(f"Erro ao enviar carga do CADIC para API: {request_cadic.text}")
-            
-            logger.info(f"Enviando dados para: {patamar_carga_usinas_url}")
-            
-            request_patamar_carga_usinas = requests.post(
-                patamar_carga_usinas_url,
-                headers=headers,
-                json=nw_patamar_carga_usinas_records,  
-            )
-            
-            if request_patamar_carga_usinas.status_code != 200:
-                raise ValueError(f"Erro ao enviar patamar do newave de carga e usina para API: {request_patamar_carga_usinas.text}")
-            
-            logger.info(f"Enviando dados para: {patamar_intercambio_url}")
-            
-            request_patamar_intercambio = requests.post(
-                patamar_intercambio_url,
-                headers=headers,
-                json=nw_patamar_intercambio_records,  
-            )
-            
-            if request_patamar_intercambio.status_code != 200:
-                raise ValueError(f"Erro ao enviar patamar do newave de intercambio para API: {request_patamar_intercambio.text}")
-        
-        except Exception as e:
-            logger.error(f"Erro ao enviar dados para a API: {e}")
-            raise
     
+class GerarTabelaDiferenca():  
+    def __init__(self):
+        self.consts = Constants()
+        self.dataProduto = DecksNewave().dataProduto
+        self.filename = DecksNewave().filename
+        self.url_html_to_image = consts.URL_HTML_TO_IMAGE
+        self.header = get_auth_header()
+        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
+        self.url_carga_global  = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_global'
+        self.url_carga_liquida = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_liquida'
+        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
+        self.url_mmgd_base     = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
+        self.url_ande          = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_ande'
+        
+    
+    def run_process(self):
+        tabela_html = self.gerar_tabela_diferenca_cargas()
+        self.enviar_tabela_whatsapp_email(tabela_html)    
+    
+      
     def gerar_tabela_diferenca_cargas(
         self,
-        payload: WebhookSintegreSchema,
     ) -> Dict[str, Any]:
         """
         Gera uma tabela de diferença de cargas.
@@ -773,87 +769,19 @@ class DecksNewave(WebhookProductsInterface):
         try:
             logger.info("Gerando tabela de diferença de cargas...")
             
-            data_produto_str = payload.dataProduto
-            filename = payload.filename
+            data_produto_str = self.dataProduto
+            filename = self.filename
             versao = self._get_version_by_filename(filename)
             
-            auth_headers = get_auth_header()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-            
-            # base_url = constants.BASE_URL
-            base_url = "http://localhost:8000"
-            api_url = f"{base_url}/api/v2"
-            image_api_url = f"https://tradingenergiarz.com/html-to-img"
-            
-            
-            # Pegando valores do sistema de geração de usinas não simuladas (UNSI)
-            sistema_unsi_url = f"{api_url}/decks/newave/sistema/total_unsi"
-            sistema_unsi_response = requests.get(
-                sistema_unsi_url,
-                headers=headers
-            )
-            if sistema_unsi_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de geração UNSI: {sistema_unsi_response.text}")
-            
-            sistema_unsi_values = sistema_unsi_response.json() 
-            
-            # Pegando valores de carga de ANDE
-            cadic_ande_url = f"{api_url}/decks/newave/cadic/total_ande"
-            cadic_ande_response = requests.get(
-                cadic_ande_url,
-                headers=headers
-            )
-            if cadic_ande_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de carga do ANDE: {cadic_ande_response.text}")
-            
-            cadic_ande_values = cadic_ande_response.json() 
-            
-            # Pegando valores de MMGD Total 
-            sistema_mmgd_total_url = f"{api_url}/decks/newave/sistema/mmgd_total"
-            sistema_mmgd_total_response = requests.get(
-                sistema_mmgd_total_url,
-                headers=headers
-            )
-            if sistema_mmgd_total_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de MMGD Total: {sistema_mmgd_total_response.text}")
-            
-            sistema_mmgd_total_values = sistema_mmgd_total_response.json()
-            
-            # Pegando valores de geração de Carga Global
-            carga_global_url = f"{api_url}/decks/newave/sistema/cargas/total_carga_global"
-            carga_global_response = requests.get(
-                carga_global_url,
-                headers=headers
-            )
-            if carga_global_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de geração de carga global: {carga_global_response.text}")
-            carga_global_values = carga_global_response.json()
-            
-            # Pegando valores de geração de Carga Líquida
-            carga_liquida_url = f"{api_url}/decks/newave/sistema/cargas/total_carga_liquida"
-            carga_liquida_response = requests.get(
-                carga_liquida_url,
-                headers=headers
-            )
-            if carga_liquida_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de geração de carga liquida: {carga_liquida_response.text}")
-            carga_liquida_values = carga_liquida_response.json()
-            
             dados = {
-                'dados_unsi': sistema_unsi_values,
-                'dados_ande': cadic_ande_values,
-                'dados_mmgd_total': sistema_mmgd_total_values,
-                'dados_carga_global': carga_global_values,
-                'dados_carga_liquida': carga_liquida_values
+                'dados_unsi':self._get_data(self.url_unsi),
+                'dados_ande': self._get_data(self.url_ande),
+                'dados_mmgd_total': self._get_data(self.url_mmgd_base),
+                'dados_carga_global': self._get_data(self.url_carga_global),
+                'dados_carga_liquida': self._get_data(self.url_carga_liquida)
             }
-            
-            html_builder = HtmlBuilder()
-            
-            html_tabela_diferenca = html_builder.gerar_html(
+        
+            html_tabela_diferenca = HtmlBuilder.gerar_html(
                 'diferenca_cargas', 
                 dados
             )
@@ -868,11 +796,11 @@ class DecksNewave(WebhookProductsInterface):
                 }
             }
             
-            html_api_endpoint = f"{image_api_url}/convert"
+            html_api_endpoint = f"{self.url_html_to_image}/convert"
             
             request_html_api = requests.post(
                 html_api_endpoint,
-                headers=headers,
+                headers=self.headers,
                 json=api_html_payload,  
             )
             
@@ -891,9 +819,8 @@ class DecksNewave(WebhookProductsInterface):
             
             logger.info(f"Imagem salva em: {image_path}")
             
-            return {
-                "image_path": image_path
-                }
+            return image_path
+                
         
         except Exception as e:
             logger.error(f"Erro ao gerar tabela de diferença de cargas: {e}")
@@ -901,8 +828,7 @@ class DecksNewave(WebhookProductsInterface):
     
     def enviar_tabela_whatsapp_email(
         self,
-        payload: WebhookSintegreSchema,
-        gerar_tabela_diferenca_cargas_result: Dict[str, Any],
+        img_path
     ) -> Dict[str, Any]:
         """
         Envia a tabela de diferença de cargas por WhatsApp e email.
@@ -916,9 +842,9 @@ class DecksNewave(WebhookProductsInterface):
             filename = payload.filename
             versao = self._get_version_by_filename(filename)
             
-            image_path = gerar_tabela_diferenca_cargas_result.get('image_path')
-            if not image_path or not os.path.exists(image_path):
-                raise ValueError(f"Arquivo de imagem não encontrado: {image_path}")
+            img_path = img_path
+            if not img_path or not os.path.exists(img_path):
+                raise ValueError(f"Arquivo de imagem não encontrado: {img_path}")
             
             msg_whatsapp = ''
             if 'versao' == 'preliminar':
@@ -929,7 +855,7 @@ class DecksNewave(WebhookProductsInterface):
             request_whatsapp = send_whatsapp_message(
                 destinatario="Debug",
                 mensagem=msg_whatsapp,
-                arquivo=image_path,
+                arquivo=img_path,
             )
             
             if request_whatsapp.status_code < 200 or request_whatsapp.status_code >= 300:
@@ -938,7 +864,14 @@ class DecksNewave(WebhookProductsInterface):
         except Exception as e:
             logger.error(f"Erro ao enviar tabela por WhatsApp e email: {e}")
             raise
+
+    def _get_data(self, url: str) -> pd.DataFrame:
+        res = requests.get(url, headers=self.header)
+        if res.status_code != 200:
+            res.raise_for_status()
+        return res.json()
         
+
 if __name__ == "__main__":
    
    payload = {

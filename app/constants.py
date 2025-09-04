@@ -6,7 +6,7 @@ from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
 PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "relatorio_de_acompanhamento_hidrologico": None,
-   "precipitacao_por_satelite": None,
+   "precipitacao_por_satelite_pmo": None,
    "modelo_gefs": None,
    "resultados_preliminares_nao_consistidos_vazoes_semanais_pmo": None,
    "relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_pdp": None,
@@ -19,7 +19,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_dos_modelos_de_previsao_de_vazoes_diarias_pdp": None,
    "acomph": None,
    "rdh": None,
-   "historico_de_precipitacao_por_satelite": None,
+   "historico_de_precipitacao_por_satelite_pmo": None,
    "modelo_eta": None,
    "carga_por_patamar_decomp": CargaPatamarDecomp,
    "deck_preliminar_decomp_valor_esperado": None,

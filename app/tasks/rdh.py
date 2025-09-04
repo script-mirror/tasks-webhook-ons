@@ -29,7 +29,7 @@ class Rdh(WebhookProductsInterface):
         logger.info("Initialized RDH with payload: %s", payload)
     
     def run_workflow(self):
-        logger.info("Starting workflow for RDH")
+        logger.info("Starting run_workflow for RDH")
         try:
             os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)            
             payload = get_latest_webhook_product(constants.WEBHOOK_CARGA_DECOMP)[0]
@@ -38,10 +38,10 @@ class Rdh(WebhookProductsInterface):
             logger.info("Webhook file handled, base path: %s", base_path)
             
             self.run_process(base_path)
-            logger.info("Workflow completed successfully")
+            logger.info("run_workflow completed successfully")
             
         except Exception as e:
-            logger.error("Workflow failed: %s", str(e), exc_info=True)
+            logger.error("run_workflow failed: %s", str(e), exc_info=True)
             raise
         
         
