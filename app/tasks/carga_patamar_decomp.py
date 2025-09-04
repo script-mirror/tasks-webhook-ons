@@ -46,7 +46,7 @@ class CargaPatamarDecomp(WebhookProductsInterface):
     def run_process(self, base_path):
         df_load = self.read_week_load(base_path)
         logger.info("Successfully processed load data with %d rows", len(df_load))
-        self.post_load_to_database(df_load)
+        self.post_data(df_load)
         
         
     def read_week_load(self, base_path):
@@ -111,7 +111,7 @@ class CargaPatamarDecomp(WebhookProductsInterface):
             logger.error("Failed to read week load data: %s", str(e), exc_info=True)
             raise
     
-    def post_load_to_database(self, data_in: pd.DataFrame) -> dict:
+    def post_data(self, data_in: pd.DataFrame) -> dict:
         logger.info("Posting load data to database, rows: %d", len(data_in))
         try:
             res = requests.post(

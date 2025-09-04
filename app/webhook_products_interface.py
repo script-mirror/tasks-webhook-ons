@@ -61,7 +61,7 @@ class WebhookProductsInterface(ABC):
      
         
     @abstractmethod
-    def process_file(self, basepath) -> str:
+    def run_process(self, basepath) -> str:
         """
         Método responsável pela leitura do arquivo baixado
 
@@ -72,7 +72,7 @@ class WebhookProductsInterface(ABC):
         
         
     @abstractmethod
-    def post_process_result_to_database(self, process_result: pd.DataFrame) -> dict:
+    def post_data(self, process_result: pd.DataFrame) -> dict:
         """
         Método responsável por inserir os dados lidos e processados no banco através da nossa API
 

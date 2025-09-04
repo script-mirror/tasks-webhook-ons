@@ -39,17 +39,12 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
             filepath = self.download_extract_files()
     
         data_produto = self.get_data_produto(filepath)
-        df = self.read_table(filepath, data_produto)
+        df = self.run_process(filepath, data_produto)
         df = self.sanitaze_dataframe(df)
         self.post_data(df)
         analyzer = IntercambioAnalyzer()
         analyzer.run_workflow()
-        
-    def process_file():
-        pass
-    def post_process_result_to_database():
-        pass
-    
+           
     def get_data_produto(self, path_produto: str) -> datetime.date:
         with pdfplumber.open(path_produto) as pdf:
             data_produto = extrair_mes_ano(pdf.pages[0].extract_text())
@@ -145,7 +140,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         return reformatted_df
 
 
-    def read_table(
+    def run_process(
         self,
         pdf_path: str,
         data_produto: datetime.date,
@@ -211,7 +206,7 @@ class IntercambioAnalyzer:
             logger.error(f"Erro na execução da análise: {str(e)}")
             raise
       
-    def get_dados_banco(self, produto: str, date: str = "") -> pd.DataFrame:
+    def get_data(self, produto: str, date: str = "") -> pd.DataFrame:
         """Obtém dados da API para o produto e data especificados."""
         logger.info(f"Obtendo dados da API para produto: {produto}, data: {date}")
         try:
@@ -299,15 +294,15 @@ class IntercambioAnalyzer:
         """Calcula as diferenças entre os limites de intercâmbio de duas datas e envia mensagens."""
         logger.info("Iniciando cálculo de diferenças")
         try:
-            df_datas = self.get_dados_banco('restricoes-eletricas/historico')
+            df_datas = self.get_data('restricoes-eletricas/historico')
             df_datas = sorted(list(df_datas[0]), reverse=True)
             if len(df_datas) < 2:
                 logger.warning("Não há dados suficientes para comparar")
                 return
 
             logger.info(f"Comparando datas: {df_datas[0]} e {df_datas[1]}")
-            df1 = self.res_to_df(self.get_dados_banco(produto='restricoes-eletricas', date=df_datas[0]))
-            df2 = self.res_to_df(self.get_dados_banco(produto='restricoes-eletricas', date=df_datas[1]))
+            df1 = self.res_to_df(self.get_data(produto='restricoes-eletricas', date=df_datas[0]))
+            df2 = self.res_to_df(self.get_data(produto='restricoes-eletricas', date=df_datas[1]))
             df1_months = [col for col in df1.columns if col != "Limite"]
             df2_months = [col for col in df2.columns if col != "Limite"]
             common_months = sorted(set(df1_months).intersection(df2_months))
@@ -345,5 +340,5 @@ class IntercambioAnalyzer:
 
 
 if __name__ == "__main__":
-    teste = RelatorioLimitesIntercambioDecomp({})
-    teste.run_workflow("/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/trading-middle-tasks-webhook-ons/RT-ONS DPL 0298-2025_Limites PMO_Agosto-2025.pdf")
+    analyzer = IntercambioAnalyzer()
+    analyzer.run_workflow()
