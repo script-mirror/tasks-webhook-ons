@@ -55,7 +55,7 @@ class DecksNewave(WebhookProductsInterface):
             process_sist_result = self.update_weol.run_process()
             process_result['process_sist_result'] = process_sist_result
         
-        self.post_database(process_result)
+        self.post_data(process_result)
         
         self.gerar_tabela.run_process()
 
@@ -82,7 +82,7 @@ class DecksNewave(WebhookProductsInterface):
         except Exception as e:
             logger.error("Falha na leitura e processamento do arquivo: %s", str(e), exc_info=True)
             
-    def post_database(self, process_result:pd.DataFrame) -> dict:
+    def post_data(self, process_result:pd.DataFrame) -> dict:
         try:
             logger.info("Enviando dados para a API...")
             

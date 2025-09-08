@@ -45,7 +45,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
     def run_process(self, file_path):
         
         process_result = self.process_file(file_path)
-        self.post_database(process_result)
+        self.post_data(process_result)
         
         self.update_nw.run_process()
             
@@ -114,7 +114,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
             logger.error("Failed to read week load data: %s", str(e), exc_info=True)
             raise
 
-    def post_database(self, process_result: pd.DataFrame) -> dict:
+    def post_data(self, process_result: pd.DataFrame) -> dict:
         logger.info("Posting load data to database, rows: %d", len(process_result))
         try:
             res = requests.post(
