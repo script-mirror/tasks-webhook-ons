@@ -11,7 +11,7 @@ from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from app.schema import WebhookPayloadSchema
+from app.schema import WebhookSintegreSchema
 from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header
 from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils.file_manipulation import extract_zip
@@ -22,7 +22,7 @@ constants = Constants()
 
 class CargaPatamarNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookPayloadSchema]):
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
         self.update_nw = UpdateSistemaCadic()
         self.gerar_tabela = GerarTabelaDiferenca()
@@ -332,7 +332,7 @@ if __name__ == '__main__':
             "webhookId": "68accd5eb790e437d652a03d"
         }
         
-        payload = WebhookPayloadSchema(**payload)
+        payload = WebhookSintegreSchema(**payload)
         
         previsoescarga = CargaPatamarNewave(payload)
         previsoescarga.run_workflow()

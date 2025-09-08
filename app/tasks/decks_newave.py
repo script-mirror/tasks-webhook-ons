@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from app.webhook_products_interface import WebhookProductsInterface
-from app.schema import WebhookPayloadSchema
+from app.schema import WebhookSintegreSchema
 
 from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants
 from middle.message import send_whatsapp_message
@@ -21,7 +21,7 @@ from inewave.newave import Patamar, Cadic, Sistema
 
 class DecksNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookPayloadSchema] = None) -> None:
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
         super().__init__(payload)
         self.dataProduto = self.payload.dataProduto
         self.filename = self.payload.filename
@@ -887,7 +887,7 @@ if __name__ == "__main__":
   "webhookId": "6892aa3794f9e32e8e798bed"
 }
    
-   payload = WebhookPayloadSchema(**payload)
+   payload = WebhookSintegreSchema(**payload)
    
    decknewave = DecksNewave(payload)
    

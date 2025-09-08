@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from middle import s3
 from middle.utils import setup_logger, extract_zip
 from typing import Optional, Dict, Any
-from .schema import WebhookPayloadSchema
+from .schema import WebhookSintegreSchema
 import pandas as pd
 # from .webhook_service import get_webhook_payload
 from middle.utils import Constants
@@ -16,8 +16,8 @@ class WebhookProductsInterface(ABC):
     Define os metodos base que devem ser implementados no ETL dos produtos do webhook.
     """
     
-    def __init__(self, payload: Optional[WebhookPayloadSchema] = None):
-        self.payload:WebhookPayloadSchema = payload
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
+        self.payload:WebhookSintegreSchema = payload
         self.run_workflow_results:dict = {}
 
 
