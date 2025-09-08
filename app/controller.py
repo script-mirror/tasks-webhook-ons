@@ -1,6 +1,6 @@
 from middle.utils import setup_logger
 from .constants import PRODUCT_MAPPING
-from .schema import WebhookSintegreSchema
+from .schema import WebhookPayloadSchema
 from fastapi import APIRouter, HTTPException
 from middle.utils import sanitize_string
 from .webhook_products_interface import WebhookProductsInterface
@@ -10,7 +10,7 @@ logger = setup_logger()
 router = APIRouter()
 
 @router.post("/webhook")
-def webhook_handler(payload: WebhookSintegreSchema):
+def webhook_handler(payload: WebhookPayloadSchema):
     payload.nome = sanitize_string(payload.nome, space_char="_")
     product_handler: WebhookProductsInterface | None = PRODUCT_MAPPING[payload.nome]
     if not product_handler:

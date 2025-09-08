@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from app.webhook_products_interface import WebhookProductsInterface
-from app.schema import WebhookSintegreSchema
+from app.schema import WebhookPayloadSchema
 
 from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants
 from middle.message import send_whatsapp_message
@@ -21,13 +21,13 @@ from inewave.newave import Patamar, Cadic, Sistema
 
 class DecksNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
+    def __init__(self, payload: Optional[WebhookPayloadSchema] = None) -> None:
         super().__init__(payload)
         self.dataProduto = self.payload.dataProduto
         self.filename = self.payload.filename
-        self.process_functions = ProcessFunctions
-        self.update_weol = UpdateWeol
-        self.gerar_tabela = GerarTabelaDiferenca
+        self.process_functions = ProcessFunctions()
+        self.update_weol = UpdateWeol()
+        self.gerar_tabela = GerarTabelaDiferenca()
     
         logger.info("Inicializado DecksNewave com payload: %s", payload)
                
@@ -55,7 +55,7 @@ class DecksNewave(WebhookProductsInterface):
             process_sist_result = self.update_weol.run_process()
             process_result['process_sist_result'] = process_sist_result
         
-        self.post_database(process_result)
+        self.post_data(process_result)
         
         self.gerar_tabela.run_process()
 
@@ -82,7 +82,7 @@ class DecksNewave(WebhookProductsInterface):
         except Exception as e:
             logger.error("Falha na leitura e processamento do arquivo: %s", str(e), exc_info=True)
             
-    def post_database(self, process_result:pd.DataFrame) -> dict:
+    def post_data(self, process_result:pd.DataFrame) -> dict:
         try:
             logger.info("Enviando dados para a API...")
             
@@ -887,7 +887,7 @@ if __name__ == "__main__":
   "webhookId": "6892aa3794f9e32e8e798bed"
 }
    
-   payload = WebhookSintegreSchema(**payload)
+   payload = WebhookPayloadSchema(**payload)
    
    decknewave = DecksNewave(payload)
    

@@ -83,13 +83,13 @@ class Debugger:
             print("Aviso: Payload vazio fornecido")
             payload = {}
         
-        # Converter payload para WebhookSintegreSchema se for um dicionário
+        # Converter payload para WebhookPayloadSchema se for um dicionário
         if isinstance(payload, dict) and payload:
             try:
-                from app.schema import WebhookSintegreSchema
-                payload_obj = WebhookSintegreSchema(**payload)
+                from app.schema import WebhookPayloadSchema
+                payload_obj = WebhookPayloadSchema(**payload)
             except Exception as e:
-                print(f"Aviso: Não foi possível converter payload para WebhookSintegreSchema: {e}")
+                print(f"Aviso: Não foi possível converter payload para WebhookPayloadSchema: {e}")
                 payload_obj = payload
         else:
             payload_obj = payload

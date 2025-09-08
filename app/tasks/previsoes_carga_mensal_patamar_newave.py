@@ -1,97 +1,203 @@
-import os
 import sys
-import pandas as pd
-import datetime
-from typing import Optional, Dict, Any
+import os
 import requests
+import pandas as pd
+import glob
 import pdb
-
-from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants
-from middle.message import send_whatsapp_message
-constants = Constants()
-logger = setup_logger()
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from typing import Optional
+from pathlib import Path
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent.parent
+sys.path.insert(0, str(project_root))
+from app.schema import WebhookPayloadSchema
+from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header
 from app.webhook_products_interface import WebhookProductsInterface
-from app.schema import WebhookSintegreSchema
+from middle.utils.file_manipulation import extract_zip
+from middle.message.sender import send_whatsapp_message
 
+logger = setup_logger()
+constants = Constants()
 
-
-class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
+class CargaPatamarNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
-        """
-        Inicializa a classe com o payload iguração fornecida.
-        
-        Args:
-            conf: Dicionário com a configuração do produto.
-        """
+    def __init__(self, payload: Optional[WebhookPayloadSchema]):
         super().__init__(payload)
-        
-    def run_workflow(
-        self, 
-        filepath:Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Executa o fluxo completo de processamento de forma sequencial.
-        Cada etapa depende do resultado da etapa anterior.
-        
-        """
+        self.update_nw = UpdateSistemaCadic()
+        self.gerar_tabela = GerarTabelaDiferenca()
+        self.gerar_dat = GerarCadicSistema()  
+        self.trigger_dag = TriggerDagExterna()
+        logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
+    
+    
+    def run_workflow(self):
+        logger.info("Iniciando workflow do produto Previsões de Carga Mensal e por Patamar...")
         try:
-            if filepath:
-                download_extract_filepath = filepath
-            elif payload:
-                download_extract_filepath = self.download_extract_files()
-            else:
-                raise ValueError("É necessário fornecer um filepath ou um payload válido.")
+            file_path = self.download_extract_files()
             
-            processar_carga_mensal_para_atualizacao_result = self.processar_carga_mensal_para_atualizacao(payload, download_extract_filepath)
-            
-            processar_carga_mensal_para_api_result = self.processar_carga_mensal_para_api(payload, download_extract_filepath)
-            
-            self.atualizar_carga_mensal(payload, processar_carga_mensal_para_atualizacao_result)
-            
-            gerar_tabela_diferenca_cargas_result = self.gerar_tabela_diferenca_cargas(payload)
-            
-            self.enviar_tabela_whatsapp_email(payload, gerar_tabela_diferenca_cargas_result)
-            
+            self.run_process(file_path)
+                        
+            logger.info("Workflow do produto Previsões de Carga Mensal e por Patamar finalizado com sucesso!")
         except Exception as e:
-            error_msg = f"Erro no fluxo de processamento do DECK Newave: {str(e)}"
-            logger.error(error_msg)
-
-
-    def _xlsx_to_df(filepath) -> pd.DataFrame:
-        xlsx_files = [f for f in os.listdir(filepath) if f.endswith('.xlsx')]
-        filename = xlsx_files[0]
+            logger.error("Erro no fluxo de processamento das Previsões de Carga Mensal por Patamar do Newave: %s", str(e), exc_info=True)
+            raise
+        
+    def run_process(self, file_path):
+        
+        process_result = self.process_file(file_path)
+        
+        self.post_data(process_result)
+        
+        # self.gerar_dat.run_process(process_result)
+        
+        self.update_nw.run_process()
             
-        xlsx_file = os.path.join(filepath, filename)
+        self.gerar_tabela.run_process()
+            
+        self.trigger_dag.run_process()
         
-        return pd.read_excel(xlsx_file)
-
-
-    def processar_carga_mensal_para_atualizacao(
-        self,
-        payload: WebhookSintegreSchema,
-        download_extract_filepath: Dict[str, Any]
-    ) -> list:
         
+    def process_file(self, file_path) -> pd.DataFrame:
+        logger.info("Reading week load data from base path: %s", file_path)
         try:
-            filepath = download_extract_filepath
+            MAP_COLUMNS = {
+                'DATE':       'data_referente',
+                'SOURCE':     'submercado',
+                'LOAD_sMMGD': 'vl_carga',
+                'LOAD_cMMGD': 'vl_carga_global',
+                'TYPE':        'patamar',
+                'GAUGE':       'horas',
+                'Exp_CGH':     'vl_exp_pch_mmgd',
+                'Exp_EOL':     'vl_exp_eol_mmgd',
+                'Exp_UFV':     'vl_exp_ufv_mmgd',
+                'Exp_UTE':     'vl_exp_pct_mmgd', 
+                'Base_CGH':    'vl_base_pch_mmgd',
+                'Base_EOL':    'vl_base_eol_mmgd',
+                'Base_UFV':    'vl_base_ufv_mmgd',
+                'Base_UTE':    'vl_base_pct_mmgd',
+                'Base_MMGD':   'vl_base_total_mmgd',
+                'Exp_MMGD':    'vl_exp_total_mmgd',
+                'REVISION':    'data_revisao'}
             
-            df_carga = self._xlsx_to_df(filepath)
+            MAP_PAT = {'MIDDLE': 'medio','LOW':'leve','HIGH':'pesada', 'MEDIUM': 'media' }
+            MAP_SS  = {'SUDESTE': 'SE', 'SUL':'S','NORDESTE':'NE', 'NORTE':'N'}
+            LOAD_QUADRI = False
             
-            df_carga.drop(columns=['WEEK','GAUGE','LOAD_cMMGD', 'Base_CGH', 'Base_EOL', 'Base_UFV', 'Base_UTE','Exp_MMGD','REVISION'], inplace=True, errors='ignore')
-            df_carga = df_carga[df_carga['TYPE'] == 'MEDIUM']
-            df_carga.drop(columns=['TYPE'], inplace=True, errors='ignore')
+            unzip_path = extract_zip(file_path)
+            logger.debug("Extracted zip file to: %s", unzip_path)
             
-            df_carga['vl_ano'] = df_carga['DATE'].dt.year
-            df_carga['vl_mes'] = df_carga['DATE'].dt.month
-            df_carga.drop(columns=['DATE'], inplace=True, errors='ignore')
+            load_path = glob.glob(os.path.join(unzip_path, '*xlsx'))[0]
+            logger.info("Found file: %s",load_path)
             
-            df_atualizacao_sist = df_carga[['vl_ano', 'vl_mes','SOURCE', 'LOAD_sMMGD', 'Exp_CGH', 'Exp_EOL', 'Exp_UFV', 'Exp_UTE']]
-            df_atualizacao_cadic = df_carga[['vl_ano', 'vl_mes','SOURCE', 'Base_MMGD']]
+            if 'quad' in os.path.basename(load_path): 
+                LOAD_QUADRI= True
             
-            df_atualizacao_sist.rename(columns={
+            df_load = pd.read_excel(load_path, dtype={'DATE': str, 'REVISION': str})
+            
+            logger.debug("Read weekly load data with %d rows", len(df_load))
+            df_load = df_load.drop('WEEK', axis=1)
+            df_load = df_load.rename(columns=MAP_COLUMNS)
+            df_load['patamar'] = df_load['patamar'].replace(MAP_PAT)
+            df_load['submercado'] = df_load['submercado'].replace(MAP_SS)
+            
+            delta_days = 0
+            if 'quad' in os.path.basename(load_path): 
+                LOAD_QUADRI= True
+                delta_days = 15
+            
+            date = pd.to_datetime(df_load['data_revisao'].unique()[0]) + timedelta(days=delta_days)
+            date_produto = (date + relativedelta(months=1)).replace(day=1).strftime('%Y-%m-%d')
+            df_load['data_produto'] = date_produto
+            df_load['quadrimestral'] = LOAD_QUADRI
+            
+            logger.info("Successfully processed load data with %d rows", len(df_load))
+            
+            return df_load
+        
+        except Exception as e:
+            logger.error("Failed to read week load data: %s", str(e), exc_info=True)
+            raise
+
+    def post_data(self, process_result: pd.DataFrame) -> dict:
+        logger.info("Inserindo valores de vazão observado do produto Previsões de Carga Mensal por Patamar do Newave. Qntd de linhas inseridas: %d", len(process_result))
+        try:
+            res = requests.post(
+                json=process_result.to_dict('records'),
+                headers=get_auth_header()
+            )
+            if res.status_code != 200:
+                logger.error("Failed to post data to database: status %d, response: %s",
+                           res.status_code, res.text)
+                res.raise_for_status()
+            logger.info("Successfully posted data to database, response status: %d", res.status_code)
+            return
+        
+        except Exception as e:
+            logger.error("Failed to post data to database: %s", str(e), exc_info=True)
+            raise
+            
+                   
+class UpdateSistemaCadic():
+    def __init__(self):
+        self.consts = Constants()
+        self.header = get_auth_header()
+        self.url_previsoes_carga = self.consts.GET_NEWAVE_PREVISOES_CARGAS
+        self.url_mmgd_base = self.consts.PUT_NEWAVE_CADIC_TOTAL_MMGD_BASE
+        self.url_mmgd_total = self.consts.PUT_NEWAVE_SISTEMA_MMGD_TOTAL
+        
+        logger.info("Initialized update sistema and c_adic" )
+    
+    def run_process(self):
+        self.update_cadic()
+        self.update_sistema()
+        
+        
+    def update_sistema(self):
+        df_data = self.get_data(self.url_previsoes_carga)
+        self.put_data(self.url_mmgd_total, df_data )
+        pass
+        
+    def update_cadic(self):
+        df_data = self.get_data(self.url_previsoes_carga)
+        self.put_data(self.url_mmgd_base, df_data )
+        pass
+        
+    def get_data(self, produto: str) -> pd.DataFrame:
+        res = requests.get(self.base_url_api + produto, headers=self.header)
+        if res.status_code != 200:
+            res.raise_for_status()
+        return pd.DataFrame(res.json())   
+    
+    def put_data(self, produto: str, data_in: pd.DataFrame ):
+        res = requests.get(self.base_url_api + produto,
+                           json=data_in.to_dict('records'),
+                           headers=self.header)
+        if res.status_code != 200:
+            res.raise_for_status()
+        return  res  
+
+class GerarCadicSistema():
+    def __init__(self):
+       self.consts = Constants()
+       
+    def run_process(self, process_result):
+        self.gerar_cadic(process_result)
+        self.gerar_sistema(process_result)
+    
+    def gerar_cadic(self,process_result):
+        cadic_values = process_result
+        pdb.set_trace()
+        df_cadic = cadic_values[['vl_ano', 'vl_mes','submercado', 'vl_base_total_mmgd']]
+        
+        pass
+    
+    def gerar_sistema(self,process_result):
+        sistema_values = process_result
+        
+        df_sist = sistema_values[['vl_ano', 'vl_mes','SOURCE', 'LOAD_sMMGD', 'Exp_CGH', 'Exp_EOL', 'Exp_UFV', 'Exp_UTE']]
+        
+        df_sist.rename(columns={
                 'SOURCE': 'cd_submercado',
                 'LOAD_sMMGD': 'vl_energia_total',
                 'Exp_CGH': 'vl_geracao_pch_mmgd',
@@ -99,349 +205,71 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
                 'Exp_UFV': 'vl_geracao_ufv_mmgd',
                 'Exp_UTE': 'vl_geracao_pct_mmgd'
             }, inplace=True)
-            
-            cd_submercados = {
-                'SUDESTE': '1',
-                'SUL': '2',
-                'NORDESTE': '3',
-                'NORTE': '4'
-            }
-            
-            df_atualizacao_sist['cd_submercado'] = df_atualizacao_sist['cd_submercado'].map(cd_submercados)
-            df_atualizacao_sist['cd_submercado'] = df_atualizacao_sist['cd_submercado'].astype(int)
-            
-            df_atualizacao_sist['vl_energia_total'] = df_atualizacao_sist['vl_energia_total'].astype(int)
-            
-            for col in ['vl_geracao_pch_mmgd', 'vl_geracao_eol_mmgd', 'vl_geracao_ufv_mmgd', 'vl_geracao_pct_mmgd']:
-                if col in df_atualizacao_sist.columns:
-                    df_atualizacao_sist[col] = df_atualizacao_sist[col].astype(float).round(2)
-            
-            df_atualizacao_cadic.rename(columns={
-                'SOURCE': 'cd_submercado',
-                'Base_MMGD': 'vl_mmgd'
-            }, inplace=True)
-            
-            cd_submercados_cadic = {
-                'SUDESTE': 'se',
-                'SUL': 's',
-                'NORDESTE': 'ne',
-                'NORTE': 'n'
-            }
-            
-            df_atualizacao_cadic.loc[:, 'cd_submercado'] = df_atualizacao_cadic['cd_submercado'].map(cd_submercados_cadic)
-            
-            df_atualizacao_cadic = df_atualizacao_cadic.pivot_table(
-                index=['vl_ano', 'vl_mes'],
-                columns='cd_submercado',
-                values='vl_mmgd',
-                aggfunc='first'
-            ).reset_index()
-            
-            df_atualizacao_cadic.columns.name = None
-            
-            df_atualizacao_cadic = df_atualizacao_cadic.rename(columns={
-                'se': 'vl_mmgd_se',
-                's': 'vl_mmgd_s',
-                'ne': 'vl_mmgd_ne',
-                'n': 'vl_mmgd_n'
-            })
-            
-            for col in ['vl_mmgd_se', 'vl_mmgd_s', 'vl_mmgd_ne', 'vl_mmgd_n']:
-                if col in df_atualizacao_cadic.columns:
-                    df_atualizacao_cadic[col] = df_atualizacao_cadic[col].astype(float).round(0)
-                    df_atualizacao_cadic[col] = df_atualizacao_cadic[col].fillna(0).astype(int)
-                    
-            df_atualizacao_cadic['versao'] = 'preliminar'
-            df_atualizacao_sist['versao'] = 'preliminar'
-            
-            data_produto_str = payload.dataProduto
-            data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
-                
-            df_atualizacao_cadic['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
-            df_atualizacao_sist['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
-            
-            df_atualizacao_cadic = df_atualizacao_cadic[['vl_ano', 'vl_mes', 'vl_mmgd_se', 'vl_mmgd_s', 'vl_mmgd_ne', 'vl_mmgd_n', 'versao', 'dt_deck']]
-           
-            return [df_atualizacao_sist, df_atualizacao_cadic]
-            
-        except Exception as e:
-            logger.error(f"Erro ao ler o arquivo XLSX: {e}")
-            raise
-  
-  
-    def processar_carga_mensal_para_api(
-        self,
-        payload: WebhookSintegreSchema,
-        download_extract_filepath: Dict[str, Any]
-    ) -> list:
-        
-        filepath = download_extract_filepath
-            
-        df_carga = self._xlsx_to_df(filepath)
-        
-        
-        pass
-            
-  
-    def atualizar_carga_mensal(
-        self,
-        payload: WebhookSintegreSchema,
-        processar_carga_mensal_result: list
-    ) -> None:
-        
-        try:
-            df_atualizacao_sist, df_atualizacao_cadic = processar_carga_mensal_result
-            
-            logger.info("Atualizando SISTEMA e CADIC com os dados processados de Carga Mensal.")
-            
-            auth_headers = get_auth_header()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-            
-            # base_url = constants.BASE_URL
-            base_url = "http://localhost:8000"
-            api_url = f"{base_url}/api/v2"
-            
-            url_sistema_mmgd_total = f"{api_url}/decks/newave/sistema/mmgd_total"
-            url_cadic_mmgd_base = f"{api_url}/decks/newave/cadic/total_mmgd_base"
-            
-            url_last_sistema = f"{api_url}/decks/newave/sistema/last_deck"
-            url_last_cadic = f"{api_url}/decks/newave/cadic/last_deck"
-            url_post_cadic_quad = f"{api_url}/decks/newave/cadic/"
-            url_post_sistema_quad = f"{api_url}/decks/newave/sistema/"
-            
-            headers = get_auth_header()
-            headers['Content-Type'] = 'application/json'
-            
-            
-            filename = payload.filename
-            
-            if 'quad' in filename.lower():
-                
-                response_last_cadic = requests.get(
-                    url_last_cadic,
-                    headers=headers
-                )
-                response_last_sistema = requests.get(
-                    url_last_sistema,
-                    headers=headers
-                )
-                
-                df_last_cadic = pd.DataFrame(response_last_cadic.json())
-                df_last_sist = pd.DataFrame(response_last_sistema.json())
-                
-                CADIC_KEYS_TO_KEEP = ['vl_ano','vl_mes','vl_const_itaipu','vl_ande','vl_boa_vista']
-                SISTEMA_KEYS_TO_KEEP = ['vl_ano','vl_mes','cd_submercado', 'vl_geracao_pch', 'vl_geracao_eol', 'vl_geracao_ufv', 'vl_geracao_pct']
-                
-                df_last_cadic = df_last_cadic[CADIC_KEYS_TO_KEEP]
-                df_last_sist = df_last_sist[SISTEMA_KEYS_TO_KEEP]
-                
-                cadic_atualizado = pd.merge(
-                    df_last_cadic,
-                    df_atualizacao_cadic,
-                    on=["vl_ano", "vl_mes"],
-                    how="left"  
-                )
-                
-                sist_atualizado = pd.merge(
-                    df_last_sist,
-                    df_atualizacao_sist,
-                    on=["vl_ano", "vl_mes","cd_submercado"],
-                    how="left"  
-                )
-                
-                cadic_atualizado['vl_boa_vista'] = 0
-                
-                cadic_atualizado = cadic_atualizado.to_dict(orient='records')
-                sist_atualizado = sist_atualizado.to_dict(orient='records')
-                
-                response_cadic_mmgd_base = requests.post(
-                    url_post_cadic_quad,
-                    json=cadic_atualizado, 
-                    headers=headers
-                )
-                
-                response_sistema_mmgd_total = requests.post(
-                    url_post_sistema_quad,
-                    json=sist_atualizado,
-                    headers=headers
-                )
+        pass 
 
-            else:
-                
-                sistema_payload = df_atualizacao_sist.to_dict(orient='records')
-                cadic_payload = df_atualizacao_cadic.to_dict(orient='records')
-                
-                response_cadic_mmgd_base = requests.put(
-                    url_cadic_mmgd_base,
-                    json=cadic_payload, 
-                    headers=headers
-                )
-                
-                response_sistema_mmgd_total = requests.put(
-                    url_sistema_mmgd_total, 
-                    json=sistema_payload, 
-                    headers=headers
-                )
-            
-            if response_sistema_mmgd_total.status_code == 200 or response_sistema_mmgd_total.status_code == 201:
-                logger.info("Carga mensal do sistema atualizada com sucesso.")
-            else:
-                logger.error(f"Erro ao atualizar carga mensal do sistema: {response_sistema_mmgd_total.text}")
-                raise ValueError(f"Erro ao atualizar carga mensal do sistema: {response_sistema_mmgd_total.text}")
-            
-            if response_cadic_mmgd_base.status_code == 200 or response_cadic_mmgd_base.status_code == 201:
-                logger.info("Carga mensal do CADIC atualizada com sucesso.")
-            else:
-                logger.error(f"Erro ao atualizar carga mensal do CADIC: {response_cadic_mmgd_base.text}")
-                raise ValueError(f"Erro ao atualizar carga mensal do CADIC: {response_cadic_mmgd_base.text}")
+class GerarTabelaDiferenca():
+    def __init__(self):
+        self.consts = Constants()
+        self.header = get_auth_header()
+        self.url_html_to_image = self.consts.URL_HTML_TO_IMAGE
+        self.url_carga_global  = self.consts.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
+        self.url_carga_liquida = self.consts.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
+        self.url_unsi          = self.consts.GET_NEWAVE_SISTEMA_TOTAL_UNSI
+        self.url_mmgd_total    = self.consts.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_ande          = self.consts.GET_NEWAVE_CADIC_TOTAL_ANDE
         
-        except Exception as e:
-            logger.error(f"Erro ao atualizar carga mensal: {e}")
-            raise
-
-    def gerar_tabela_diferenca_cargas(
-        self,
-        payload: WebhookSintegreSchema,
-    ) -> Dict[str, Any]:
-        """
-        Gera uma tabela de diferença de cargas.
+        logger.info("Initialized generate table" )
+    
+    def run_process(self):
+        html = self.generate_table()
+        image_path = self.transform_html_to_image(html)
+        self.enviar_tabela_whatsapp_email(image_path)
         
-        :return: Dicionário com o status e mensagem da geração da tabela.
-        """
-        try:
-            logger.info("Gerando tabela de diferença de cargas...")
-            
-            data_produto_str = payload.dataProduto
-            
-            auth_headers = get_auth_header()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-            
-            # base_url = constants.BASE_URL
-            base_url = "http://localhost:8000"
-            api_url = f"{base_url}/api/v2"
-            image_api_url = f"https://tradingenergiarz.com/html-to-img"
-            
-            
-            # Pegando valores do sistema de geração de usinas não simuladas (UNSI)
-            sistema_unsi_url = f"{api_url}/decks/newave/sistema/total_unsi"
-            sistema_unsi_response = requests.get(
-                sistema_unsi_url,
-                headers=headers
-            )
-            if sistema_unsi_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de geração UNSI: {sistema_unsi_response.text}")
-            
-            sistema_unsi_values = sistema_unsi_response.json() 
-            
-            # Pegando valores de carga de ANDE
-            cadic_ande_url = f"{api_url}/decks/newave/cadic/total_ande"
-            cadic_ande_response = requests.get(
-                cadic_ande_url,
-                headers=headers
-            )
-            if cadic_ande_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de carga do ANDE: {cadic_ande_response.text}")
-            
-            cadic_ande_values = cadic_ande_response.json() 
-            
-            # Pegando valores de MMGD Total 
-            sistema_mmgd_total_url = f"{api_url}/decks/newave/sistema/mmgd_total"
-            sistema_mmgd_total_response = requests.get(
-                sistema_mmgd_total_url,
-                headers=headers
-            )
-            if sistema_mmgd_total_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de MMGD Total: {sistema_mmgd_total_response.text}")
-            
-            sistema_mmgd_total_values = sistema_mmgd_total_response.json()
-            
-            # Pegando valores de geração de Carga Global
-            carga_global_url = f"{api_url}/decks/newave/sistema/cargas/total_carga_global"
-            carga_global_response = requests.get(
-                carga_global_url,
-                headers=headers
-            )
-            if carga_global_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de geração de carga global: {carga_global_response.text}")
-            carga_global_values = carga_global_response.json()
-            
-            # Pegando valores de geração de Carga Líquida
-            carga_liquida_url = f"{api_url}/decks/newave/sistema/cargas/total_carga_liquida"
-            carga_liquida_response = requests.get(
-                carga_liquida_url,
-                headers=headers
-            )
-            if carga_liquida_response.status_code != 200:
-                raise ValueError(f"Erro ao obter dados de geração de carga liquida: {carga_liquida_response.text}")
-            carga_liquida_values = carga_liquida_response.json()
-            
-            dados = {
-                'dados_unsi': sistema_unsi_values,
-                'dados_ande': cadic_ande_values,
-                'dados_mmgd_total': sistema_mmgd_total_values,
-                'dados_carga_global': carga_global_values,
-                'dados_carga_liquida': carga_liquida_values
-            }
-            
-            html_builder = HtmlBuilder()
-            
-            html_tabela_diferenca = html_builder.gerar_html(
-                'diferenca_cargas', 
-                dados
-            )
-            
-            api_html_payload = {
-                "html": html_tabela_diferenca,
+    def generate_table(self):        
+        dados = {
+            'dados_unsi':self.get_data(self.url_unsi),
+            'dados_ande': self.get_data(self.url_ande),
+            'dados_mmgd_total': self.get_data(self.url_mmgd_total),
+            'dados_carga_global': self.get_data(self.url_carga_global),
+            'dados_carga_liquida': self.get_data(self.url_carga_liquida)
+        }
+        
+        html_tabela_diferenca = HtmlBuilder.gerar_html(
+            'diferenca_cargas', 
+            dados
+        )
+       
+        print(html_tabela_diferenca)
+        
+        return html_tabela_diferenca
+    
+    def transform_html_to_image(self,html):
+        
+        api_html_payload = {
+                "html": html,
                 "options": {
                   "type": "png",
                   "quality": 100,
                   "trim": True,
                   "deviceScaleFactor": 2
                 }
-            }
+        }
             
-            html_api_endpoint = f"{image_api_url}/convert"
-            
-            request_html_api = requests.post(
-                html_api_endpoint,
-                headers=headers,
-                json=api_html_payload,  
-            )
-            
-            if request_html_api.status_code != 200:
-                raise ValueError(f"Erro ao converter HTML em imagem: {request_html_api.text}")
-            
-            image_dir = "/tmp/deck_newave/images"
-            os.makedirs(image_dir, exist_ok=True)
-            
-            image_filename = f"tabela_diferenca_cargas_preliminar_atualizado_{data_produto_str.replace("/","_")}.png"
-            
-            image_path = os.path.join(image_dir, image_filename)
-            
-            with open(image_path, 'wb') as f:
-                f.write(request_html_api.content)
-            
-            logger.info(f"Imagem salva em: {image_path}")
-            
-            return image_path
+        html_api_endpoint = f"{self.url_html_to_image}/convert"
         
-        except Exception as e:
-            logger.error(f"Erro ao gerar tabela de diferença de cargas: {e}")
-            raise
+        request_html_api = requests.post(
+            html_api_endpoint,
+            headers=self.headers,
+            json=api_html_payload,  
+        )
+        
+        if request_html_api.status_code < 200 or request_html_api.status_code >= 300:
+                raise ValueError(f"Erro ao converter HTML em imagem: {request_html_api.text}")
         
     def enviar_tabela_whatsapp_email(
         self,
-        payload: WebhookSintegreSchema,
-        gerar_tabela_diferenca_cargas_result: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        image_path,
+    ):
         """
         Envia a tabela de diferença de cargas por WhatsApp e email.
         
@@ -450,14 +278,14 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
         try:
             logger.info("Enviando tabela de diferença de cargas por WhatsApp e email...")
             
-            data_produto_str = payload.dataProduto
+            data_produto_str = self.dataProduto
             versao = "preliminar"
             
-            image_path = gerar_tabela_diferenca_cargas_result
+            image_path = image_path
             if not image_path or not os.path.exists(image_path):
                 raise ValueError(f"Arquivo de imagem não encontrado: {image_path}")
             
-            if 'quad' in payload.filename:
+            if 'quad' in self.filename:
                 msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Quadrimestral x Definitivo anterior) - {data_produto_str}"
             else:
                 msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar atual atualizado x Definitivo anterior) - {data_produto_str}"
@@ -473,28 +301,42 @@ class PrevisoesCargaMensalPatamarNewave(WebhookProductsInterface):
                     
         except Exception as e:
             logger.error(f"Erro ao enviar tabela por WhatsApp e email: {e}")
-            raise        
+            raise 
+        
+    def get_data(self, url: str) -> pd.DataFrame:
+        res = requests.get(url, headers=self.header)
+        if res.status_code != 200:
+            res.raise_for_status()
+        return res.json()
     
-    def triggar_dag_externa():
-        pass    
-    
-if __name__ == "__main__":
-   
-   payload = {
-  "dataProduto": "09/2025", 
-  "filename": "CargaMensal_2revquad2529.zip",
-  "macroProcesso": "Programação da Operação",
-  "nome": "Previsões de carga mensal e por patamar - NEWAVE",
-  "periodicidade": "2025-09-01T00:00:00",
-  "periodicidadeFinal": "2025-09-30T23:59:59",
-  "processo": "Previsão de Carga para o PMO",
-  "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
-  "webhookId": "688d2cb494f9e32e8e798756"
-}
-   
-   payload = WebhookSintegreSchema(**payload)
-   
-   previsoescargamensal = PrevisoesCargaMensalPatamarNewave(payload)
-   
-   previsoescargamensal.run_workflow()
+class TriggerDagExterna():
+    pass
+
+
+
+
+if __name__ == '__main__':
+    logger.info("Iniciando workflow do produto manualmente...")
+    try:
+        
+        payload = {
+            "dataProduto": "09/2025",
+            "filename": "RV0_PMO_Setembro_2025_carga_mensal.zip",
+            "macroProcesso": "Programação da Operação",
+            "nome": "Previsões de carga mensal e por patamar - NEWAVE",
+            "periodicidade": "2025-09-01T00:00:00",
+            "periodicidadeFinal": "2025-09-30T23:59:59",
+            "processo": "Previsão de Carga para o PMO",
+            "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/68accd5eb790e437d652a03d_RV0_PMO_Setembro_2025_carga_mensal.zip",
+            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvUlYwX1BNT19TZXRlbWJyb18yMDI1X2NhcmdhX21lbnNhbC56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUHJldmlzw7VlcyBkZSBjYXJnYSBtZW5zYWwgZSBwb3IgcGF0YW1hciAtIE5FV0FWRSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzU2MjQxODcwLCJuYmYiOjE3NTYxNTUyMzB9.azluL7uoHY-tRZ21TuXHFX3R9yNNOS1urVts6xgsghM",
+            "webhookId": "68accd5eb790e437d652a03d"
+        }
+        
+        payload = WebhookPayloadSchema(**payload)
+        
+        previsoescarga = CargaPatamarNewave(payload)
+        previsoescarga.run_workflow()
+        
+    except Exception as e:
+        logger.error("Erro no fluxo manual de processamento das Previsões de Carga Mensal por Patamar do Newave: %s", str(e), exc_info=True)
+        raise

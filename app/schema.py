@@ -3,7 +3,7 @@ import datetime
 from typing import Optional
 
 
-class WebhookSintegreSchema(BaseModel):
+class WebhookPayloadSchema(BaseModel):
     dataProduto: str
     filename: str
     macroProcesso: str

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from middle import s3
 from middle.utils import setup_logger, extract_zip
 from typing import Optional, Dict, Any
-from .schema import WebhookSintegreSchema
+from .schema import WebhookPayloadSchema
 import pandas as pd
 # from .webhook_service import get_webhook_payload
 from middle.utils import Constants
@@ -16,8 +16,8 @@ class WebhookProductsInterface(ABC):
     Define os metodos base que devem ser implementados no ETL dos produtos do webhook.
     """
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
-        self.payload:WebhookSintegreSchema = payload
+    def __init__(self, payload: Optional[WebhookPayloadSchema] = None):
+        self.payload:WebhookPayloadSchema = payload
         self.run_workflow_results:dict = {}
 
 
@@ -45,7 +45,7 @@ class WebhookProductsInterface(ABC):
         
         id_produto = self.payload.webhookId
         filename = self.payload.filename
-        path_to_send = constants.PATH_ARQUIVOS_TEMP
+        path_to_send = constants.PATH_TMP
         os.makedirs(path_to_send, exist_ok=True)
         logger.debug("Criado caminho temporário para o arquivo: %s", path_to_send)
         
