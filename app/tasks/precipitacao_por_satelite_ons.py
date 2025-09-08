@@ -18,14 +18,14 @@ logger = setup_logger()
 constants = Constants()
 
 
-class PrecipitacaoPorSatelitePMO(WebhookProductsInterface):
+class PrecipitacaoPorSateliteONS(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookPayloadSchema]):
         super().__init__(payload)
         
         
     def run_workflow(self):
-        logger.info("Iniciando workflow do produto Precipitação por Satélite - PMO...")
+        logger.info("Iniciando workflow do produto Precipitação por Satélite - ONS...")
         try:
             file_path = self.download_extract_files()
             
@@ -58,14 +58,12 @@ class PrecipitacaoPorSatelitePMO(WebhookProductsInterface):
             raise
         
         
-        pdb.set_trace()
-    
     def post_data(self, process_result: pd.DataFrame) -> dict:
         pass
     
 
 if __name__ == '__main__':
-    logger.info("Iniciando manualmente o workflow do produto Precipitação por Satélite - PMO...")
+    logger.info("Iniciando manualmente o workflow do produto Precipitação por Satélite - ONS...")
     try:
         payload = {
             "dataProduto": "06/09/2025",
@@ -85,5 +83,5 @@ if __name__ == '__main__':
         relatorioacompanhamento = RelatorioAcompanhamentoHidrologico(payload)
         relatorioacompanhamento.run_workflow()
     except Exception as e:
-        logger.error("Erro no fluxo manual de processamento das Precipitação por Satélite - PMO: %s", str(e), exc_info=True)
+        logger.error("Erro no fluxo manual de processamento das Precipitação por Satélite - ONS: %s", str(e), exc_info=True)
         raise

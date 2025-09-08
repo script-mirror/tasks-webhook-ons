@@ -50,13 +50,10 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
     def process_file(self, file_path):
         logger.info("Processando arquivos do produto... Arquivo encontrado: %s", file_path)
         try:
-            file_path = file_path
             
             df_load = pd.ExcelFile(file_path)
             
-            import pdb
-            
-            with open('/projetos/arquivos/smap/infos_vazoes/info_vazao_obs.json', encoding='utf-8') as f:
+            with open(self.consts.PATH_INFO_VAZOES_OBS_JSON, encoding='utf-8') as f:
                 infoTrechos = json.load(f)
             
             process_result = []	
