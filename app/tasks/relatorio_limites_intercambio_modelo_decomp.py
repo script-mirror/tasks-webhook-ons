@@ -12,7 +12,7 @@ from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from app.schema import WebhookPayloadSchema  # noqa: E402
+from app.schema import WebhookSintegreSchema  # noqa: E402
 from middle.utils import ( # noqa: E402
     setup_logger,
     Constants,
@@ -31,7 +31,7 @@ MONTHS = {
 
 class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookPayloadSchema]):
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
     
     def run_workflow(self, filepath: Optional[str] = None):

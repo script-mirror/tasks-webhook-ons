@@ -10,7 +10,7 @@ current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 from app.webhook_products_interface import WebhookProductsInterface
-from app.schema import WebhookPayloadSchema
+from app.schema import WebhookSintegreSchema
 
 from middle.utils import setup_logger, Constants
 from middle.utils.file_manipulation import extract_zip
@@ -20,7 +20,7 @@ constants = Constants()
 
 class PrecipitacaoPorSateliteONS(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookPayloadSchema]):
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
         
         
@@ -78,7 +78,7 @@ if __name__ == '__main__':
             "webhookId": "68bd994351c7b8ba11d2d11c"
         }
         
-        payload = WebhookPayloadSchema(**payload)
+        payload = WebhookSintegreSchema(**payload)
         
         relatorioacompanhamento = RelatorioAcompanhamentoHidrologico(payload)
         relatorioacompanhamento.run_workflow()
