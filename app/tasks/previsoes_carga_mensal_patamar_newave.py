@@ -24,6 +24,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookPayloadSchema]):
         super().__init__(payload)
+        self.post_previsoes_carga = constants.POST_NEWAVE_PREVISOES_CARGAS
         self.update_nw = UpdateSistemaCadic()
         self.gerar_tabela = GerarTabelaDiferenca()
         self.gerar_dat = GerarCadicSistema()  
@@ -55,7 +56,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
             
         self.gerar_tabela.run_process()
             
-        self.trigger_dag.run_process()
+        # self.trigger_dag.run_process()
         
         
     def process_file(self, file_path) -> pd.DataFrame:
@@ -123,6 +124,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         logger.info("Inserindo valores de vazão observado do produto Previsões de Carga Mensal por Patamar do Newave. Qntd de linhas inseridas: %d", len(process_result))
         try:
             res = requests.post(
+                url=self.post_previsoes_carga,
                 json=process_result.to_dict('records'),
                 headers=get_auth_header()
             )
@@ -131,7 +133,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
                            res.status_code, res.text)
                 res.raise_for_status()
             logger.info("Successfully posted data to database, response status: %d", res.status_code)
-            return
+            return {"msg": "Dados de carga previstas enviadas com sucesso!"}
         
         except Exception as e:
             logger.error("Failed to post data to database: %s", str(e), exc_info=True)
