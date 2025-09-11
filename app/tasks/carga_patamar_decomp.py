@@ -13,8 +13,12 @@ sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema  # noqa: E402
 from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string  # noqa: E402
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
-from middle.utils.file_manipulation import extract_zip
-from middle.s3 import (handle_webhook_file, get_latest_webhook_product,)
+from middle.utils.file_manipulation import extract_zip # noqa: E402
+from middle.s3 import ( # noqa: E402
+    handle_webhook_file,
+    get_latest_webhook_product,
+)
+from middle.airflow import trigger_dag, trigger_dag_legada
 
 logger = setup_logger()
 constants = Constants()
@@ -39,15 +43,18 @@ class CargaPatamarDecomp(WebhookProductsInterface):
             
             self.run_process( base_path)
             logger.info("run_workflow completed successfully")
+            self.trigger_dags()
+            logger.info("Triggered Airflow DAG successfully")
+            
             
         except Exception as e:
             logger.error("run_workflow failed: %s", str(e), exc_info=True)
             raise
+
     def run_process(self, base_path):
         df_load = self.read_week_load(base_path)
         logger.info("Successfully processed load data with %d rows", len(df_load))
         self.post_data(df_load)
-        
         
     def read_week_load(self, base_path):
         logger.info("Reading week load data from base path: %s", base_path)
@@ -131,6 +138,13 @@ class CargaPatamarDecomp(WebhookProductsInterface):
             logger.error("Failed to post data to database: %s", str(e), exc_info=True)
             raise
 
+    def trigger_dags(self):
+        trigger_dag(
+            dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
+        )
+        trigger_dag_legada(
+            dag_id="WEBHOOK", conf=self.payload.model_dump() if type(self.payload) is WebhookSintegreSchema else self.payload
+        )
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
