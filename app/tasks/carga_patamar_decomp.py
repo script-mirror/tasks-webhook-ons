@@ -1,3 +1,4 @@
+import pdb
 import sys
 import os
 import requests
@@ -32,13 +33,12 @@ class CargaPatamarDecomp(WebhookProductsInterface):
     def run_workflow(self):
         logger.info("Starting run_workflow for CargaPatamarDecomp")
         try:
-            os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)
-            logger.debug("Created temporary directory: %s", constants.PATH_ARQUIVOS_TEMP)
+            os.makedirs(constants.PATH_TMP, exist_ok=True)
+            logger.debug("Created temporary directory: %s", constants.PATH_TMP)
             
             payload = get_latest_webhook_product(constants.WEBHOOK_CARGA_DECOMP)[0]
             logger.debug("Retrieved latest webhook product: %s", payload)
-            
-            base_path = handle_webhook_file(payload, constants.PATH_ARQUIVOS_TEMP)
+            base_path = handle_webhook_file(payload, constants.PATH_TMP)
             logger.info("Webhook file handled, base path: %s", base_path)
             
             self.run_process( base_path)
@@ -149,7 +149,18 @@ class CargaPatamarDecomp(WebhookProductsInterface):
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
     try:
-        carga = CargaPatamarDecomp({})
+        carga = CargaPatamarDecomp({
+    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjgvUlYxX1BNT19TZXRlbWJyb18yMDI1X2NhcmdhX3NlbWFuYWwuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkNhcmdhIHBvciBwYXRhbWFyIC0gREVDT01QIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTcwODczMzgsIm5iZiI6MTc1NzAwMDY5OH0.k5Mxx8C50KASKG_ilL9tF-x7i-YOaWtiSYJmAW-sGQs",
+    "nome": "Carga por patamar - DECOMP",
+    "s3Key": "webhooks/Carga por patamar - DECOMP/68b9b3fb51c7b8ba11d2ce58_RV1_PMO_Setembro_2025_carga_semanal.zip",
+    "filename": "RV1_PMO_Setembro_2025_carga_semanal.zip",
+    "processo": "Previsão de Carga para o PMO",
+    "webhookId": "68b9b3fb51c7b8ba11d2ce58",
+    "dataProduto": "06/09/2025 - 12/09/2025",
+    "macroProcesso": "Programação da Operação",
+    "periodicidade": "2025-09-06T03:00:00.000Z",
+    "periodicidadeFinal": "2025-09-13T02:59:59.000Z"
+})
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
