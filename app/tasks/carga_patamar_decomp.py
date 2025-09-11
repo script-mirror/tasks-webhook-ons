@@ -142,8 +142,13 @@ class CargaPatamarDecomp(WebhookProductsInterface):
         trigger_dag(
             dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
         )
+        conf = self.payload.model_dump() if type(self.payload) is WebhookSintegreSchema else self.payload
+        if isinstance(conf, dict):
+            for k, v in conf.items():
+                if isinstance(v, (datetime, pd.Timestamp)):
+                    conf[k] = str(v)
         trigger_dag_legada(
-            dag_id="WEBHOOK", conf=self.payload.model_dump() if type(self.payload) is WebhookSintegreSchema else self.payload
+            dag_id="WEBHOOK", conf=conf
         )
 
 if __name__ == '__main__':
