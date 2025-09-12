@@ -137,7 +137,21 @@ class CargaPatamarDecomp(WebhookProductsInterface):
         except Exception as e:
             logger.error("Failed to post data to database: %s", str(e), exc_info=True)
             raise
-
+    
+    
+    def trigger_dags(self):
+        trigger_dag(
+            dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
+        )
+        conf = self.payload.model_dump() if type(self.payload) is WebhookSintegreSchema else self.payload
+        if isinstance(conf, dict):
+            for k, v in conf.items():
+                if isinstance(v, (datetime, pd.Timestamp)):
+                    conf[k] = str(v)
+        trigger_dag_legada(
+            dag_id="WEBHOOK", conf=conf
+        )
+       
 
 class CargaSemanalDecomp():
     
@@ -182,18 +196,6 @@ class CargaSemanalDecomp():
         df_week_load = pd.read_excel(week_load_path)
         logger.debug("Read weekly load data with %d rows", len(df_week_load))
 
-    def trigger_dags(self):
-        trigger_dag(
-            dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
-        )
-        conf = self.payload.model_dump() if type(self.payload) is WebhookSintegreSchema else self.payload
-        if isinstance(conf, dict):
-            for k, v in conf.items():
-                if isinstance(v, (datetime, pd.Timestamp)):
-                    conf[k] = str(v)
-        trigger_dag_legada(
-            dag_id="WEBHOOK", conf=conf
-        )
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
