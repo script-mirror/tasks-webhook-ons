@@ -1,3 +1,4 @@
+import pdb
 import sys
 import os
 import requests
@@ -13,8 +14,12 @@ sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema  # noqa: E402
 from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string  # noqa: E402
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
-from middle.utils.file_manipulation import extract_zip, create_directory
-from middle.s3 import (handle_webhook_file, get_latest_webhook_product,)
+from middle.utils.file_manipulation import extract_zip, create_directory # noqa: E402
+from middle.s3 import ( # noqa: E402
+    handle_webhook_file,
+    get_latest_webhook_product,
+)
+from middle.airflow import trigger_dag, trigger_dag_legada
 
 logger = setup_logger()
 constants = Constants()
@@ -28,26 +33,28 @@ class CargaPatamarDecomp(WebhookProductsInterface):
     def run_workflow(self):
         logger.info("Starting run_workflow for CargaPatamarDecomp")
         try:
-            os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)
-            logger.debug("Created temporary directory: %s", constants.PATH_ARQUIVOS_TEMP)
+            os.makedirs(constants.PATH_TMP, exist_ok=True)
+            logger.debug("Created temporary directory: %s", constants.PATH_TMP)
             
             payload = get_latest_webhook_product(constants.WEBHOOK_CARGA_DECOMP)[0]
             logger.debug("Retrieved latest webhook product: %s", payload)
-            
-            base_path = handle_webhook_file(payload, constants.PATH_ARQUIVOS_TEMP)
+            base_path = handle_webhook_file(payload, constants.PATH_TMP)
             logger.info("Webhook file handled, base path: %s", base_path)
             
             self.run_process( base_path)
             logger.info("run_workflow completed successfully")
+            self.trigger_dags()
+            logger.info("Triggered Airflow DAG successfully")
+            
             
         except Exception as e:
             logger.error("run_workflow failed: %s", str(e), exc_info=True)
             raise
+
     def run_process(self, base_path):
         df_load = self.read_week_load(base_path)
         logger.info("Successfully processed load data with %d rows", len(df_load))
         self.post_data(df_load)
-        
         
     def read_week_load(self, base_path):
         logger.info("Reading week load data from base path: %s", base_path)
@@ -175,6 +182,18 @@ class CargaSemanalDecomp():
         df_week_load = pd.read_excel(week_load_path)
         logger.debug("Read weekly load data with %d rows", len(df_week_load))
 
+    def trigger_dags(self):
+        trigger_dag(
+            dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
+        )
+        conf = self.payload.model_dump() if type(self.payload) is WebhookSintegreSchema else self.payload
+        if isinstance(conf, dict):
+            for k, v in conf.items():
+                if isinstance(v, (datetime, pd.Timestamp)):
+                    conf[k] = str(v)
+        trigger_dag_legada(
+            dag_id="WEBHOOK", conf=conf
+        )
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
