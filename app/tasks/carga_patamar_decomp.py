@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema  # noqa: E402
 from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string  # noqa: E402
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
-from middle.utils.file_manipulation import extract_zip
+from middle.utils.file_manipulation import extract_zip, create_directory
 from middle.s3 import (handle_webhook_file, get_latest_webhook_product,)
 
 logger = setup_logger()
@@ -132,10 +132,54 @@ class CargaPatamarDecomp(WebhookProductsInterface):
             raise
 
 
+class CargaSemanalDecomp():
+    
+    def __init__(self):
+        
+        logger.info("Initialized CargaPatamarDecomp with payload: ")
+    
+    def run_workflow(self):
+        logger.info("Starting run_workflow for CargaPatamarDecomp")
+        try:
+            os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)
+            logger.debug("Created temporary directory: %s", constants.PATH_ARQUIVOS_TEMP)
+            
+            payload = get_latest_webhook_product(constants.WEBHOOK_CARGA_DECOMP)[0]
+            logger.debug("Retrieved latest webhook product: %s", payload)
+            
+            base_path = handle_webhook_file(payload, constants.PATH_ARQUIVOS_TEMP)
+            logger.info("Webhook file handled, base path: %s", base_path)
+            
+            self.run_process( base_path)
+            logger.info("run_workflow completed successfully")
+            
+        except Exception as e:
+            logger.error("run_workflow failed: %s", str(e), exc_info=True)
+            raise
+    def run_process(self, base_path):
+        df_load = self.read_week_load(base_path)
+        logger.info("Successfully processed load data with %d rows", len(df_load))
+        
+        
+    def read_week_load(self, base_path):
+        logger.info("Reading week load data from base path: %s", base_path)
+        unzip_path = extract_zip(base_path)
+        logger.debug("Extracted zip file to: %s", unzip_path)
+        
+        week_load_path = glob.glob(os.path.join(unzip_path, '*arga_*.xlsx'))[0]
+        logger.info("Found weekly file: %s and monthly file: %s", week_load_path)
+        
+        file_rv = int(os.path.basename(week_load_path).split('Rev')[1][:2])
+        logger.info("Extracted file revision: %d", file_rv)
+        
+        df_week_load = pd.read_excel(week_load_path)
+        logger.debug("Read weekly load data with %d rows", len(df_week_load))
+
+
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
     try:
-        carga = CargaPatamarDecomp({})
+        carga = CargaSemanalDecomp()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
