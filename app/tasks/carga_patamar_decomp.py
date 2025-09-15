@@ -376,8 +376,8 @@ class GenerateTable:
         last_rv = int(SemanaOperativa(pd.to_datetime(date_last_rv)).current_revision)
         self.logger.info("Calculated revisions: RV=%d, last_RV=%d", rv, last_rv)
         
-        dif_rv_html.set_caption(f"Atualizacao de carga DC (RV{rv} - RV{last_rv})")
-        dif_pmo_html.set_caption(f"Atualizacao de carga DC (RV{rv} - PMO)")
+        dif_rv_html.set_caption(f"Atualização de carga DC (RV{rv} - RV{last_rv})")
+        dif_pmo_html.set_caption(f"Atualização de carga DC (RV{rv} - PMO)")
 
         css = '<style type="text/css">'
         css += 'caption {background-color: #666666; color: white;}'
