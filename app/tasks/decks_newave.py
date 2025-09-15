@@ -9,8 +9,12 @@ from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants
 from middle.message import send_whatsapp_message
 constants = Constants()
 logger = setup_logger()
+html_builder = HtmlBuilder()
 
 from typing import Optional, Dict, Any
+import shutil
+import zipfile
+import glob
 import pdb
 import pandas as pd
 import numpy as np
@@ -21,13 +25,13 @@ from inewave.newave import Patamar, Cadic, Sistema
 
 class DecksNewave(WebhookProductsInterface):
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema] = None) -> None:
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
         self.dataProduto = self.payload.dataProduto
         self.filename = self.payload.filename
-        self.process_functions = ProcessFunctions()
+        self.process_functions = ProcessFunctions(payload)
         self.update_weol = UpdateWeol()
-        self.gerar_tabela = GerarTabelaDiferenca()
+        self.gerar_tabela = GerarTabelaDiferenca(payload)
     
         logger.info("Inicializado DecksNewave com payload: %s", payload)
                
@@ -37,7 +41,7 @@ class DecksNewave(WebhookProductsInterface):
             
             file_path = self.download_extract_files()
             
-            self.run_process(self, file_path)
+            self.run_process(file_path)
 
             logger.info("Workflow do produto DecksNewave terminado com sucesso!")
         
@@ -51,9 +55,9 @@ class DecksNewave(WebhookProductsInterface):
         
         process_result = self.process_file(file_path)
         
-        if 'preliminar' in self.filename:
-            process_sist_result = self.update_weol.run_process()
-            process_result['process_sist_result'] = process_sist_result
+        # if 'preliminar' in self.filename:
+        #     process_sist_result = self.update_weol.run_process()
+        #     process_result['process_sist_result'] = process_sist_result
         
         self.post_data(process_result)
         
@@ -159,7 +163,12 @@ class DecksNewave(WebhookProductsInterface):
               
                
 class ProcessFunctions():
-    def get_version_by_filename(self, filename: str) -> str:
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
+        self.dataProduto = payload.dataProduto
+        self.filename = payload.filename
+        
+    
+    def _get_version_by_filename(self, filename: str) -> str:
         try:
             if 'preliminar' in filename.lower():
                 return 'preliminar'
@@ -186,23 +195,23 @@ class ProcessFunctions():
             file_path = download_extract_filepath
             
             dat_files = []
-            target_files = ['C_ADIC.DAT', 'SISTEMA.DAT', 'PATAMAR.DAT']
-            path_to_send = '/tmp/Deck NEWAVE Preliminar'
+            path_to_send = f'{constants.PATH_TMP}/DeckNEWAVE-extraido'
             
-            for root, _, files in os.walk(file_path):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    
-                    if file.lower().endswith('.zip'):
-                        with zipFile.ZipFile(file_path, 'r') as zip_ref:
-                            zip_ref.extractall(path_to_send)
-                            
-            for target in target_files:
-                for root, _, files in os.walk(path_to_send):
-                    for filename in files:
-                        if filename.upper() == target:
-                            dat_files.append(os.path.join(root, filename))
-                            
+            shutil.rmtree(path_to_send, ignore_errors=True)
+            os.makedirs(path_to_send, exist_ok=True)
+            
+            zip_ref = zipfile.ZipFile(file_path, 'r')
+            zip_ref.extractall(path_to_send)
+            
+            zip_ref = glob.glob(os.path.join(path_to_send, '*'))[0]
+            zip_ref = zipfile.ZipFile(zip_ref)
+            zip_ref.extractall(path_to_send)
+            
+            cadic_dat = glob.glob(os.path.join(path_to_send, 'C_ADIC.DAT'))[0]
+            sistema_dat = glob.glob(os.path.join(path_to_send, 'SISTEMA.DAT'))[0]
+            patamar_dat = glob.glob(os.path.join(path_to_send, 'PATAMAR.DAT'))[0]
+            
+            dat_files = [cadic_dat,sistema_dat,patamar_dat]
             if not dat_files:
                 raise ValueError(f"Nenhum arquivo DAT encontrado em {download_extract_filepath}")
                             
@@ -233,7 +242,7 @@ class ProcessFunctions():
                 if  'C_ADIC.DAT' in path:
                     cadic_file = path
                     break
-            
+
             if not cadic_file or not os.path.exists(cadic_file):
                 raise ValueError(f"Arquivo C_ADIC.DAT não encontrado em {file_path}")
             
@@ -649,9 +658,8 @@ class ProcessFunctions():
     
 class UpdateWeol():
     def __init__(self):
-        self.consts = Constants()
-        self.url_last_deck_date = self.consts.GET_DECOMP_WEOL_LAST_DECK_DATE
-        self.url_weighted_average = self.consts.GET_DECOMP_WEOL_WEIGHTED_AVERAGE
+        self.url_last_deck_date = constants.GET_DECOMP_WEOL_LAST_DECK_DATE
+        self.url_weighted_average = constants.GET_DECOMP_WEOL_WEIGHTED_AVERAGE
         
     def run_process(self):
         return self.atualizar_sist_com_weol()
@@ -739,23 +747,37 @@ class UpdateWeol():
             raise
     
 class GerarTabelaDiferenca():  
-    def __init__(self):
-        self.consts = Constants()
-        self.dataProduto = DecksNewave().dataProduto
-        self.filename = DecksNewave().filename
-        self.url_html_to_image = consts.URL_HTML_TO_IMAGE
-        self.header = get_auth_header()
-        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
-        self.url_carga_global  = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_global'
-        self.url_carga_liquida = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/cargas/total_carga_liquida'
-        self.url_unsi          = self.consts.BASE_URL + '/api/v2/decks/newave/sistema/total_unsi'
-        self.url_mmgd_base     = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_mmgd_base'
-        self.url_ande          = self.consts.BASE_URL + '/api/v2/decks/newave/cadic/total_ande'
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
+        constants = Constants()
+        self.payload = payload
+        self.dataProduto = payload.dataProduto
+        self.filename = payload.filename
+        self.headers = get_auth_header()
+        self.url_html_to_image = constants.URL_HTML_TO_IMAGE
+        self.url_unsi          = constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
+        self.url_carga_global  = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
+        self.url_carga_liquida = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
+        self.url_mmgd_exp     = constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_ande          = constants.GET_NEWAVE_CADIC_TOTAL_ANDE
         
     
     def run_process(self):
         tabela_html = self.gerar_tabela_diferenca_cargas()
         self.enviar_tabela_whatsapp_email(tabela_html)    
+    
+    
+    def _get_version_by_filename(self, filename: str) -> str:
+        try:
+            if 'preliminar' in filename.lower():
+                return 'preliminar'
+            elif 'definitivo' in filename.lower():
+                return 'definitivo'  
+            else:
+                raise ValueError("Nome do arquivo não contém 'preliminar' ou 'definitivo'.")
+                
+        except Exception as e:
+            logger.error(f"Erro ao determinar a versão pelo nome do arquivo: {e}")
+            raise
     
       
     def gerar_tabela_diferenca_cargas(
@@ -776,16 +798,16 @@ class GerarTabelaDiferenca():
             dados = {
                 'dados_unsi':self._get_data(self.url_unsi),
                 'dados_ande': self._get_data(self.url_ande),
-                'dados_mmgd_total': self._get_data(self.url_mmgd_base),
+                'dados_mmgd_total': self._get_data(self.url_mmgd_exp),
                 'dados_carga_global': self._get_data(self.url_carga_global),
                 'dados_carga_liquida': self._get_data(self.url_carga_liquida)
             }
         
-            html_tabela_diferenca = HtmlBuilder.gerar_html(
-                'diferenca_cargas', 
+            html_tabela_diferenca = html_builder.gerar_html(
+                'diferenca_cargas',
                 dados
             )
-            
+
             api_html_payload = {
                 "html": html_tabela_diferenca,
                 "options": {
@@ -796,7 +818,7 @@ class GerarTabelaDiferenca():
                 }
             }
             
-            html_api_endpoint = f"{self.url_html_to_image}/convert"
+            html_api_endpoint = self.url_html_to_image
             
             request_html_api = requests.post(
                 html_api_endpoint,
@@ -807,7 +829,7 @@ class GerarTabelaDiferenca():
             if request_html_api.status_code != 200:
                 raise ValueError(f"Erro ao converter HTML em imagem: {request_html_api.text}")
             
-            image_dir = "/tmp/deck_newave/images"
+            image_dir = "/projetos/arquivos/tmp/DeckNEWAVETabelas"
             os.makedirs(image_dir, exist_ok=True)
             
             image_filename = f"tabela_diferenca_cargas_{versao}_{data_produto_str.replace("/","_")}.png"
@@ -838,8 +860,8 @@ class GerarTabelaDiferenca():
         try:
             logger.info("Enviando tabela de diferença de cargas por WhatsApp e email...")
             
-            data_produto_str = payload.dataProduto
-            filename = payload.filename
+            data_produto_str = self.dataProduto
+            filename = self.filename
             versao = self._get_version_by_filename(filename)
             
             img_path = img_path
@@ -850,7 +872,7 @@ class GerarTabelaDiferenca():
             if 'versao' == 'preliminar':
                 msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar Atual x Definitivo anterior) - {data_produto_str}"
             else:
-                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar Atual x Definitivo anterior) - {data_produto_str}"
+                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Definitivo Atual x Preliminar anterior) - {data_produto_str}"
                 
             request_whatsapp = send_whatsapp_message(
                 destinatario="Debug",
@@ -866,7 +888,7 @@ class GerarTabelaDiferenca():
             raise
 
     def _get_data(self, url: str) -> pd.DataFrame:
-        res = requests.get(url, headers=self.header)
+        res = requests.get(url, headers=self.headers)
         if res.status_code != 200:
             res.raise_for_status()
         return res.json()
@@ -875,16 +897,16 @@ class GerarTabelaDiferenca():
 if __name__ == "__main__":
    
    payload = {
-  "dataProduto": "08/2025",
+  "dataProduto": "09/2025",
   "filename": "DECK NEWAVE DEFINITIVO.zip",
   "macroProcesso": "Programação da Operação",
   "nome": "DECK NEWAVE DEFINITIVO",
-  "periodicidade": "2025-08-01T00:00:00",
-  "periodicidadeFinal": "2025-08-31T23:59:59",
+  "periodicidade": "2025-09-01T00:00:00",
+  "periodicidadeFinal": "2025-09-30T23:59:59",
   "processo": "Médio Prazo",
-  "s3Key": "webhooks/DECK NEWAVE DEFINITIVO/6892aa3794f9e32e8e798bed_DECK NEWAVE DEFINITIVO.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODYvMjQtMDctMjAyNV8xODE5MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiREVDSyBORVdBVkUgREVGSU5JVElWTyIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NDUyODkzNSwibmJmIjoxNzU0NDQyMjk1fQ.SY_Lto-EOxj0SzFE8s2PeATR63IQVg0BPDJzYFZ1Vrc",
-  "webhookId": "6892aa3794f9e32e8e798bed"
+  "s3Key": "webhooks/DECK NEWAVE DEFINITIVO/68b585c951c7b8ba11d2cb6b_DECK NEWAVE DEFINITIVO.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODYvMjgtMDgtMjAyNV8xOTMzMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiREVDSyBORVdBVkUgREVGSU5JVElWTyIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NjgxMzM2OSwibmJmIjoxNzU2NzI2NzI5fQ.KLkO-0AYySyDKzWBitCZ1WPZLOVNytU9jaIIMQ2WI9g",
+  "webhookId": "68b585c951c7b8ba11d2cb6b"
 }
    
    payload = WebhookSintegreSchema(**payload)

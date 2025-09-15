@@ -189,9 +189,7 @@ class GerarCadicSistema():
     
     def gerar_cadic(self,process_result):
         cadic_values = process_result
-        pdb.set_trace()
         df_cadic = cadic_values[['vl_ano', 'vl_mes','submercado', 'vl_base_total_mmgd']]
-        
         pass
     
     def gerar_sistema(self,process_result):
@@ -211,14 +209,13 @@ class GerarCadicSistema():
 
 class GerarTabelaDiferenca():
     def __init__(self):
-        self.consts = Constants()
         self.header = get_auth_header()
         self.url_html_to_image = self.consts.URL_HTML_TO_IMAGE
-        self.url_carga_global  = self.consts.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
-        self.url_carga_liquida = self.consts.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
-        self.url_unsi          = self.consts.GET_NEWAVE_SISTEMA_TOTAL_UNSI
-        self.url_mmgd_total    = self.consts.GET_NEWAVE_SISTEMA_MMGD_TOTAL
-        self.url_ande          = self.consts.GET_NEWAVE_CADIC_TOTAL_ANDE
+        self.url_unsi          = constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
+        self.url_carga_global  = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
+        self.url_carga_liquida = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
+        self.url_mmgd_exp     = constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_ande          = constants.GET_NEWAVE_CADIC_TOTAL_ANDE
         
         logger.info("Initialized generate table" )
     
