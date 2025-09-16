@@ -10,4 +10,4 @@ git+https://github.com/wx-middle/libs-middle.git
 matplotlib
 openpyxl
 pdf2image
-aspose
+aspose-words
