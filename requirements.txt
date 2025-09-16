@@ -11,3 +11,4 @@ matplotlib
 openpyxl
 pdf2image
 aspose-words
+beautifulsoup4
