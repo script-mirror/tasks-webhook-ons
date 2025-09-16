@@ -296,7 +296,7 @@ class GenerateTable:
 
     def run_process(self):
         self.logger.info("Generating table")
-        table = self.generate_table()
+        self.generate_table()
         self.logger.info("Table generation completed")
         
     def generate_table(self):
@@ -398,10 +398,10 @@ class GenerateTable:
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
-    try:
+    """ try:
         carga = CargaPatamarDecomp()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
         logger.error("Script execution failed: %s", str(e), exc_info=True)
-        raise
+        raise"""
