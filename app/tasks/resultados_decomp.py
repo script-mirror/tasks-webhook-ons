@@ -1,24 +1,32 @@
+import pdb
 import sys
 import os
 import requests
 import shutil
 import pandas as pd
 import glob
-from datetime import timedelta
+from PIL import Image
+from datetime import datetime, timedelta
+import aspose.words as aw
 from middle.utils import SemanaOperativa
 from middle.utils import html_to_image
+from typing import Optional
 from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
+from middle.utils import HtmlBuilder
+from bs4 import BeautifulSoup
 from middle.message import send_whatsapp_message, send_email_message
+from app.schema import WebhookSintegreSchema  # noqa: E402
 from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string  # noqa: E402
-from middle.utils.file_manipulation import extract_zip # noqa: E402
+from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
+from middle.utils.file_manipulation import extract_zip, create_directory # noqa: E402
 from middle.s3 import ( # noqa: E402
     handle_webhook_file,
     get_latest_webhook_product,
 )
-from middle.airflow import trigger_dag
+from middle.airflow import trigger_dag, trigger_dag_legada
 
 # Configura o logger globalmente uma única vez
 logger = setup_logger()
