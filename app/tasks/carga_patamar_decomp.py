@@ -53,22 +53,7 @@ class CargaPatamarDecomp():
         self.read_carga_semanal.run_workflow()
         self.generate_table.run_workflow()
      
-    def trigger_dags(self):
-        logger.info("Triggering DAGs for CargaPatamarDecomp")
-        logger.debug("Triggering DAG 1.18-PROSPEC_UPDATE with conf: {'produto': 'CARGA-DECOMP'}")
-        trigger_dag(
-            dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
-        )
-        conf = self.payload.model_dump() if isinstance(self.payload, WebhookSintegreSchema) else self.payload
-        if isinstance(conf, dict):
-            for k, v in conf.items():
-                if isinstance(v, (datetime, pd.Timestamp)):
-                    conf[k] = str(v)
-            logger.debug("Triggering DAG WEBHOOK with conf: %s", conf)
-            trigger_dag_legada(
-                dag_id="WEBHOOK", conf=conf
-            )
-
+     
 class ReadCargaPatamar:
     
     def __init__(self):
@@ -88,8 +73,6 @@ class ReadCargaPatamar:
             
             self.run_process(base_path)
             self.logger.info("run_workflow completed successfully")
-            self.trigger_dags()
-            self.logger.info("Triggered Airflow DAGs successfully")
             
         except Exception as e:
             self.logger.error("run_workflow failed: %s", str(e), exc_info=True)
@@ -184,22 +167,6 @@ class ReadCargaPatamar:
             self.logger.error("Failed to post data to database: %s", str(e), exc_info=True)
             raise
     
-    def trigger_dags(self):
-        self.logger.info("Triggering DAGs for ReadCargaPatamar")
-        logger.debug("Triggering DAG 1.18-PROSPEC_UPDATE with conf: {'produto': 'CARGA-DECOMP'}")
-        trigger_dag(
-            dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"}
-        )
-        conf = self.payload.model_dump() if hasattr(self, 'payload') and isinstance(self.payload, WebhookSintegreSchema) else {}
-        if isinstance(conf, dict):
-            for k, v in conf.items():
-                if isinstance(v, (datetime, pd.Timestamp)):
-                    conf[k] = str(v)
-            self.logger.debug("Triggering DAG WEBHOOK with conf: %s", conf)
-            trigger_dag_legada(
-                dag_id="WEBHOOK", conf=conf
-            )
-
 class ReadCargaSemanal:
     
     def __init__(self):
