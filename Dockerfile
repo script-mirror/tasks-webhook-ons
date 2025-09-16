@@ -1,15 +1,16 @@
-FROM python:3.13-alpine
+FROM python:3.13-slim
 
-RUN apk add --no-cache \
-    musl-locales \
-    musl-locales-lang \
+RUN apt-get update && apt-get install -y \
+    locales \
     git \
     gcc \
-    musl-dev \
-    linux-headers \
+    build-essential \
     ffmpeg \
-    xvfb-run && \
-    echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen
+    xvfb && \
+    echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 
 WORKDIR /app
