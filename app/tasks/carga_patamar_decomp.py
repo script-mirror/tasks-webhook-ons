@@ -19,6 +19,8 @@ from middle.s3 import ( # noqa: E402
     get_latest_webhook_product,
 )
 from middle.airflow import trigger_dag
+from typing import Optional
+from app.schema import WebhookSintegreSchema 
 
 # Configura o logger globalmente uma única vez
 logger = setup_logger()
@@ -26,7 +28,7 @@ constants = Constants()
 
 class CargaPatamarDecomp():
     
-    def __init__(self):
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
         self.read_carga_patamar = ReadCargaPatamar()  
         self.trigger_dag = trigger_dag      
         self.read_carga_semanal = ReadCargaSemanal()
