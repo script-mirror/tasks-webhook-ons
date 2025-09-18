@@ -254,7 +254,7 @@ class ProcessFunctions():
             
             cadic_object = Cadic.read(cadic_file)
             nw_cadic_df = cadic_object.cargas.copy()
-            
+
             if nw_cadic_df is None:
                 error_msg = "Dados do c_adic não encontrados no arquivo!"
                 raise ValueError(error_msg)
@@ -290,6 +290,7 @@ class ProcessFunctions():
                 nw_cadic_df['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
                 
                 nw_cadic_df['versao'] = versao
+                
                 nw_cadic_records = nw_cadic_df.to_dict('records')
                 
                 logger.info(f"- Valores do Cadic: ({len(nw_cadic_records)} registros)")
@@ -757,7 +758,7 @@ class GerarTabelaDiferenca():
         self.url_unsi          = constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
         self.url_carga_global  = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
         self.url_carga_liquida = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
-        self.url_mmgd_exp     = constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_mmgd_total     = constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
         self.url_ande          = constants.GET_NEWAVE_CADIC_TOTAL_ANDE
         
     
@@ -798,7 +799,7 @@ class GerarTabelaDiferenca():
             dados = {
                 'dados_unsi':self._get_data(self.url_unsi),
                 'dados_ande': self._get_data(self.url_ande),
-                'dados_mmgd_total': self._get_data(self.url_mmgd_exp),
+                'dados_mmgd_total': self._get_data(self.url_mmgd_total),
                 'dados_carga_global': self._get_data(self.url_carga_global),
                 'dados_carga_liquida': self._get_data(self.url_carga_liquida)
             }
@@ -869,7 +870,7 @@ class GerarTabelaDiferenca():
                 raise ValueError(f"Arquivo de imagem não encontrado: {img_path}")
             
             msg_whatsapp = ''
-            if 'versao' == 'preliminar':
+            if versao == 'preliminar':
                 msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar Atual x Definitivo anterior) - {data_produto_str}"
             else:
                 msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Definitivo Atual x Preliminar anterior) - {data_produto_str}"
@@ -897,16 +898,16 @@ class GerarTabelaDiferenca():
 if __name__ == "__main__":
    
    payload = {
-  "dataProduto": "09/2025",
-  "filename": "DECK NEWAVE DEFINITIVO.zip",
+  "dataProduto": "08/2025",
+  "filename": "Deck NEWAVE Preliminar.zip",
   "macroProcesso": "Programação da Operação",
-  "nome": "DECK NEWAVE DEFINITIVO",
-  "periodicidade": "2025-09-01T00:00:00",
-  "periodicidadeFinal": "2025-09-30T23:59:59",
+  "nome": "Deck NEWAVE Preliminar",
+  "periodicidade": "2025-08-01T00:00:00",
+  "periodicidadeFinal": "2025-08-31T23:59:59",
   "processo": "Médio Prazo",
-  "s3Key": "webhooks/DECK NEWAVE DEFINITIVO/68b585c951c7b8ba11d2cb6b_DECK NEWAVE DEFINITIVO.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODYvMjgtMDgtMjAyNV8xOTMzMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiREVDSyBORVdBVkUgREVGSU5JVElWTyIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NjgxMzM2OSwibmJmIjoxNzU2NzI2NzI5fQ.KLkO-0AYySyDKzWBitCZ1WPZLOVNytU9jaIIMQ2WI9g",
-  "webhookId": "68b585c951c7b8ba11d2cb6b"
+  "s3Key": "webhooks/Deck NEWAVE Preliminar/6890c1e194f9e32e8e7989f1_Deck NEWAVE Preliminar.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjEtMDctMjAyNV8xMjAxMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NDQwMzkyMSwibmJmIjoxNzU0MzE3MjgxfQ.82TBWIRXT2C43hCY3PqVkz6avWOo-Z95Qw7u3EEJc3M",
+  "webhookId": "6890c1e194f9e32e8e7989f1"
 }
    
    payload = WebhookSintegreSchema(**payload)
