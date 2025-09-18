@@ -170,13 +170,13 @@ class ReadCargaSemanal:
     def run_workflow(self):
         self.logger.info("Starting run_workflow for ReadCargaSemanal")
         try:
-            os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)
-            self.logger.debug("Created temporary directory: %s", constants.PATH_ARQUIVOS_TEMP)
+            os.makedirs(constants.PATH_TMP, exist_ok=True)
+            self.logger.debug("Created temporary directory: %s", constants.PATH_TMP)
             
             payload = get_latest_webhook_product(constants.WEBHOOK_CARGA_DECOMP)[0]
             self.logger.debug("Retrieved latest webhook product: %s", payload)
             
-            base_path = handle_webhook_file(payload, constants.PATH_ARQUIVOS_TEMP)
+            base_path = handle_webhook_file(payload, constants.PATH_TMP)
             self.logger.info("Webhook file handled, base path: %s", base_path)
             
             self.run_process(base_path)
