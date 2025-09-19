@@ -1,6 +1,8 @@
 from .tasks import (
    RelatorioLimitesIntercambioDecomp,
    CargaPatamarDecomp,
+   DecksNewave,
+   CargaPatamarNewave
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -26,13 +28,13 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "decks_de_entrada_e_saida_modelo_dessem": None,
    "arquivos_de_previsao_de_carga_para_o_dessem": None,
    "decks_de_entrada_do_prevcargadessem": None,
-   "previsoes_de_carga_mensal_e_por_patamar_newave": None,
+   "previsoes_de_carga_mensal_e_por_patamar_newave": CargaPatamarNewave,
    "ipdo_informativo_preliminar_diario_da_operacao": None,
    "modelo_ecmwf": None,
    "dados_utilizados_na_previsao_de_geracao_eolica": None,
    "arquivos_de_previsao_de_carga_para_o_dessem_prevcargadessem": None,
-   "deck_newave_preliminar": None,
-   "deck_newave_definitivo": None,
+   "deck_newave_preliminar": DecksNewave,
+   "deck_newave_definitivo": DecksNewave,
    "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": None,
    "preliminar_relatorio_mensal_de_limites_de_intercambio": RelatorioLimitesIntercambioDecomp,
    "relatorio_mensal_de_limites_de_intercambio_para_o_modelo_decomp": RelatorioLimitesIntercambioDecomp,
