@@ -6,6 +6,7 @@ from app.webhook_products_interface import WebhookProductsInterface
 from app.schema import WebhookSintegreSchema
 
 from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants
+from middle.airflow import trigger_dag
 from middle.message import send_whatsapp_message
 constants = Constants()
 logger = setup_logger()
@@ -29,6 +30,7 @@ class DecksNewave(WebhookProductsInterface):
         super().__init__(payload)
         self.dataProduto = self.payload.dataProduto
         self.filename = self.payload.filename
+        self.trigger_dag = trigger_dag   
         self.process_functions = ProcessFunctions(payload)
         self.update_weol = UpdateWeol()
         self.gerar_tabela = GerarTabelaDiferenca(payload)
@@ -62,6 +64,10 @@ class DecksNewave(WebhookProductsInterface):
         self.post_data(process_result)
         
         self.gerar_tabela.run_process()
+        
+        if 'preliminar' in self.filename:
+            self.payload['dt_ref'] = self.payload['dataProduto']
+            self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf=self.payload)
 
     
     def process_file(self, file_path) -> dict:
@@ -890,6 +896,8 @@ class GerarTabelaDiferenca():
             logger.error(f"Erro ao determinar a versão pelo nome do arquivo: {e}")
             raise
 
+    
+    
 if __name__ == "__main__":
    
    payload = {
