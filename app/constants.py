@@ -2,12 +2,13 @@ from .tasks import (
    RelatorioLimitesIntercambioDecomp,
    CargaPatamarDecomp,
    DecksNewave,
-   CargaPatamarNewave
+   CargaPatamarNewave,
+   RelatorioAcompanhamentoHidrologico
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
 PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
-   "relatorio_de_acompanhamento_hidrologico": None,
+   "relatorio_de_acompanhamento_hidrologico": RelatorioAcompanhamentoHidrologico,
    "precipitacao_por_satelite_pmo": None,
    "modelo_gefs": None,
    "resultados_preliminares_nao_consistidos_vazoes_semanais_pmo": None,
