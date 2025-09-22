@@ -769,6 +769,7 @@ class GerarTabelaDiferenca():
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         constants = Constants()
         self.payload = payload
+        self.headers = get_auth_header()
         self.dataProduto = payload.dataProduto
         self.filename = payload.filename
         self.url_html_to_image = constants.URL_HTML_TO_IMAGE
