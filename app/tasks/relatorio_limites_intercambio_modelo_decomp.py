@@ -252,7 +252,7 @@ class IntercambioAnalyzer:
         logger.info("Convertendo DataFrame em imagem")
         try:
             df = df.reset_index()
-            df = df.rename(columns={"RE": "Índice"})
+            #df = df.rename(columns={"RE": "Índice"})
             col_widths = []
             for col in df.columns:
                 max_len = max(
@@ -317,7 +317,10 @@ class IntercambioAnalyzer:
                 diff_df[month] = df2[month] - df1[month]
             diff_df.dropna(how="all", subset=common_months, inplace=True)
             diff_df = diff_df.reset_index()
-
+            diff_df = diff_df.set_index('RE')
+            diff_df.columns.name = 'RE' 
+            diff_df.index.name = 'RE'  
+            
             data_pmo = datetime.datetime.strptime(df_datas[0], '%Y-%m-%d')
             data_ant = datetime.datetime.strptime(df_datas[1], '%Y-%m-%d')
 
