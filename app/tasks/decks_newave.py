@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from app.webhook_products_interface import WebhookProductsInterface
 from app.schema import WebhookSintegreSchema
 
-from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants
+from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants, create_directory
 from middle.airflow import trigger_dag
 from middle.message import send_whatsapp_message
 constants = Constants()
@@ -23,6 +23,8 @@ import datetime
 import requests
 import zipfile as zipFile
 from inewave.newave import Patamar, Cadic, Sistema
+sys.path.append(os.path.join(constants.PATH_PROJETOS, "estudos-middle/update_estudos"))
+from update_newave import NewaveUpdater
 
 class DecksNewave(WebhookProductsInterface):
     
@@ -55,11 +57,14 @@ class DecksNewave(WebhookProductsInterface):
         
     def run_process(self, file_path):
         
-        process_result = self.process_file(file_path)
         
         if 'preliminar' in self.filename:
-            process_sist_result = self.update_weol.run_process()
-            process_result['process_sist_result'] = process_sist_result
+            for file in os.listdir(file_path):             
+                if file.lower().startswith('sistema'):
+                    sistema = file_path + '/' + file
+            self.update_wind(sistema)
+                 
+        process_result = self.process_file(file_path)
         
         self.post_data(process_result)
         
@@ -69,6 +74,14 @@ class DecksNewave(WebhookProductsInterface):
         
         self.gerar_tabela.run_process()
         
+    def update_wind(self, path):
+        updater = NewaveUpdater()
+        params = {}
+        params['produto'] = 'EOLICA'
+        params['id_estudo'] = None
+        params['path_download'] = ''
+        params['path_out'] = ''
+        updater.update_eolica(params,[path])
 
     
     def process_file(self, file_path) -> dict:
@@ -902,16 +915,16 @@ class GerarTabelaDiferenca():
 if __name__ == "__main__":
    
    payload = {
-  "dataProduto": "08/2025",
+  "dataProduto": "10/2025",
   "filename": "Deck NEWAVE Preliminar.zip",
   "macroProcesso": "Programação da Operação",
   "nome": "Deck NEWAVE Preliminar",
-  "periodicidade": "2025-08-01T00:00:00",
-  "periodicidadeFinal": "2025-08-31T23:59:59",
+  "periodicidade": "2025-10-01T00:00:00",
+  "periodicidadeFinal": "2025-10-31T23:59:59",
   "processo": "Médio Prazo",
-  "s3Key": "webhooks/Deck NEWAVE Preliminar/6890c1e194f9e32e8e7989f1_Deck NEWAVE Preliminar.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjEtMDctMjAyNV8xMjAxMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1NDQwMzkyMSwibmJmIjoxNzU0MzE3MjgxfQ.82TBWIRXT2C43hCY3PqVkz6avWOo-Z95Qw7u3EEJc3M",
-  "webhookId": "6890c1e194f9e32e8e7989f1"
+  "s3Key": "webhooks/Deck NEWAVE Preliminar/68d166d4668482a24061e32f_Deck NEWAVE Preliminar.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjItMDktMjAyNV8xMjA2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1ODY0MDQ1MSwibmJmIjoxNzU4NTUzODExfQ.yp5GkfD7XC9jn2YiaNLsq8UMfmGOZBT9Pnvt9V1Wqzo",
+  "webhookId": "68d166d4668482a24061e32f"
 }
    
    payload = WebhookSintegreSchema(**payload)
