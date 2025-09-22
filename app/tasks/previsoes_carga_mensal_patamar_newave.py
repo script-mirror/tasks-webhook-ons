@@ -16,6 +16,7 @@ from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header
 from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils.file_manipulation import extract_zip
 from middle.message.sender import send_whatsapp_message
+from middle.airflow import trigger_dag
 
 logger = setup_logger()
 constants = Constants()
@@ -25,13 +26,13 @@ class CargaPatamarNewave(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
+        self.trigger_dag = trigger_dag   
         self.post_previsoes_carga = constants.POST_NEWAVE_PREVISOES_CARGAS
         self.dataProduto = payload.dataProduto
         self.filename = payload.filename
-        self.update_nw = UpdateSistemaCadic()
+        self.update_deck_preliminar = UpdateSistemaCadic()
         self.gerar_deck_quad = GerarDeckQuadrimestral(self.dataProduto)
         self.gerar_tabela = GerarTabelaDiferenca(self.dataProduto, self.filename)
-        self.trigger_dag = TriggerDagExterna()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
     
@@ -53,14 +54,15 @@ class CargaPatamarNewave(WebhookProductsInterface):
         
         self.post_data(process_result)
         
+        self.trigger_dag(dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-NEWAVE"})
+        
         if 'quad' in file_path:
             self.gerar_deck_quad.run_process()
         else:
-            self.update_nw.run_process()
+            self.update_deck_preliminar.run_process()
         
         self.gerar_tabela.run_process()
             
-        # self.trigger_dag.run_process()
         
         
     def process_file(self, file_path) -> pd.DataFrame:
@@ -489,12 +491,6 @@ class GerarTabelaDiferenca():
         if res.status_code != 200:
             res.raise_for_status()
         return res.json()
-    
-    
-class TriggerDagExterna():
-    pass
-
-
 
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
 from .tasks import (
+   RelatorioAcompanhamentoHidrologico,
    RelatorioLimitesIntercambioDecomp,
    CargaPatamarDecomp,
    DecksNewave,
    CargaPatamarNewave,
-   RelatorioAcompanhamentoHidrologico
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
