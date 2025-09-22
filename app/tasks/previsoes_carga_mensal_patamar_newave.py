@@ -12,7 +12,7 @@ current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema
-from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header
+from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header, html_to_image
 from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils.file_manipulation import extract_zip
 from middle.message.sender import send_whatsapp_message
@@ -32,7 +32,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.filename = payload.filename
         self.update_deck_preliminar = UpdateSistemaCadic()
         self.gerar_deck_quad = GerarDeckQuadrimestral(self.dataProduto)
-        self.gerar_tabela = GerarTabelaDiferenca(self.dataProduto, self.filename)
+        self.gerar_tabela = GerarTabelaDiferenca()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
     
@@ -379,22 +379,22 @@ class GerarDeckQuadrimestral():
             )
         if res.status_code != 200:
             res.raise_for_status()
+            
 class GerarTabelaDiferenca():  
-    def __init__(self, dataProduto, filename):
-        self.dataProduto = dataProduto
-        self.filename = filename
+    def __init__(self):
+        #self.dataProduto = dataProduto
+        #self.filename = filename
+        self.constants = Constants()
         self.headers = get_auth_header()
-        self.url_html_to_image = constants.URL_HTML_TO_IMAGE
-        self.url_unsi          = constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
-        self.url_carga_global  = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
-        self.url_carga_liquida = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
-        self.url_mmgd_total     = constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
-        self.url_ande          = constants.GET_NEWAVE_CADIC_TOTAL_ANDE
+        self.url_html_to_image = self.constants.URL_HTML_TO_IMAGE
+        self.url_unsi          = self.constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
+        self.url_carga_global  = self.constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
+        self.url_carga_liquida = self.constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
+        self.url_mmgd_total     = self.constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_ande          = self.constants.GET_NEWAVE_CADIC_TOTAL_ANDE
     
     def run_process(self):
-        html = self.generate_table()
-        image_path = self.transform_html_to_image(html)
-        self.enviar_tabela_whatsapp_email(image_path)
+        self.generate_table()
         
     def generate_table(self):        
         dados = {
@@ -409,83 +409,13 @@ class GerarTabelaDiferenca():
             'diferenca_cargas', 
             dados
         )
-       
-        return html_tabela_diferenca
+        image_binary = html_to_image(html_tabela_diferenca)
+        date_last = datetime.strptime(dados['dados_unsi'][0]['dt_deck'], '%Y-%m-%d').strftime('%m/%Y')
+        date_now = datetime.strptime(dados['dados_unsi'][1]['dt_deck'], '%Y-%m-%d').strftime('%m/%Y')
+        msg = f"DIFERENÇAS DE CARGA ENTRE OS NW:\nNW {date_now} {dados['dados_unsi'][1]['versao'].upper()}\n" +\
+                      f"NW {date_last} {dados['dados_unsi'][0]['versao'].upper()}\n"
+        send_whatsapp_message(self.constants.WHATSAPP_DEBUG, msg, image_binary)
     
-    def transform_html_to_image(self,html):
-        
-        api_html_payload = {
-                "html": html,
-                "options": {
-                  "type": "png",
-                  "quality": 100,
-                  "trim": True,
-                  "deviceScaleFactor": 2
-                }
-        }
-            
-        html_api_endpoint = self.url_html_to_image
-        
-        request_html_api = requests.post(
-            html_api_endpoint,
-            headers=self.headers,
-            json=api_html_payload,  
-        )
-        
-        if request_html_api.status_code != 200:
-                raise ValueError(f"Erro ao converter HTML em imagem: {request_html_api.text}")
-            
-        image_dir = "/projetos/arquivos/tmp/DeckNEWAVETabelas"
-        os.makedirs(image_dir, exist_ok=True)
-        
-        data_produto_str = self.dataProduto
-        image_filename = f"tabela_diferenca_cargas_preliminar_{data_produto_str.replace("/","_")}.png"
-        
-        image_path = os.path.join(image_dir, image_filename)
-        
-        with open(image_path, 'wb') as f:
-            f.write(request_html_api.content)
-        
-        logger.info(f"Imagem salva em: {image_path}")
-        
-        return image_path
-        
-    def enviar_tabela_whatsapp_email(
-        self,
-        image_path,
-    ):
-        """
-        Envia a tabela de diferença de cargas por WhatsApp e email.
-        
-        :return: Dicionário com o status e mensagem do envio.
-        """
-        try:
-            logger.info("Enviando tabela de diferença de cargas por WhatsApp e email...")
-            
-            data_produto_str = self.dataProduto
-            
-            image_path = image_path
-            if not image_path or not os.path.exists(image_path):
-                raise ValueError(f"Arquivo de imagem não encontrado: {image_path}")
-            
-            if 'quad' in self.filename:
-                msg_whatsapp = f"Diferença de Cargas NEWAVE preliminar * (Quadrimestral x Definitivo anterior) - {data_produto_str}"
-            else:
-                msg_whatsapp = f"Diferença de Cargas NEWAVE preliminar atualizado (Preliminar atual atualizado x Definitivo anterior) - {data_produto_str}"
-            
-            request_whatsapp = send_whatsapp_message(
-                destinatario="Debug",
-                mensagem=msg_whatsapp,
-                arquivo=image_path,
-            )
-            
-            if request_whatsapp.status_code < 200 or request_whatsapp.status_code >= 300:
-                raise ValueError(f"Erro ao enviar mensagem por WhatsApp: {request_whatsapp.text}")
-                    
-        except Exception as e:
-            logger.error(f"Erro ao enviar tabela por WhatsApp e email: {e}")
-            raise 
-        
     def get_data(self, url: str) -> pd.DataFrame:
         res = requests.get(url, headers=self.headers)
         if res.status_code != 200:
@@ -510,10 +440,10 @@ if __name__ == '__main__':
   "webhookId": "688d2cb494f9e32e8e798756"
 }
         
-        payload = WebhookSintegreSchema(**payload)
+       # payload = WebhookSintegreSchema(**payload)
         
-        previsoescarga = CargaPatamarNewave(payload)
-        previsoescarga.run_workflow()
+        previsoescarga = GerarTabelaDiferenca()
+        previsoescarga.run_process()
         
     except Exception as e:
         logger.error("Erro no fluxo manual de processamento das Previsões de Carga Mensal por Patamar do Newave: %s", str(e), exc_info=True)

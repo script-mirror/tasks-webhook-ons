@@ -8,6 +8,7 @@ from app.schema import WebhookSintegreSchema
 from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants, extract_zip
 from middle.airflow import trigger_dag
 from middle.message import send_whatsapp_message
+from previsoes_carga_mensal_patamar_newave import GerarTabelaDiferenca
 constants = Constants()
 logger = setup_logger()
 html_builder = HtmlBuilder()
@@ -34,37 +35,32 @@ class DecksNewave(WebhookProductsInterface):
         self.filename = self.payload.filename
         self.trigger_dag = trigger_dag   
         self.process_functions = ProcessFunctions(payload)
-        self.update_weol = UpdateWeol()
-        self.gerar_tabela = GerarTabelaDiferenca(payload)
-    
-        logger.info("Inicializado DecksNewave com payload: %s", payload)
-               
-        
-    def run_workflow(self) -> Dict[str, Any]:
-        try:
-            
-            file_path = self.download_extract_files()
-            
-            self.run_process(file_path)
+        self.gerar_tabela = GerarTabelaDiferenca()
+        self.headers = get_auth_header()
+        self.constants = Constants()
 
-            logger.info("Workflow do produto DecksNewave terminado com sucesso!")
+    def run_workflow(self) -> Dict[str, Any]:
+            
+        file_path = self.download_extract_files()
         
-        except Exception as e:
-            error_msg = f"Erro no fluxo de processamento do DecksNewave: {str(e)}"
-            logger.error(error_msg)
-            raise
-        
-        
+        self.run_process(file_path)
+   
     def run_process(self, file_path):
         
     
-        process_result = self.process_file(file_path)
+        dict_result = self.process_file(file_path)
+        dict_url = {
+            'df_c_adic': self.constants.POST_NEWAVE_CADIC,
+            'df_sistema': self.constants.POST_NEWAVE_SISTEMA,
+            'df_patamar_usina': self.constants.POST_NEWAVE_PATAMAR_CARGA_USINAS,
+            'df_patamar_intercambio': self.constants.POST_NEWAVE_PATAMAR_INTERCAMBIO
+        }
         
-        self.post_data(process_result)
-        
-        if 'preliminar' in self.filename:
-            self.payload['dt_ref'] = self.payload['dataProduto']
-            self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf=self.payload)
+        for chave, valor in dict_result.items():
+            
+            self.post_data(valor,dict_url[chave])
+               
+        self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf='')
         
         self.gerar_tabela.run_process()
         
@@ -79,106 +75,40 @@ class DecksNewave(WebhookProductsInterface):
 
     
     def process_file(self, file_path) -> dict:
-        try:
             
-            dat_files = self.process_functions.extrair_arquivos_dat(file_path)
-            
-            if 'preliminar' in self.filename.lower():
-                self.update_wind(dat_files['sistema'])
-            
-            process_cadic_result = self.process_functions.processar_deck_nw_cadic(dat_files['cadic'])
-            
-            process_sist_result = self.process_functions.processar_deck_nw_sist(dat_files['sistema'])
-            
-            process_patamar_result = self.process_functions.processar_deck_nw_patamar(dat_files['patamar'])
-            
-            process_result = {
-                'process_cadic_result': process_cadic_result,
-                'process_sist_result': process_sist_result,
-                'process_patamar_result': process_patamar_result
-            }
-            
-            return process_result 
-            
-        except Exception as e:
-            logger.error("Falha na leitura e processamento do arquivo: %s", str(e), exc_info=True)
-            
-    def post_data(self, process_result:pd.DataFrame) -> dict:
-        try:
-            logger.info("Enviando dados para a API...")
-            
-            auth_headers = get_auth_header()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-            
-            base_url = constants.BASE_URL
-            api_url = f"{base_url}/api/v2"
-            
-            nw_cadic_records = process_result.get('process_cadic_result', [])
-            nw_sist_records = process_result.get('process_sist_result', [])
-            patamar_process_result = process_result.get('process_patamar_result', [])
-            nw_patamar_carga_usinas_records = patamar_process_result.get('patamar_carga_usinas_records', [])
-            nw_patamar_intercambio_records = patamar_process_result.get('patamar_intercambio_records', [])
-            
-            sistema_url = f"{api_url}/decks/newave/sistema"
-            cadic_url = f"{api_url}/decks/newave/cadic"
-            patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
-            patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
-            
-                
-            logger.info(f"Enviando dados para: {sistema_url}")
-                
-            request_sistema = requests.post(
-                sistema_url,
-                headers=headers,
-                json=nw_sist_records,
-            )
-            
-            if request_sistema.status_code != 200:
-                raise ValueError(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
-
-            logger.info(f"Enviando dados para: {cadic_url}")
-
-            request_cadic = requests.post(
-                cadic_url,
-                headers=headers,
-                json=nw_cadic_records,
-            )
-            
-            if request_cadic.status_code != 200:
-                raise ValueError(f"Erro ao enviar carga do CADIC para API: {request_cadic.text}")
-            
-            logger.info(f"Enviando dados para: {patamar_carga_usinas_url}")
-            
-            request_patamar_carga_usinas = requests.post(
-                patamar_carga_usinas_url,
-                headers=headers,
-                json=nw_patamar_carga_usinas_records,  
-            )
-            
-            if request_patamar_carga_usinas.status_code != 200:
-                raise ValueError(f"Erro ao enviar patamar do newave de carga e usina para API: {request_patamar_carga_usinas.text}")
-            
-            logger.info(f"Enviando dados para: {patamar_intercambio_url}")
-            
-            request_patamar_intercambio = requests.post(
-                patamar_intercambio_url,
-                headers=headers,
-                json=nw_patamar_intercambio_records,  
-            )
-            
-            if request_patamar_intercambio.status_code != 200:
-                raise ValueError(f"Erro ao enviar patamar do newave de intercambio para API: {request_patamar_intercambio.text}")
-            
+        dat_files = self.process_functions.extrair_arquivos_dat(file_path)
         
+        if 'preliminar' in self.filename.lower():
+            self.update_wind(dat_files['sistema'])
+        
+        df_c_adic = self.process_functions.processar_deck_nw_cadic(dat_files['cadic'])
+        
+        df_sistema = self.process_functions.processar_deck_nw_sist(dat_files['sistema'])
+        
+        dict_patamar = self.process_functions.processar_deck_nw_patamar(dat_files['patamar'])
+        
+        dict_result = {
+            'df_c_adic': df_c_adic,
+            'df_sistema': df_sistema,
+            'df_patamar_usina': dict_patamar['df_patamar_carga_usinas'],
+            'df_patamar_intercambio': dict_patamar['df_patamar_intercambio'],
+        }
+        
+        return dict_result 
+        
+    def post_data(self, data_in: pd.DataFrame, url: str) -> dict:
+        try:
+            res = requests.post(
+                url,
+                json=data_in.to_dict('records'),
+                headers=self.headers
+            )
+            if res.status_code != 200:
+                res.raise_for_status()
+                    
         except Exception as e:
-            logger.error("Falha no import dos dados ao banco: %s", str(e), exc_info=True)
-              
-              
-               
+            raise
+                         
 class ProcessFunctions():
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         self.dataProduto = payload.dataProduto
@@ -228,15 +158,8 @@ class ProcessFunctions():
         self,
         cadic_file
     ) -> Dict[str, Any]:
-        """
-        Tarefa para processar os valores do C_ADIC.DAT.
-        
-        :param payload: Dicionário com os dados do C_ADIC.DAT.
-        :return: Dicionário com o status e mensagem do processamento.
-        """
         
         try:
-            logger.info("Processando o C_ADIC.DAT do Deck Newave...")
             
             data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
@@ -244,20 +167,20 @@ class ProcessFunctions():
             versao = self._get_version_by_filename(filename)
             
             cadic_object = Cadic.read(cadic_file)
-            nw_cadic_df = cadic_object.cargas.copy()
+            df_c_adic = cadic_object.cargas.copy()
 
-            if nw_cadic_df is None:
+            if df_c_adic is None:
                 error_msg = "Dados do c_adic não encontrados no arquivo!"
                 raise ValueError(error_msg)
             else:
-                logger.info(f"Dados do c_adic encontrados: {nw_cadic_df} ")
-                logger.info(f"Mercado de energia total carregado com sucesso. Total de registros: {len(nw_cadic_df)}")
+                logger.info(f"Dados do c_adic encontrados: {df_c_adic} ")
+                logger.info(f"Mercado de energia total carregado com sucesso. Total de registros: {len(df_c_adic)}")
 
-                nw_cadic_df['data'] = pd.to_datetime(nw_cadic_df['data'], errors='coerce')
-                nw_cadic_df = nw_cadic_df[nw_cadic_df['data'].dt.year < 9999]
-                nw_cadic_df['vl_ano'] = nw_cadic_df['data'].dt.year.astype(int)
-                nw_cadic_df['vl_mes'] = nw_cadic_df['data'].dt.month.astype(int)
-                nw_cadic_df = nw_cadic_df.dropna(subset=['valor'])
+                df_c_adic['data'] = pd.to_datetime(df_c_adic['data'], errors='coerce')
+                df_c_adic = df_c_adic[df_c_adic['data'].dt.year < 9999]
+                df_c_adic['vl_ano'] = df_c_adic['data'].dt.year.astype(int)
+                df_c_adic['vl_mes'] = df_c_adic['data'].dt.month.astype(int)
+                df_c_adic = df_c_adic.dropna(subset=['valor'])
                 
                 mapeamento_razao = {
                     'CONS.ITAIPU': 'vl_const_itaipu',
@@ -269,24 +192,21 @@ class ProcessFunctions():
                     'MMGD N': 'vl_mmgd_n'
                 }
             
-                nw_cadic_df['coluna'] = nw_cadic_df['razao'].map(mapeamento_razao)
+                df_c_adic['coluna'] = df_c_adic['razao'].map(mapeamento_razao)
 
-                nw_cadic_df = nw_cadic_df.pivot_table(
+                df_c_adic = df_c_adic.pivot_table(
                     index=['vl_ano', 'vl_mes'], 
                     columns='coluna',
                     values='valor',
                     aggfunc='first'  
                 ).reset_index()
                 
-                nw_cadic_df['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
+                df_c_adic['dt_deck'] = data_produto_datetime.strftime('%Y-%m-%d')
                 
-                nw_cadic_df['versao'] = versao
+                df_c_adic['versao'] = versao
                 
-                nw_cadic_records = nw_cadic_df.to_dict('records')
                 
-                logger.info(f"- Valores do Cadic: ({len(nw_cadic_records)} registros)")
-                
-            return nw_cadic_records
+            return df_c_adic
                 
                     
         
@@ -398,11 +318,9 @@ class ProcessFunctions():
             ]
             
             nw_sistema_df = nw_sistema_df.reindex(columns=ordem_colunas)
-            nw_sistema_records = nw_sistema_df.to_dict('records')
             
-            logger.info(f"- Valores do Sistema: ({len(nw_sistema_records)} registros)")
             
-            return nw_sistema_records
+            return nw_sistema_df
                     
         except Exception as e:
             logger.error(f"Erro ao processar os valores de carga do Sistema do DECK Newave : {e}")
@@ -616,170 +534,17 @@ class ProcessFunctions():
             
             patamar_intercambio_df = patamar_intercambio_df[colunas_tabela2]
             patamar_intercambio_df = patamar_intercambio_df.replace([np.inf, -np.inf], np.nan)
-            
-            patamar_carga_usinas_records = patamar_carga_usinas_df.to_dict('records')
-            patamar_intercambio_records = patamar_intercambio_df.to_dict('records')
 
-            logger.info(f"- Carga e usinas: ({len(patamar_carga_usinas_records)} registros)")
-            logger.info(f"- Intercâmbio:({len(patamar_intercambio_records)} registros)")
-            
             return {
-                "patamar_carga_usinas_records": patamar_carga_usinas_records,
-                "patamar_intercambio_records": patamar_intercambio_records,
+                "df_patamar_carga_usinas": patamar_carga_usinas_df,
+                "df_patamar_intercambio": patamar_intercambio_df,
             }
         
         except Exception as e:
             logger.error(f"Erro ao processar PATAMAR.DAT: {e}")
             raise
+
  
-class GerarTabelaDiferenca():  
-    def __init__(self, payload: Optional[WebhookSintegreSchema]):
-        constants = Constants()
-        self.payload = payload
-        self.headers = get_auth_header()
-        self.dataProduto = payload.dataProduto
-        self.filename = payload.filename
-        self.url_html_to_image = constants.URL_HTML_TO_IMAGE
-        self.url_unsi          = constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
-        self.url_carga_global  = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
-        self.url_carga_liquida = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
-        self.url_mmgd_total     = constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
-        self.url_ande          = constants.GET_NEWAVE_CADIC_TOTAL_ANDE
-        
-    
-    def run_process(self):
-        tabela_html = self.gerar_tabela_diferenca_cargas()
-        self.enviar_tabela_whatsapp_email(tabela_html)    
-    
-     
-    def gerar_tabela_diferenca_cargas(
-        self,
-    ) -> Dict[str, Any]:
-        """
-        Gera uma tabela de diferença de cargas.
-        
-        :return: Dicionário com o status e mensagem da geração da tabela.
-        """
-        try:
-            logger.info("Gerando tabela de diferença de cargas...")
-            
-            data_produto_str = self.dataProduto
-            filename = self.filename
-            versao = self._get_version_by_filename(filename)
-            
-            dados = {
-                'dados_unsi':self._get_data(self.url_unsi),
-                'dados_ande': self._get_data(self.url_ande),
-                'dados_mmgd_total': self._get_data(self.url_mmgd_total),
-                'dados_carga_global': self._get_data(self.url_carga_global),
-                'dados_carga_liquida': self._get_data(self.url_carga_liquida)
-            }
-        
-            html_tabela_diferenca = html_builder.gerar_html(
-                'diferenca_cargas',
-                dados
-            )
-
-            api_html_payload = {
-                "html": html_tabela_diferenca,
-                "options": {
-                  "type": "png",
-                  "quality": 100,
-                  "trim": True,
-                  "deviceScaleFactor": 2
-                }
-            }
-            
-            html_api_endpoint = self.url_html_to_image
-            
-            request_html_api = requests.post(
-                html_api_endpoint,
-                headers=self.headers,
-                json=api_html_payload,  
-            )
-            
-            if request_html_api.status_code != 200:
-                raise ValueError(f"Erro ao converter HTML em imagem: {request_html_api.text}")
-            
-            image_dir = "/projetos/arquivos/tmp/DeckNEWAVETabelas"
-            os.makedirs(image_dir, exist_ok=True)
-            
-            image_filename = f"tabela_diferenca_cargas_{versao}_{data_produto_str.replace("/","_")}.png"
-            
-            image_path = os.path.join(image_dir, image_filename)
-            
-            with open(image_path, 'wb') as f:
-                f.write(request_html_api.content)
-            
-            logger.info(f"Imagem salva em: {image_path}")
-            
-            return image_path
-                
-        
-        except Exception as e:
-            logger.error(f"Erro ao gerar tabela de diferença de cargas: {e}")
-            raise
-    
-    def enviar_tabela_whatsapp_email(
-        self,
-        img_path
-    ) -> Dict[str, Any]:
-        """
-        Envia a tabela de diferença de cargas por WhatsApp e email.
-        
-        :return: Dicionário com o status e mensagem do envio.
-        """
-        try:
-            logger.info("Enviando tabela de diferença de cargas por WhatsApp e email...")
-            
-            data_produto_str = self.dataProduto
-            filename = self.filename
-            versao = self._get_version_by_filename(filename)
-            
-            img_path = img_path
-            if not img_path or not os.path.exists(img_path):
-                raise ValueError(f"Arquivo de imagem não encontrado: {img_path}")
-            
-            msg_whatsapp = ''
-            if versao == 'preliminar':
-                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Preliminar Atual x Definitivo anterior) - {data_produto_str}"
-            else:
-                msg_whatsapp = f"Diferença de Cargas NEWAVE {versao} (Definitivo Atual x Preliminar anterior) - {data_produto_str}"
-                
-            request_whatsapp = send_whatsapp_message(
-                destinatario="Debug",
-                mensagem=msg_whatsapp,
-                arquivo=img_path,
-            )
-            
-            if request_whatsapp.status_code < 200 or request_whatsapp.status_code >= 300:
-                raise ValueError(f"Erro ao enviar mensagem por WhatsApp: {request_whatsapp.text}")
-                    
-        except Exception as e:
-            logger.error(f"Erro ao enviar tabela por WhatsApp e email: {e}")
-            raise
-
-    def _get_data(self, url: str) -> pd.DataFrame:
-        res = requests.get(url, headers=self.headers)
-        if res.status_code != 200:
-            res.raise_for_status()
-        return res.json()
-        
-    def _get_version_by_filename(self, filename: str) -> str:
-        try:
-            if 'preliminar' in filename.lower():
-                return 'preliminar'
-            elif 'definitivo' in filename.lower():
-                return 'definitivo'  
-            else:
-                raise ValueError("Nome do arquivo não contém 'preliminar' ou 'definitivo'.")
-                
-        except Exception as e:
-            logger.error(f"Erro ao determinar a versão pelo nome do arquivo: {e}")
-            raise
-
-    
-    
 if __name__ == "__main__":
    
    payload = {
