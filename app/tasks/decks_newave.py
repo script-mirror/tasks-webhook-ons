@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from app.webhook_products_interface import WebhookProductsInterface
 from app.schema import WebhookSintegreSchema
 
-from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants, create_directory
+from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants, extract_zip
 from middle.airflow import trigger_dag
 from middle.message import send_whatsapp_message
 constants = Constants()
@@ -57,13 +57,7 @@ class DecksNewave(WebhookProductsInterface):
         
     def run_process(self, file_path):
         
-        
-        if 'preliminar' in self.filename:
-            for file in os.listdir(file_path):             
-                if file.lower().startswith('sistema'):
-                    sistema = file_path + '/' + file
-            self.update_wind(sistema)
-                 
+    
         process_result = self.process_file(file_path)
         
         self.post_data(process_result)
@@ -74,14 +68,14 @@ class DecksNewave(WebhookProductsInterface):
         
         self.gerar_tabela.run_process()
         
-    def update_wind(self, path):
+    def update_wind(self, file_path):
         updater = NewaveUpdater()
         params = {}
         params['produto'] = 'EOLICA'
         params['id_estudo'] = None
         params['path_download'] = ''
         params['path_out'] = ''
-        updater.update_eolica(params,[path])
+        updater.update_eolica(params,[file_path])
 
     
     def process_file(self, file_path) -> dict:
@@ -89,11 +83,14 @@ class DecksNewave(WebhookProductsInterface):
             
             dat_files = self.process_functions.extrair_arquivos_dat(file_path)
             
-            process_cadic_result = self.process_functions.processar_deck_nw_cadic(dat_files)
+            if 'preliminar' in self.filename.lower():
+                self.update_wind(dat_files['sistema'])
             
-            process_sist_result = self.process_functions.processar_deck_nw_sist(dat_files)
+            process_cadic_result = self.process_functions.processar_deck_nw_cadic(dat_files['cadic'])
             
-            process_patamar_result = self.process_functions.processar_deck_nw_patamar(dat_files)
+            process_sist_result = self.process_functions.processar_deck_nw_sist(dat_files['sistema'])
+            
+            process_patamar_result = self.process_functions.processar_deck_nw_patamar(dat_files['patamar'])
             
             process_result = {
                 'process_cadic_result': process_cadic_result,
@@ -205,45 +202,31 @@ class ProcessFunctions():
         self,
         download_extract_filepath: Dict[str, Any]
     ) -> list:
-        """
-        Extrai os arquivos .DAT do diretório especificado.
-        
-        :param download_extract_filepath: Dicionário com o caminho do arquivo a ser extraído.
-        :return: Dicionário com o status e mensagem da extração.
-        """
+
         try:
-            file_path = download_extract_filepath
             
-            dat_files = []
-            path_to_send = f'{constants.PATH_TMP}/DeckNEWAVE-extraido'
-            
-            shutil.rmtree(path_to_send, ignore_errors=True)
-            os.makedirs(path_to_send, exist_ok=True)
-            
-            zip_ref = zipfile.ZipFile(file_path, 'r')
-            zip_ref.extractall(path_to_send)
-            
-            zip_ref = glob.glob(os.path.join(path_to_send, '*'))[0]
-            zip_ref = zipfile.ZipFile(zip_ref)
-            zip_ref.extractall(path_to_send)
-            
-            cadic_dat = glob.glob(os.path.join(path_to_send, 'C_ADIC.DAT'))[0]
-            sistema_dat = glob.glob(os.path.join(path_to_send, 'SISTEMA.DAT'))[0]
-            patamar_dat = glob.glob(os.path.join(path_to_send, 'PATAMAR.DAT'))[0]
-            
-            dat_files = [cadic_dat,sistema_dat,patamar_dat]
-            if not dat_files:
-                raise ValueError(f"Nenhum arquivo DAT encontrado em {download_extract_filepath}")
-                            
-            return dat_files
-        
+            path = extract_zip(download_extract_filepath)
+            zip_ref = glob.glob(os.path.join(path, '*.zip'))
+            zip_ref = extract_zip(zip_ref[0])
+                 
+            dict_paths = {'cadic':None, 'sistema':None, 'patamar':None}
+
+            for file in os.listdir(zip_ref):
+                if file.lower().startswith('c_adic'):
+                    dict_paths['cadic'] = zip_ref + '/' + file
+                if file.lower().startswith('sistema'):
+                    dict_paths['sistema'] = zip_ref + '/' + file
+                if file.lower().startswith('patamar'):
+                    dict_paths['patamar'] = zip_ref + '/' + file
+            return dict_paths
+                    
         except Exception as e:
             logger.error(f"Erro ao extrair arquivos .DAT: {e}")
             raise
     
     def processar_deck_nw_cadic( 
         self,
-        dat_files: list
+        cadic_file
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do C_ADIC.DAT.
@@ -255,18 +238,6 @@ class ProcessFunctions():
         try:
             logger.info("Processando o C_ADIC.DAT do Deck Newave...")
             
-            files_paths = dat_files
-            file_path = None
-            
-            for path in files_paths:
-                if  'C_ADIC.DAT' in path:
-                    cadic_file = path
-                    break
-
-            if not cadic_file or not os.path.exists(cadic_file):
-                raise ValueError(f"Arquivo C_ADIC.DAT não encontrado em {file_path}")
-            
-        
             data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
             filename = self.filename
@@ -325,7 +296,7 @@ class ProcessFunctions():
     
     def processar_deck_nw_sist(
         self, 
-        dat_files: list
+        sistema_file: str
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do SISTEMA.DAT.
@@ -336,17 +307,7 @@ class ProcessFunctions():
         try:
             logger.info("Processando o SISTEMA.DAT do Deck Newave...")
             
-            files_paths = dat_files
-            file_path = None
-            
-            for path in files_paths:
-                if 'SISTEMA.DAT' in path:
-                    sistema_file = path
-                    break
-            
-            if not sistema_file or not os.path.exists(sistema_file):
-                raise ValueError(f"Arquivo SISTEMA.DAT não encontrado em {file_path}")
-            
+                     
             data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
             filename = self.filename
@@ -449,7 +410,7 @@ class ProcessFunctions():
     
     def processar_deck_nw_patamar(
         self,
-        dat_files: list
+        patamar_file: str
     ) -> Dict[str, Any]:
         """
         Tarefa para processar os valores do PATAMAR.DAT.
@@ -460,13 +421,7 @@ class ProcessFunctions():
         try:
             logger.info("Processando o PATAMAR.DAT do Deck Newave...")
             
-            files_paths = dat_files
-            
-            for path in files_paths:
-                if 'PATAMAR.DAT' in path:
-                    patamar_file = path
-                    break
-
+      
             data_produto_str = self.dataProduto
             data_produto_datetime = datetime.datetime.strptime(data_produto_str, '%m/%Y')
             filename = self.filename
