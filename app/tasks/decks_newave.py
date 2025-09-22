@@ -63,11 +63,12 @@ class DecksNewave(WebhookProductsInterface):
         
         self.post_data(process_result)
         
-        self.gerar_tabela.run_process()
-        
         if 'preliminar' in self.filename:
             self.payload['dt_ref'] = self.payload['dataProduto']
             self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf=self.payload)
+        
+        self.gerar_tabela.run_process()
+        
 
     
     def process_file(self, file_path) -> dict:
