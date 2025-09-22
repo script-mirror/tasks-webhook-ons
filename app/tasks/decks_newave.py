@@ -55,9 +55,9 @@ class DecksNewave(WebhookProductsInterface):
         
         process_result = self.process_file(file_path)
         
-        # if 'preliminar' in self.filename:
-        #     process_sist_result = self.update_weol.run_process()
-        #     process_result['process_sist_result'] = process_sist_result
+        if 'preliminar' in self.filename:
+            process_sist_result = self.update_weol.run_process()
+            process_result['process_sist_result'] = process_sist_result
         
         self.post_data(process_result)
         
@@ -659,6 +659,8 @@ class ProcessFunctions():
     
 class UpdateWeol():
     def __init__(self):
+        self.headers = get_auth_header()
+        self.url_last_sist = constants.GET_NEWAVE_SISTEMA_LAST_DECK
         self.url_last_deck_date = constants.GET_DECOMP_WEOL_LAST_DECK_DATE
         self.url_weighted_average = constants.GET_DECOMP_WEOL_WEIGHTED_AVERAGE
         
@@ -677,26 +679,22 @@ class UpdateWeol():
         try:
             logger.info("Atualizando SISTEMA com WEOL...")
             
-            auth_headers = get_auth_header()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-            
-            nw_sistema_records = requests.get()
+            nw_sistema_records = requests.get(
+                self.url_last_sist,
+                headers= self.headers
+            )
         
             nw_sistema_df = pd.DataFrame(nw_sistema_records)
             
             last_deck_date = requests.get(
                 self.url_last_deck_date,
-                headers=headers
+                headers=self.headers
             )
             
             weol_decomp = requests.get(
                 self.url_weighted_average, 
                 params={"dataProduto": datetime.datetime.strptime(last_deck_date.json(), '%Y-%m-%d')}, 
-                headers= headers
+                headers= self.headers
             )
             
             weol_decomp_df = pd.DataFrame(weol_decomp.json())
@@ -753,7 +751,6 @@ class GerarTabelaDiferenca():
         self.payload = payload
         self.dataProduto = payload.dataProduto
         self.filename = payload.filename
-        self.headers = get_auth_header()
         self.url_html_to_image = constants.URL_HTML_TO_IMAGE
         self.url_unsi          = constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
         self.url_carga_global  = constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
@@ -766,21 +763,7 @@ class GerarTabelaDiferenca():
         tabela_html = self.gerar_tabela_diferenca_cargas()
         self.enviar_tabela_whatsapp_email(tabela_html)    
     
-    
-    def _get_version_by_filename(self, filename: str) -> str:
-        try:
-            if 'preliminar' in filename.lower():
-                return 'preliminar'
-            elif 'definitivo' in filename.lower():
-                return 'definitivo'  
-            else:
-                raise ValueError("Nome do arquivo não contém 'preliminar' ou 'definitivo'.")
-                
-        except Exception as e:
-            logger.error(f"Erro ao determinar a versão pelo nome do arquivo: {e}")
-            raise
-    
-      
+     
     def gerar_tabela_diferenca_cargas(
         self,
     ) -> Dict[str, Any]:
@@ -894,6 +877,18 @@ class GerarTabelaDiferenca():
             res.raise_for_status()
         return res.json()
         
+    def _get_version_by_filename(self, filename: str) -> str:
+        try:
+            if 'preliminar' in filename.lower():
+                return 'preliminar'
+            elif 'definitivo' in filename.lower():
+                return 'definitivo'  
+            else:
+                raise ValueError("Nome do arquivo não contém 'preliminar' ou 'definitivo'.")
+                
+        except Exception as e:
+            logger.error(f"Erro ao determinar a versão pelo nome do arquivo: {e}")
+            raise
 
 if __name__ == "__main__":
    
