@@ -390,7 +390,7 @@ class GerarTabelaDiferenca():
         self.url_unsi          = self.constants.GET_NEWAVE_SISTEMA_TOTAL_UNSI
         self.url_carga_global  = self.constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_GLOBAL
         self.url_carga_liquida = self.constants.GET_NEWAVE_SISTEMA_CARGAS_TOTAL_CARGA_LIQUIDA
-        self.url_mmgd_total     = self.constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
+        self.url_mmgd_total    = self.constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
         self.url_ande          = self.constants.GET_NEWAVE_CADIC_TOTAL_ANDE
     
     def run_process(self):

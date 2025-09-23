@@ -341,8 +341,8 @@ class GenerateTable:
         dif_pmo_html.set_caption(f"Atualização de carga DC (RV{rv} - PMO)")
 
         css = '<style type="text/css">'
-        css += 'caption {background-color: #666666; color: white;}'
-        css += 'th {background-color: #666666; color: white; min-width: 80px;}'  # largura do cabeçalho
+        css += 'caption {background-color: #E0E0E0; color: black;}'
+        css += 'th {background-color: #E0E0E0; color: black; min-width: 80px;}'  # largura do cabeçalho
         css += 'td {min-width: 80px;}'  # largura das células
         css += 'table {text-align: center; border-collapse: collapse; border 2px solid black !important}'  # centralizar e ajustar tabela
         css += '</style>'
@@ -392,10 +392,10 @@ class GenerateTable:
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
-    """ try:
-        carga = CargaPatamarDecomp()
+    try:
+        carga = GenerateTable()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
         logger.error("Script execution failed: %s", str(e), exc_info=True)
-        raise"""
+        raise
