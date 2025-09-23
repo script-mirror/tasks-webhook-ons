@@ -60,7 +60,7 @@ class DecksNewave(WebhookProductsInterface):
             
             self.post_data(valor,dict_url[chave])
                
-        self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf='')
+        self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf={})
         
         self.gerar_tabela.run_process()
         

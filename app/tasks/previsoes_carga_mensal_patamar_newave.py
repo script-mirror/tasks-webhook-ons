@@ -30,7 +30,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.post_previsoes_carga = constants.POST_NEWAVE_PREVISOES_CARGAS
         self.dataProduto = payload.dataProduto
         self.filename = payload.filename
-        self.update_deck_preliminar = UpdateSistemaCadic()
+        self.update_deck_preliminar = UpdateSistemaCadic(self.dataProduto)
         self.gerar_deck_quad = GerarDeckQuadrimestral(self.dataProduto)
         self.gerar_tabela = GerarTabelaDiferenca()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
@@ -149,13 +149,13 @@ class CargaPatamarNewave(WebhookProductsInterface):
             
                    
 class UpdateSistemaCadic():
-    def __init__(self):
+    def __init__(self,  dataProduto):
+        self.dataProduto = dataProduto
         self.headers = get_auth_header()
         self.base_url_api = constants.BASE_URL
         self.url_previsoes_carga = constants.GET_NEWAVE_PREVISOES_CARGAS
         self.url_mmgd_base = constants.PUT_NEWAVE_CADIC_TOTAL_MMGD_BASE
         self.url_mmgd_total = constants.PUT_NEWAVE_SISTEMA_MMGD_TOTAL
-        
         logger.info("Initialized update sistema and c_adic" )
     
     def run_process(self):
@@ -167,7 +167,7 @@ class UpdateSistemaCadic():
         
     def update_sistema(self, df_data, dataProduto):
         
-        df_data = df_data[df_data['patamar'] == 'medio']
+        df_data = df_data[df_data['patamar'] == 'media']
         
         df_data['data_referente'] = pd.to_datetime(df_data['data_referente'])
         dataProduto = pd.to_datetime('01/' + dataProduto, format='%d/%m/%Y')
@@ -203,7 +203,7 @@ class UpdateSistemaCadic():
         
     def update_cadic(self, df_data, dataProduto):
         
-        df_data = df_data[df_data['patamar'] == 'medio']
+        df_data = df_data[df_data['patamar'] == 'media']
         
         df_data['data_referente'] = pd.to_datetime(df_data['data_referente'])
         dataProduto = pd.to_datetime('01/' + dataProduto, format='%d/%m/%Y')
@@ -428,22 +428,22 @@ if __name__ == '__main__':
     try:
         
         payload = {
-  "dataProduto": "09/2025",
-  "filename": "CargaMensal_2revquad2529.zip",
+  "dataProduto": "10/2025",
+  "filename": "RV0_PMO_Outubro_2025_carga_mensal.zip",
   "macroProcesso": "Programação da Operação",
   "nome": "Previsões de carga mensal e por patamar - NEWAVE",
-  "periodicidade": "2025-09-01T00:00:00",
-  "periodicidadeFinal": "2025-09-30T23:59:59",
+  "periodicidade": "2025-10-01T00:00:00",
+  "periodicidadeFinal": "2025-10-31T23:59:59",
   "processo": "Previsão de Carga para o PMO",
-  "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
-  "webhookId": "688d2cb494f9e32e8e798756"
+  "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/68d1c91a450014d70a3e5a4b_RV0_PMO_Outubro_2025_carga_mensal.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvUlYwX1BNT19PdXR1YnJvXzIwMjVfY2FyZ2FfbWVuc2FsLnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTg2NjU2MTAsIm5iZiI6MTc1ODU3ODk3MH0.kRh6NGPhw1fEHGNRKU7LbxE0ktwqaDqiopjcuGOTyts",
+  "webhookId": "68d1c91a450014d70a3e5a4b"
 }
         
-       # payload = WebhookSintegreSchema(**payload)
+        payload = WebhookSintegreSchema(**payload)
         
-        previsoescarga = GerarTabelaDiferenca()
-        previsoescarga.run_process()
+        previsoescarga = CargaPatamarNewave(payload)
+        previsoescarga.run_workflow()
         
     except Exception as e:
         logger.error("Erro no fluxo manual de processamento das Previsões de Carga Mensal por Patamar do Newave: %s", str(e), exc_info=True)
