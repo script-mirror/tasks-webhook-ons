@@ -35,7 +35,7 @@ class WebhookProductsInterface(ABC):
         pass
 
     
-    def download_extract_files(self) -> str:
+    def download_files(self) -> str:
         """
         Método responsável por baixar os arquivos necessários com base nos detalhes do produto.
         

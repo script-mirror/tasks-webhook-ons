@@ -11,7 +11,7 @@ from app.schema import WebhookSintegreSchema
 from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants, extract_zip
 from middle.airflow import trigger_dag
 from middle.message import send_whatsapp_message
-from previsoes_carga_mensal_patamar_newave import GerarTabelaDiferenca
+from app.tasks.previsoes_carga_mensal_patamar_newave import GerarTabelaDiferenca
 constants = Constants()
 logger = setup_logger()
 html_builder = HtmlBuilder()
