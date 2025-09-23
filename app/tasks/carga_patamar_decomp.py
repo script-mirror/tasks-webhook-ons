@@ -392,10 +392,10 @@ class GenerateTable:
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
-    try:
+    """try:
         carga = GenerateTable()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
         logger.error("Script execution failed: %s", str(e), exc_info=True)
-        raise
+        raise"""
