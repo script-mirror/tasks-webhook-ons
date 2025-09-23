@@ -12,7 +12,7 @@ current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema
-from middle.utils import setup_logger, Constants,HtmlBuilder, get_auth_header, html_to_image
+from middle.utils import setup_logger, Constants, get_auth_header, html_to_image
 from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils.file_manipulation import extract_zip
 from middle.message.sender import send_whatsapp_message
@@ -20,7 +20,6 @@ from middle.airflow import trigger_dag
 
 logger = setup_logger()
 constants = Constants()
-html_builder = HtmlBuilder()
 
 class CargaPatamarNewave(WebhookProductsInterface):
     
@@ -61,7 +60,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         else:
             self.update_deck_preliminar.run_process()
         
-        self.gerar_tabela.run_process()
+        self.gerar_tabela.run_workflow()
             
         
         
@@ -382,8 +381,6 @@ class GerarDeckQuadrimestral():
             
 class GerarTabelaDiferenca():  
     def __init__(self):
-        #self.dataProduto = dataProduto
-        #self.filename = filename
         self.constants = Constants()
         self.headers = get_auth_header()
         self.url_html_to_image = self.constants.URL_HTML_TO_IMAGE
@@ -393,29 +390,71 @@ class GerarTabelaDiferenca():
         self.url_mmgd_total    = self.constants.GET_NEWAVE_SISTEMA_MMGD_TOTAL
         self.url_ande          = self.constants.GET_NEWAVE_CADIC_TOTAL_ANDE
     
+    def run_workflow(self):
+        self.run_process()
+    
     def run_process(self):
         self.generate_table()
         
     def generate_table(self):        
-        dados = {
+        dict_data = {
             'dados_unsi':self.get_data(self.url_unsi),
             'dados_ande': self.get_data(self.url_ande),
             'dados_mmgd_total': self.get_data(self.url_mmgd_total),
             'dados_carga_global': self.get_data(self.url_carga_global),
             'dados_carga_liquida': self.get_data(self.url_carga_liquida)
         }
+        dict_caption = {
+            'dados_unsi': 'Diferença UNSI ',
+            'dados_ande': 'Diferença ANDE',
+            'dados_mmgd_total': 'Diferença MMGD Total',
+            'dados_carga_global': 'Diferença Carga Global',  
+            'dados_carga_liquida': 'Diferença Carga Líquida'}
         
-        html_tabela_diferenca = html_builder.gerar_html(
-            'diferenca_cargas', 
-            dados
-        )
-        image_binary = html_to_image(html_tabela_diferenca)
-        date_last = datetime.strptime(dados['dados_unsi'][0]['dt_deck'], '%Y-%m-%d').strftime('%m/%Y')
-        date_now = datetime.strptime(dados['dados_unsi'][1]['dt_deck'], '%Y-%m-%d').strftime('%m/%Y')
-        msg = f"DIFERENÇAS DE CARGA ENTRE OS NW:\nNW {date_now} {dados['dados_unsi'][1]['versao'].upper()}\n" +\
-                      f"NW {date_last} {dados['dados_unsi'][0]['versao'].upper()}\n"
+        html = ""
+        for data in dict_data:
+            html += self.generate_dif(dict_data[data][1]['data'], dict_data[data][0]['data'], dict_caption[data])
+            html += '<br><br>'
+        
+        css = '<style type="text/css">'
+        css += 'caption {background-color: #E0E0E0; color: black;}'
+        css += 'th {background-color: #E0E0E0; color: black; min-width: 60px;}'
+        css += 'td {min-width: 60px;}'
+        css += 'table {text-align: center; border-collapse: collapse; border 2px solid black !important}'
+        css += '</style>'
+        html = html.replace('<style type="text/css">\n</style>\n', css)
+
+        image_binary = html_to_image(html)
+        date_last = datetime.strptime(dict_data['dados_unsi'][0]['dt_deck'], '%Y-%m-%d').strftime('%m/%Y')
+        date_now = datetime.strptime(dict_data['dados_unsi'][1]['dt_deck'], '%Y-%m-%d').strftime('%m/%Y')
+        msg = f"DIFERENÇAS DE CARGA ENTRE OS NW:\nNW {date_now} {dict_data['dados_unsi'][1]['versao'].upper()}\n" +\
+                      f"NW {date_last} {dict_data['dados_unsi'][0]['versao'].upper()}\n"
+                      
         send_whatsapp_message(self.constants.WHATSAPP_DEBUG, msg, image_binary)
+        print(html)
     
+    def generate_dif(self, df, df_last, caption):
+        df = pd.DataFrame(df)
+        df = df.pivot(index=["vl_ano"], columns="vl_mes", values=df.keys()[-1]).reset_index()
+        df = df.set_index('vl_ano')
+        df.columns.name = 'ANO'
+        df.index.name = None
+        
+        df_last = pd.DataFrame(df_last)
+        df_last = df_last.pivot(index=["vl_ano"], columns="vl_mes", values=df_last.keys()[-1]).reset_index()
+        df_last = df_last.set_index('vl_ano')
+        df_last.columns.name = 'ANO'
+        df_last.index.name = None
+        
+        df_dif = df - df_last
+        df_dif['Média'] = df_dif.iloc[:, 1:].mean(axis=1, skipna=True)
+        df_dif = df_dif.rename(columns={1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'})
+        df_dif = df_dif.style.format(na_rep='', precision=0)
+        df_dif = df_dif.set_caption(caption)
+       
+        return df_dif.to_html()
+    
+  
     def get_data(self, url: str) -> pd.DataFrame:
         res = requests.get(url, headers=self.headers)
         if res.status_code != 200:
