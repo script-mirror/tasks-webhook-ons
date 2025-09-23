@@ -36,11 +36,12 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     
     def run_workflow(self, filepath: Optional[str] = None):
         if not filepath:
-            filepath = self.download_extract_files()
-    
+            filepath = self.download_files()
+        tipo = "preliminar" if "preliminar" in filepath.lower() else "definitivo"
         data_produto = self.get_data_produto(filepath)
         df = self.run_process(filepath, data_produto)
         df = self.sanitaze_dataframe(df)
+        df['tipo'] = tipo
         self.post_data(df)
         analyzer = IntercambioAnalyzer()
         analyzer.run_workflow()
@@ -206,13 +207,13 @@ class IntercambioAnalyzer:
             logger.error(f"Erro na execução da análise: {str(e)}")
             raise
       
-    def get_data(self, produto: str, date: str = "") -> pd.DataFrame:
+    def get_data(self, produto: str, params:dict=None) -> pd.DataFrame:
         """Obtém dados da API para o produto e data especificados."""
-        logger.info(f"Obtendo dados da API para produto: {produto}, data: {date}")
+        logger.info(f"Obtendo dados da API para produto: {[f'{x} : {y}' for x, y in params.items()]} ")
         try:
             res = requests.get(
                 f"{self.base_url_api}{produto}",
-                params={'data_produto': date},
+                params=params,
                 headers=self.header
             )
             if res.status_code != 200:
@@ -301,8 +302,8 @@ class IntercambioAnalyzer:
                 return
 
             logger.info(f"Comparando datas: {df_datas[0]} e {df_datas[1]}")
-            df1 = self.res_to_df(self.get_data(produto='restricoes-eletricas', date=df_datas[0]))
-            df2 = self.res_to_df(self.get_data(produto='restricoes-eletricas', date=df_datas[1]))
+            df1 = self.res_to_df(self.get_data(produto='restricoes-eletricas', params={"data_produto": df_datas[0]['data_produto'], "tipo":df_datas[0]['tipo']}))
+            df2 = self.res_to_df(self.get_data(produto='restricoes-eletricas', params={"data_produto": df_datas[1]['data_produto'], "tipo":df_datas[1]['tipo']}))
             df1_months = [col for col in df1.columns if col != "Limite"]
             df2_months = [col for col in df2.columns if col != "Limite"]
             common_months = sorted(set(df1_months).intersection(df2_months))
