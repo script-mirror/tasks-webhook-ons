@@ -8,6 +8,7 @@ services:
     volumes:
       - .:/app
       - ~/projetos/arquivos:/home/projetos/arquivos
+      - ~/projetos/estudos-middle:/home/projetos/estudos-middle
     ports:
       - "8000:8000"
     restart: unless-stopped
