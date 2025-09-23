@@ -80,7 +80,7 @@ if __name__ == '__main__':
         
         payload = WebhookSintegreSchema(**payload)
         
-        relatorioacompanhamento = RelatorioAcompanhamentoHidrologico(payload)
+        relatorioacompanhamento = PrecipitacaoPorSateliteONS(payload)
         relatorioacompanhamento.run_workflow()
     except Exception as e:
         logger.error("Erro no fluxo manual de processamento das Precipitação por Satélite - ONS: %s", str(e), exc_info=True)
