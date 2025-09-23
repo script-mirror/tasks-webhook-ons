@@ -36,7 +36,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     
     def run_workflow(self, filepath: Optional[str] = None):
         if not filepath:
-            filepath = self.download_extract_files()
+            filepath = self.download_files()
         tipo = "preliminar" if "preliminar" in filepath.lower() else "definitivo"
         data_produto = self.get_data_produto(filepath)
         df = self.run_process(filepath, data_produto)

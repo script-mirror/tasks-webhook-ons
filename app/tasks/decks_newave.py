@@ -1,7 +1,10 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from pathlib import Path
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent.parent
+sys.path.insert(0, str(project_root))
 from app.webhook_products_interface import WebhookProductsInterface
 from app.schema import WebhookSintegreSchema
 
@@ -41,7 +44,7 @@ class DecksNewave(WebhookProductsInterface):
 
     def run_workflow(self) -> Dict[str, Any]:
             
-        file_path = self.download_extract_files()
+        file_path = self.download_files()
         
         self.run_process(file_path)
    
