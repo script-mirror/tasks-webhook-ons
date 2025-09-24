@@ -63,7 +63,7 @@ class PreciptacaoPrevista(WebhookProductsInterface):
         df_postos = self.get_postos()
         df = df.melt(id_vars=["cd_subbacia"], var_name="dt_prevista", value_name="vl_chuva")
         df = df.merge(df_postos, on="cd_subbacia", how="left").drop(columns=["cd_subbacia"]).rename(columns={"id":"cd_subbacia"})
-        df['modelo'] = f'{arquivo.split('_')[0].replace('40', '')}-ONS'
+        df['modelo'] = f'{arquivo.split('_')[0]}-ONS'
         df['dt_rodada'] = f'{data_rodada}'
         logger.info(f"Arquivo processado: {len(df)} registros gerados")
         return df
