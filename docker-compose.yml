@@ -7,7 +7,8 @@ services:
         - GIT_TOKEN=${git_token}
     volumes:
       - .:/app
-      - ~/projetos/arquivos:/home/projetos/arquivos
+      - /projetos/arquivos:/projetos/arquivos
+      - /projetos/estudos-middle:/projetos/estudos-middle
     ports:
       - "8000:8000"
     restart: unless-stopped

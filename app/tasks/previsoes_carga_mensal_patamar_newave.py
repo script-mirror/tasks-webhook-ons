@@ -38,7 +38,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
     def run_workflow(self):
         logger.info("Iniciando workflow do produto Previsões de Carga Mensal e por Patamar...")
         try:
-            file_path = self.download_extract_files()
+            file_path = self.download_files()
             
             self.run_process(file_path)
                         
