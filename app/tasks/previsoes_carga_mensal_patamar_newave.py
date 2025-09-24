@@ -398,18 +398,18 @@ class GerarTabelaDiferenca():
         
     def generate_table(self):        
         dict_data = {
-            'dados_unsi':self.get_data(self.url_unsi),
-            'dados_ande': self.get_data(self.url_ande),
-            'dados_mmgd_total': self.get_data(self.url_mmgd_total),
-            'dados_carga_global': self.get_data(self.url_carga_global),
-            'dados_carga_liquida': self.get_data(self.url_carga_liquida)
+            'unsi':self.get_data(self.url_unsi),
+            'ande': self.get_data(self.url_ande),
+            'mmgd_total': self.get_data(self.url_mmgd_total),
+            'carga_global': self.get_data(self.url_carga_global),
+            'carga_liquida': self.get_data(self.url_carga_liquida)
         }
         dict_caption = {
-            'dados_unsi': 'Diferença UNSI ',
-            'dados_ande': 'Diferença ANDE',
-            'dados_mmgd_total': 'Diferença MMGD Total',
-            'dados_carga_global': 'Diferença Carga Global',  
-            'dados_carga_liquida': 'Diferença Carga Líquida'}
+            'unsi': 'Diferença UNSI ',
+            'ande': 'Diferença ANDE',
+            'mmgd_total': 'Diferença MMGD Total',
+            'carga_global': 'Diferença Carga Global',  
+            'carga_liquida': 'Diferença Carga Líquida'}
         
         html = ""
         for data in dict_data:
@@ -448,19 +448,16 @@ class GerarTabelaDiferenca():
         
         df_dif = df - df_last
         df_dif['Média'] = df_dif.iloc[:, 1:].mean(axis=1, skipna=True)
-        df_dif = df_dif.rename(columns={1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'})
+        df_dif = df_dif.rename(columns={1:'Jan',2:'Fev',3:'Mar',4:'Abr',5:'Mai',6:'Jun',7:'Jul',8:'Ago',9:'Set',10:'Out',11:'Nov',12:'Dez'})
         df_dif = df_dif.style.format(na_rep='', precision=0)
         df_dif = df_dif.set_caption(caption)
-       
         return df_dif.to_html()
     
-  
     def get_data(self, url: str) -> pd.DataFrame:
         res = requests.get(url, headers=self.headers)
         if res.status_code != 200:
             res.raise_for_status()
         return res.json()
-
 
 if __name__ == '__main__':
     logger.info("Iniciando workflow do produto manualmente...")

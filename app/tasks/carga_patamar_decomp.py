@@ -4,6 +4,7 @@ import requests
 import shutil
 import pandas as pd
 import glob
+import imgkit
 from datetime import timedelta
 from middle.utils import SemanaOperativa
 from middle.utils import html_to_image
@@ -28,12 +29,11 @@ constants = Constants()
 
 class CargaPatamarDecomp():
     
-    def __init__(self, payload: Optional[WebhookSintegreSchema]):
+    def __init__(self):
         self.read_carga_patamar = ReadCargaPatamar()  
         self.trigger_dag = trigger_dag      
         self.read_carga_semanal = ReadCargaSemanal()
         self.generate_table = GenerateTable()
-        logger.info("Initialized CargaPatamarDecomp with payload")
     
     def run_workflow(self):
         logger.info("Starting workflow for CargaPatamarDecomp")
@@ -41,11 +41,12 @@ class CargaPatamarDecomp():
    
     def run_process(self):
         logger.info("Running process for CargaPatamarDecomp")
-        self.read_carga_patamar.run_workflow()
+        rv = self.read_carga_patamar.run_workflow()
         logger.debug("Triggering DAG 1.18-PROSPEC_UPDATE with conf: {'produto': 'CARGA-DECOMP'}")
         self.trigger_dag(dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CARGA-DECOMP"})
         self.read_carga_semanal.run_workflow()
-        self.generate_table.run_workflow()
+        if rv != 0:
+            self.generate_table.run_workflow()
      
      
 class ReadCargaPatamar:
@@ -65,8 +66,9 @@ class ReadCargaPatamar:
             base_path = handle_webhook_file(payload, constants.PATH_TMP)
             self.logger.info("Webhook file handled, base path: %s", base_path)
             
-            self.run_process(base_path)
+            rv = self.run_process(base_path)
             self.logger.info("run_workflow completed successfully")
+            return rv
             
         except Exception as e:
             self.logger.error("run_workflow failed: %s", str(e), exc_info=True)
@@ -74,9 +76,10 @@ class ReadCargaPatamar:
 
     def run_process(self, base_path):
         self.logger.info("Processing load data from base path: %s", base_path)
-        df_load = self.read_week_load(base_path)
+        df_load, rv = self.read_week_load(base_path)
         self.logger.info("Successfully processed load data with %d rows", len(df_load))
         self.post_data(df_load)
+        return rv
         
     def read_week_load(self, base_path):
         self.logger.info("Reading week load data from base path: %s", base_path)
@@ -135,7 +138,7 @@ class ReadCargaPatamar:
             self.logger.debug("Sanitized and formatted 'patamar' and 'submercado' columns")
             shutil.rmtree(base_path, ignore_errors=True)
             self.logger.debug("Removed temporary directory: %s", base_path)
-            return df_load
+            return df_load, file_rv
         
         except Exception as e:
             self.logger.error("Failed to read week load data: %s", str(e), exc_info=True)
@@ -347,18 +350,13 @@ class GenerateTable:
         css += 'table {text-align: center; border-collapse: collapse; border 2px solid black !important}'  # centralizar e ajustar tabela
         css += '</style>'
 
-        if rv == 0:
-            html = dif_rv_html.to_html()
-            self.logger.info("Sending only RV%d - RV%d table due to identical RV1 and RV0", rv, rv)
-            destinatarioEmail = constants.EMAIL_MIDDLE
-            whatsapp = constants.WHATSAPP_MIDDLE
-        else:
-            html = dif_rv_html.to_html()
-            html += '<br><br>'
-            html += dif_pmo_html.to_html()
-            self.logger.info("Sending both RV%d - RV%d and RV%d - PMO tables", rv, last_rv, rv)
-            destinatarioEmail = [constants.EMAIL_MIDDLE, constants.EMAIL_FRONT]
-            whatsapp = constants.WHATSAPP_PMO
+
+        html = dif_rv_html.to_html()
+        html += '<br><br>'
+        html += dif_pmo_html.to_html()
+        self.logger.info("Sending both RV%d - RV%d and RV%d - PMO tables", rv, last_rv, rv)
+        destinatarioEmail = [constants.EMAIL_MIDDLE, constants.EMAIL_FRONT]
+        whatsapp = constants.WHATSAPP_PMO
         
         html = html.replace('<style type="text/css">\n</style>\n', css)
         self.logger.debug("Generated HTML for tables")
@@ -392,10 +390,10 @@ class GenerateTable:
 
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
-    """try:
+    try:
         carga = GenerateTable()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
         logger.error("Script execution failed: %s", str(e), exc_info=True)
-        raise"""
+        raise
