@@ -4,13 +4,14 @@ from .tasks import (
    CargaPatamarDecomp,
    DecksNewave,
    CargaPatamarNewave,
+   PreciptacaoPrevista,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
 PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "relatorio_de_acompanhamento_hidrologico": RelatorioAcompanhamentoHidrologico,
    "precipitacao_por_satelite_pmo": None,
-   "modelo_gefs": None,
+   "modelo_gefs":PreciptacaoPrevista,
    "resultados_preliminares_nao_consistidos_vazoes_semanais_pmo": None,
    "relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_pdp": None,
    "niveis_de_partida_para_o_dessem": None,
@@ -23,7 +24,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "acomph": None,
    "rdh": None,
    "historico_de_precipitacao_por_satelite_pmo": None,
-   "modelo_eta": None,
+   "modelo_eta":PreciptacaoPrevista,
    "carga_por_patamar_decomp": CargaPatamarDecomp,
    "deck_preliminar_decomp_valor_esperado": None,
    "decks_de_entrada_e_saida_modelo_dessem": None,
@@ -31,7 +32,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "decks_de_entrada_do_prevcargadessem": None,
    "previsoes_de_carga_mensal_e_por_patamar_newave": CargaPatamarNewave,
    "ipdo_informativo_preliminar_diario_da_operacao": None,
-   "modelo_ecmwf": None,
+   "modelo_ecmwf":PreciptacaoPrevista,
    "dados_utilizados_na_previsao_de_geracao_eolica": None,
    "arquivos_de_previsao_de_carga_para_o_dessem_prevcargadessem": None,
    "deck_newave_preliminar": DecksNewave,
