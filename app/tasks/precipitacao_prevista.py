@@ -77,7 +77,7 @@ class PreciptacaoPrevista(WebhookProductsInterface):
     
     def post_data(self, df: pd.DataFrame) -> dict:
         res = requests.post(
-            f'{constants.BASE_URL}/api/v2/rodadas/subbacias',
+            f'{constants.BASE_URL}/api/v2/rodadas/chuva/previsa/modelos',
             json=df.to_dict(orient='records'),
             headers=get_auth_header()
         )
