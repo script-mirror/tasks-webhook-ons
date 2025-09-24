@@ -15,6 +15,8 @@ from middle.utils import ( # noqa: E402
     Constants,
     get_auth_header,
 )
+from middle.airflow import trigger_dag
+
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
 logger = setup_logger()
 constants = Constants()
@@ -25,7 +27,7 @@ class PreciptacaoPrevista(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         logger.info("Inicializando PreciptacaoPrevista")
         super().__init__(payload)
-        logger.info("PreciptacaoPrevista inicializada com sucesso")
+        self.trigger_dag = trigger_dag
     
     def run_workflow(self, filepath: Optional[str] = None):
         logger.info("Iniciando execucao do workflow de Precipitacao Prevista")
@@ -45,6 +47,8 @@ class PreciptacaoPrevista(WebhookProductsInterface):
         logger.info("Iniciando envio dos dados para a API")
         self.post_data(df)
         logger.info("Workflow de Precipitacao Prevista executado com sucesso")
+
+        self.trigger_dag(dag_id="pconjunto")
 
     def file_to_df(self, filepath: str) -> pd.DataFrame:
         logger.info(f"Processando arquivo de precipitacao em: {filepath}")
