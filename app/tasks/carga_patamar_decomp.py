@@ -4,7 +4,6 @@ import requests
 import shutil
 import pandas as pd
 import glob
-import imgkit
 from datetime import timedelta
 from middle.utils import SemanaOperativa
 from middle.utils import html_to_image
@@ -391,7 +390,7 @@ class GenerateTable:
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
     try:
-        carga = GenerateTable()
+        carga = CargaPatamarDecomp()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
