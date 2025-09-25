@@ -5,15 +5,16 @@ from .tasks import (
    DecksNewave,
    CargaPatamarNewave,
    PreciptacaoPrevista,
+   ResultadosPreliminaresNaoConsistidos,
+   RelatorioResultadosFinaisConsistidosPDP,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
 PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "relatorio_de_acompanhamento_hidrologico": RelatorioAcompanhamentoHidrologico,
-   "precipitacao_por_satelite_pmo": None,
    "modelo_gefs":PreciptacaoPrevista,
-   "resultados_preliminares_nao_consistidos_vazoes_semanais_pmo": None,
-   "relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_pdp": None,
+   "resultados_preliminares_nao_consistidos_vazoes_semanais_pmo": ResultadosPreliminaresNaoConsistidos,
+   "relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_pdp": RelatorioResultadosFinaisConsistidosPDP,
    "niveis_de_partida_para_o_dessem": None,
    "dadvaz_arquivo_de_previsao_de_vazoes_diarias_pdp": None,
    "deck_e_resultados_decomp_valor_esperado": None,
