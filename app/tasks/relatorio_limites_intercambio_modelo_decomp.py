@@ -296,7 +296,6 @@ class IntercambioAnalyzer:
         logger.info("Iniciando cálculo de diferenças")
         try:
             df_datas = self.get_data('restricoes-eletricas/historico')
-            df_datas = sorted(list(df_datas[0]), reverse=True)
             if len(df_datas) < 2:
                 logger.warning("Não há dados suficientes para comparar")
                 return
