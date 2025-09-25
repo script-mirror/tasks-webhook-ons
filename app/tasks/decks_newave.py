@@ -1,34 +1,35 @@
 import os
 import sys
+from typing import Optional, Dict, Any
+import glob
+import pdb  # noqa: F401
+import pandas as pd
+import numpy as np
+import datetime
+import requests
+from inewave.newave import Patamar, Cadic, Sistema, Dger
 
 from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from app.webhook_products_interface import WebhookProductsInterface
-from app.schema import WebhookSintegreSchema
+from app.webhook_products_interface import WebhookProductsInterface # noqa: E402
+from app.schema import WebhookSintegreSchema # noqa: E402
 
-from middle.utils import setup_logger, get_auth_header, HtmlBuilder, Constants, extract_zip
-from middle.airflow import trigger_dag
-from middle.message import send_whatsapp_message
-from app.tasks.previsoes_carga_mensal_patamar_newave import GerarTabelaDiferenca
+from middle.utils import ( # noqa: E402
+    setup_logger,
+    get_auth_header,
+    HtmlBuilder,
+    Constants,
+    extract_zip,
+    SemanaOperativa,
+)
+from middle.airflow import trigger_dag # noqa: E402
+from app.tasks.previsoes_carga_mensal_patamar_newave import GerarTabelaDiferenca # noqa: E402
 constants = Constants()
 logger = setup_logger()
 html_builder = HtmlBuilder()
 
-from typing import Optional, Dict, Any
-import shutil
-import zipfile
-import glob
-import pdb
-import pandas as pd
-import numpy as np
-import datetime
-import requests
-import zipfile as zipFile
-from inewave.newave import Patamar, Cadic, Sistema
-sys.path.append(os.path.join(constants.PATH_PROJETOS, "estudos-middle/update_estudos"))
-from update_newave import NewaveUpdater
 
 class DecksNewave(WebhookProductsInterface):
     
@@ -74,7 +75,7 @@ class DecksNewave(WebhookProductsInterface):
         params['id_estudo'] = None
         params['path_download'] = ''
         params['path_out'] = ''
-        updater.update_eolica(params,[file_path])
+        updater.update_eolica(file_path)
 
     
     def process_file(self, file_path) -> dict:
@@ -547,7 +548,91 @@ class ProcessFunctions():
             logger.error(f"Erro ao processar PATAMAR.DAT: {e}")
             raise
 
- 
+
+class NewaveUpdater:
+    def __init__(self):
+        pass
+    
+    def get_dados_banco(self, endpoint):
+        try:
+            response = requests.get(endpoint)
+            response.raise_for_status()
+            data = response.json()
+            df = pd.DataFrame(data)
+            df['data'] = pd.to_datetime(df['data'])
+            return df
+        except requests.RequestException as e:
+            logger.error(f"Erro ao buscar dados da API: {e}")
+            raise
+
+    def calculate_monthly_wind_average(self, df_data, df_pq, MAP_SUBMERCADO):
+        """Calculate monthly wind generation averages."""
+        dates = pd.date_range(start=pd.to_datetime(min(df_data['inicioSemana'])).replace(day=1),
+                            end=pd.to_datetime(max(df_data['inicioSemana'])) + pd.offsets.MonthEnd(0), freq='D')
+
+        df_diaria = pd.DataFrame()
+        df_data['inicioSemana'] = pd.to_datetime(df_data['inicioSemana'])
+        for date in dates:
+            for ss in df_data['submercado'].unique():                                
+                data_rv = SemanaOperativa(date)
+                data_week = pd.to_datetime(data_rv.week_start)
+                filter = ((df_pq['data'] == date.replace(day=1)) & (df_pq['indice_bloco'] == 3) & 
+                         (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                valor = df_pq[filter]['valor'].values[0]
+                
+                if data_week in df_data['inicioSemana'].unique():
+                    filter = (df_data['submercado'] == ss) & (df_data['inicioSemana'] == data_week)
+                    valor = df_data.loc[filter, 'mediaPonderada'].values[0]
+                df_diaria = pd.concat([df_diaria, pd.DataFrame([{"data": date, "submercado": ss, "valor": valor}])], 
+                                    ignore_index=True)   
+                                
+        df_diaria['valor'] = df_diaria['valor'].fillna(0)
+        df_diaria['mes_ano'] = df_diaria['data'].dt.to_period('M')
+        df_diaria = df_diaria.groupby(['mes_ano', 'submercado'])['valor'].mean().round(2).unstack()                        
+        return df_diaria
+    
+    def update_eolica(self, path_sistema):
+            MAP_SUBMERCADO = {'SE': 1, 'S': 2, 'NE': 3, 'N': 4}
+            logger.debug("Fetching wind generation data from API")
+            df_data = self.get_dados_banco(constants.ENDPOINT_WEOL_PONDERADO)
+            logger.info(f"Processing file: {path_sistema}")
+            update_count = 0
+            try:
+                dger = Dger.read(os.path.join(os.path.dirname(path_sistema), 'dger.dat'))
+                sistema = Sistema.read(path_sistema)
+                data_deck = datetime.datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
+                logger.debug(f"Study start date from dger.dat: {data_deck}")
+                
+                df_pq = sistema.geracao_usinas_nao_simuladas
+                logger.debug(f"Loaded {len(df_pq)} non-simulated generation records from")
+                
+                logger.debug("Calculating monthly wind generation averages")
+                df_diaria = self.calculate_monthly_wind_average(df_data, df_pq, MAP_SUBMERCADO)
+                logger.info(f"Generated monthly averages for {len(df_diaria)} months across "
+                            f"{len(df_diaria.columns)} submarkets: {list(df_diaria.columns)}")
+
+                for mes_ano in df_diaria.index:
+                    if data_deck.strftime('%Y-%m') == str(mes_ano):
+                        logger.info(f"Updating wind generation for deck date: {data_deck.strftime('%Y-%m')}")
+                        for ss in df_diaria.keys():
+                            filter = ((df_pq['data'] == mes_ano.start_time) & 
+                                        (df_pq['indice_bloco'] == 3) & 
+                                        (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                            if not df_pq[filter].empty:
+                                old_value = df_pq.loc[filter, 'valor'].values[0]
+                                new_value = df_diaria.loc[mes_ano][ss]
+                                df_pq.loc[filter, 'valor'] = new_value
+                                update_count += 1
+                                logger.info(f"Updated submarket: {ss.rjust(2)}, month: {mes_ano}, "
+                                            f"old_value:{str(old_value).rjust(8)}, new_value:{str(new_value).rjust(8)}")
+                        
+                sistema.geracao_usinas_nao_simuladas = df_pq
+                logger.info(f"Writing updated to {path_sistema} with {update_count} value updates")
+                sistema.write(path_sistema)
+            except Exception as e:
+                logger.error(f"Error processing file {path_sistema}: {str(e)}. Context: ")
+                raise Exception(f"Error processing file {path_sistema}: {str(e)}. Context: ")
+
 if __name__ == "__main__":
    
    payload = {
