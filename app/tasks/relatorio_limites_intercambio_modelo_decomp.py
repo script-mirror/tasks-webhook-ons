@@ -295,7 +295,7 @@ class IntercambioAnalyzer:
         """Calcula as diferenças entre os limites de intercâmbio de duas datas e envia mensagens."""
         logger.info("Iniciando cálculo de diferenças")
         try:
-            df_datas = self.get_data('restricoes-eletricas/historico')
+            df_datas = self.get_data('restricoes-eletricas/historico').to_dict('records')
             if len(df_datas) < 2:
                 logger.warning("Não há dados suficientes para comparar")
                 return
