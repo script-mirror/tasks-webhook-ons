@@ -1,35 +1,32 @@
-import uvicorn
-from fastapi import FastAPI, Depends
-from app.controller import router as webhook_router
-from app.dependencies import cognito
-from fastapi.security import HTTPBearer
-from dotenv import load_dotenv
+import sys
+import datetime
+from middle.utils import setup_logger
+from app.constants import PRODUCT_MAPPING
+from app.schema import WebhookSintegreSchema
+from middle.utils import sanitize_string
+from app.webhook_products_interface import WebhookProductsInterface
 
-load_dotenv()
-
-auth_scheme = HTTPBearer()
-
-app = FastAPI(
-    title="API Tasks webhook ONS",
-    docs_url="/tasks/api/docs",
-    redoc_url="/tasks/api/redoc",
-    openapi_url="/tasks/api/openapi.json",
-    description="API para receber webhooks da ONS e disparar workflows correspondentes."
-)
-app.include_router(
-    webhook_router, prefix="/tasks/api", tags=["webhook"],
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
+logger = setup_logger()
 
 
-@app.get("/tasks/api/health")
-def health():
-    return {"status": "ok"}
-
-
-def main() -> None:
-    uvicorn.run(app, port=8000, host='0.0.0.0')
+def webhook_handler(payload: WebhookSintegreSchema):
+    payload.nome = sanitize_string(payload.nome, space_char="_")
+    product_handler: WebhookProductsInterface | None = PRODUCT_MAPPING[payload.nome]
+    if not product_handler:
+        logger.error(f"Produto {payload.nome} nao encontrado no mapeamento")
+        raise ValueError("Produto nao mapeado")
+    product_handler = PRODUCT_MAPPING[payload.nome](payload)
+    result = product_handler.run_workflow()
+    return result
 
 if __name__ == "__main__":
-    main()
+    logger.info("Iniciando aplicacao webhook ONS")
+    if len(sys.argv) >= 1:
+        payload = sys.argv[1]
+        payload = eval(payload)
+        webhook_handler(WebhookSintegreSchema(**payload))
+        logger.info(f"Payload: {payload}")
+    else:
+        raise ValueError("Payload nao fornecido corretamente")    
+    
+    logger.info("Aplicacao finalizada com sucesso")

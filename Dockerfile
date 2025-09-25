@@ -15,20 +15,23 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements.txt requirements.txt
+
+COPY .env /root/.env
 
 ARG GIT_USERNAME
 ARG GIT_TOKEN
+
+RUN sed -i "s/\${GIT_USERNAME}/${GIT_USERNAME}/g" requirements.txt && \
+    sed -i "s/\${GIT_TOKEN}/${GIT_TOKEN}/g" requirements.txt
+
 RUN git config --global credential.helper store && \
     echo "https://${GIT_USERNAME}:${GIT_TOKEN}@github.com" > ~/.git-credentials
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN rm -f ~/.git-credentials && \
-    git config --global --unset credential.helper
+COPY . /app
 
-COPY . .
+ENV payload=""
 
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["python", "main.py"]

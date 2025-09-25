@@ -5,7 +5,6 @@ from middle.utils import setup_logger, extract_zip
 from typing import Optional, Dict, Any
 from .schema import WebhookSintegreSchema
 import pandas as pd
-# from .webhook_service import get_webhook_payload
 from middle.utils import Constants
 logger = setup_logger()
 constants = Constants()

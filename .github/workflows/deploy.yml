@@ -1,4 +1,4 @@
-name: Deploy
+name: deploy
 
 on:
   push:
@@ -39,34 +39,20 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -o ConnectTimeout=30 -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -o ConnectTimeout=30 -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
             set -e
             
-            echo "Starting deployment..."
+            echo "Iniciando deploy..."
             
             cd /projetos/tasks-webhook-ons || exit 1
             
-            git config --local credential.helper '!f() { echo "username=${{ secrets.GIT_USERNAME }}"; echo "password=${{ secrets.GIT_TOKEN }}"; }; f'
-            
-            echo "Pulling latest changes..."
-            git pull origin main || exit 1
-            
-            git config --local --unset credential.helper
-            
-            echo "Building and starting containers..."
-            docker compose build --no-cache
-            docker compose up -d
-            
-            echo "Verifying deployment..."
-            sleep 5
-            if docker compose ps | grep -q "Up"; then
-              echo "Deployment successful!"
-            else
-              echo "Deployment may have failed - check container status"
-              docker compose logs --tail=20
-              exit 1
-            fi
+            git pull
+
+            ./build.sh
           EOF
+        env:
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
 
       - name: Cleanup SSH keys
         if: always()
