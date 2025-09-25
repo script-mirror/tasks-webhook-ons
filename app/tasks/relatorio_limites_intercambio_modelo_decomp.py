@@ -207,7 +207,7 @@ class IntercambioAnalyzer:
             logger.error(f"Erro na execução da análise: {str(e)}")
             raise
       
-    def get_data(self, produto: str, params:dict=None) -> pd.DataFrame:
+    def get_data(self, produto: str, params:dict={}) -> pd.DataFrame:
         """Obtém dados da API para o produto e data especificados."""
         logger.info(f"Obtendo dados da API para produto: {[f'{x} : {y}' for x, y in params.items()]} ")
         try:
