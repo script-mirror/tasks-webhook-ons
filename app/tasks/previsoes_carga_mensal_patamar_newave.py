@@ -12,7 +12,7 @@ current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 from app.schema import WebhookSintegreSchema
-from middle.utils import setup_logger, Constants, get_auth_header, html_to_image
+from middle.utils import setup_logger, Constants, get_auth_header, html_to_image, html_style
 from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils.file_manipulation import extract_zip
 from middle.message.sender import send_whatsapp_message
@@ -31,7 +31,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.filename = payload.filename
         self.update_deck_preliminar = UpdateSistemaCadic(self.dataProduto)
         self.gerar_deck_quad = GerarDeckQuadrimestral(self.dataProduto)
-        self.gerar_tabela = GerarTabelaDiferenca()
+        self.gerar_tabela = GenerateTable()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
     def run_workflow(self):
@@ -436,7 +436,7 @@ class GerarDeckQuadrimestral:
             logger.error("Error posting data to %s: %s", url, str(e), exc_info=True)  
             raise
 
-class GerarTabelaDiferenca:  
+class GenerateTable:
     def __init__(self):
         self.constants = Constants()
         self.headers = get_auth_header()
@@ -484,13 +484,7 @@ class GerarTabelaDiferenca:
                 html += self.generate_dif(dict_data[data][1]['data'], dict_data[data][0]['data'], dict_caption[data])
                 html += '<br><br>'
             
-            css = '<style type="text/css">'
-            css += 'caption {background-color: #E0E0E0; color: black;}'
-            css += 'th {background-color: #E0E0E0; color: black; min-width: 60px;}'
-            css += 'td {min-width: 60px;}'
-            css += 'table {text-align: center; border-collapse: collapse; border 2px solid black !important}'
-            css += '</style>'
-            html = html.replace('<style type="text/css">\n</style>\n', css)
+            html = html.replace('<style type="text/css">\n</style>\n', html_style())
             logger.debug("Generated HTML for table with CSS")  
             
             image_binary = html_to_image(html)

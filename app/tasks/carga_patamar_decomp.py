@@ -6,7 +6,7 @@ import pandas as pd
 import glob
 from datetime import timedelta
 from middle.utils import SemanaOperativa
-from middle.utils import html_to_image
+from middle.utils import html_to_image, html_style
 from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
@@ -342,14 +342,6 @@ class GenerateTable:
         dif_rv_html.set_caption(f"Atualização de carga DC (RV{rv} - RV{last_rv})")
         dif_pmo_html.set_caption(f"Atualização de carga DC (RV{rv} - PMO)")
 
-        css = '<style type="text/css">'
-        css += 'caption {background-color: #E0E0E0; color: black;}'
-        css += 'th {background-color: #E0E0E0; color: black; min-width: 80px;}'  # largura do cabeçalho
-        css += 'td {min-width: 80px;}'  # largura das células
-        css += 'table {text-align: center; border-collapse: collapse; border 2px solid black !important}'  # centralizar e ajustar tabela
-        css += '</style>'
-
-
         html = dif_rv_html.to_html()
         html += '<br><br>'
         html += dif_pmo_html.to_html()
@@ -357,7 +349,7 @@ class GenerateTable:
         destinatarioEmail = [constants.EMAIL_MIDDLE, constants.EMAIL_FRONT]
         whatsapp = constants.WHATSAPP_PMO
         
-        html = html.replace('<style type="text/css">\n</style>\n', css)
+        html = html.replace('<style type="text/css">\n</style>\n', html_style())
         self.logger.debug("Generated HTML for tables")
         image_binary = html_to_image(html)
         self.logger.debug("Converted HTML to image")
