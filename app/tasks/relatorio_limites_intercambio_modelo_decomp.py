@@ -321,8 +321,8 @@ class IntercambioAnalyzer:
             diff_df.columns.name = 'RE' 
             diff_df.index.name = 'RE'  
             
-            data_pmo = datetime.datetime.strptime(df_datas[0], '%Y-%m-%d')
-            data_ant = datetime.datetime.strptime(df_datas[1], '%Y-%m-%d')
+            data_pmo = datetime.datetime.strptime(df_datas[0]['data_produto'], '%Y-%m-%d')
+            data_ant = datetime.datetime.strptime(df_datas[1]['data_produto'], '%Y-%m-%d')
 
             logger.info(f"Enviando mensagem com limites para {data_pmo.month}/{data_pmo.year}")
             send_whatsapp_message(
