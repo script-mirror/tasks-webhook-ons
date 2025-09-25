@@ -28,7 +28,7 @@ constants = Constants()
 
 class CargaPatamarDecomp():
     
-    def __init__(self):
+    def __init__(self, payload: Optional[WebhookSintegreSchema] = None):
         self.read_carga_patamar = ReadCargaPatamar()  
         self.trigger_dag = trigger_dag      
         self.read_carga_semanal = ReadCargaSemanal()

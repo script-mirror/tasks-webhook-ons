@@ -30,17 +30,15 @@ class WebhookProductsInterface(ABC):
         """
         pass
     
-    @abstractmethod
     def run_process(self, filepath: str):
         pass
 
-    
+        
     def download_files(self) -> str:
         """
         Método responsável por baixar os arquivos necessários com base nos detalhes do produto.
         
         :param payload: Utiliza dos detalhes do produto para determinar quais arquivos baixar.
-        :return: Um dicionário com o status do download e mensagens associadas.
         """
         
         id_produto = self.payload.webhookId
@@ -60,6 +58,14 @@ class WebhookProductsInterface(ABC):
             logger.error(f"Erro ao baixar arquivo do S3: {e}")
             raise Exception(f"Erro ao baixar arquivo do S3: {e}")
      
+    def extract_files(self, filepath) -> str:
+        try:
+            extracted_path = extract_zip(filepath)
+            logger.info(f"Arquivo extraído com sucesso para {extracted_path}")
+            return extracted_path
+        except Exception as e:
+            logger.error(f"Erro ao extrair arquivo: {e}")
+            raise Exception(f"Erro ao extrair arquivo: {e}")
         
     def process_file(self, basepath) -> str:
         """

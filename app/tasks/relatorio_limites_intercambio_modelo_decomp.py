@@ -207,7 +207,7 @@ class IntercambioAnalyzer:
             logger.error(f"Erro na execução da análise: {str(e)}")
             raise
       
-    def get_data(self, produto: str, params:dict=None) -> pd.DataFrame:
+    def get_data(self, produto: str, params:dict={}) -> pd.DataFrame:
         """Obtém dados da API para o produto e data especificados."""
         logger.info(f"Obtendo dados da API para produto: {[f'{x} : {y}' for x, y in params.items()]} ")
         try:
@@ -295,8 +295,7 @@ class IntercambioAnalyzer:
         """Calcula as diferenças entre os limites de intercâmbio de duas datas e envia mensagens."""
         logger.info("Iniciando cálculo de diferenças")
         try:
-            df_datas = self.get_data('restricoes-eletricas/historico')
-            df_datas = sorted(list(df_datas[0]), reverse=True)
+            df_datas = self.get_data('restricoes-eletricas/historico').to_dict('records')
             if len(df_datas) < 2:
                 logger.warning("Não há dados suficientes para comparar")
                 return
@@ -322,8 +321,8 @@ class IntercambioAnalyzer:
             diff_df.columns.name = 'RE' 
             diff_df.index.name = 'RE'  
             
-            data_pmo = datetime.datetime.strptime(df_datas[0], '%Y-%m-%d')
-            data_ant = datetime.datetime.strptime(df_datas[1], '%Y-%m-%d')
+            data_pmo = datetime.datetime.strptime(df_datas[0]['data_produto'], '%Y-%m-%d')
+            data_ant = datetime.datetime.strptime(df_datas[1]['data_produto'], '%Y-%m-%d')
 
             logger.info(f"Enviando mensagem com limites para {data_pmo.month}/{data_pmo.year}")
             send_whatsapp_message(

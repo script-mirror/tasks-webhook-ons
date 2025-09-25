@@ -103,10 +103,19 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
                     nomeArquivoSaida = 'MAUA'
 
                 for dt, vaz in vaz_out.items():
-                    process_result += [nomeArquivoSaida, codigoEstacao, tipoVazao, dt.strftime('%Y-%m-%d 00:00:00'),round(vaz,2)]
-                   
+                    process_result.append([nomeArquivoSaida, codigoEstacao, tipoVazao, dt.strftime('%Y-%m-%d 00:00:00'), round(vaz,2)])
+            
+            process_result = pd.DataFrame(process_result)
+            process_result = process_result.dropna()
+            
+            process_result.rename(columns={0:'txt_subbacia', 1:'cd_estacao', 2:'txt_tipo_vaz', 3:'dt_referente', 4:'vl_vaz'}, inplace=True)
+            
+            process_result['cd_estacao'] = process_result['cd_estacao'].astype(int)
+            process_result['dt_referente'] = pd.to_datetime(process_result['dt_referente']).dt.strftime('%Y-%m-%d')
+            process_result['vl_vaz'] = process_result['vl_vaz'].astype(float)
+            
             return process_result
-        
+            
         except Exception as e:
             logger.error("Falha em processar os arquivos do produto: %s", str(e), exc_info=True)
             raise

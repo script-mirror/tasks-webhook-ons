@@ -4,6 +4,7 @@ from .previsoes_carga_mensal_patamar_newave import CargaPatamarNewave
 from .decks_newave import DecksNewave
 from .precipitacao_satelite import PrecipitacaoPorSateliteONS
 from .relatorio_acompanhamento_hidrologico import RelatorioAcompanhamentoHidrologico
+from .precipitacao_prevista import PreciptacaoPrevista
 
 __all__ = [
     "RelatorioLimitesIntercambioDecomp",
@@ -12,5 +13,6 @@ __all__ = [
     "DecksNewave",
     "CargaPatamarNewave",
     "PrecipitacaoPorSateliteONS",
-    "RelatorioAcompanhamentoHidrologico"
+    "RelatorioAcompanhamentoHidrologico",
+    "PreciptacaoPrevista",
 ]
