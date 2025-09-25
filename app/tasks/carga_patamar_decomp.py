@@ -329,11 +329,14 @@ class GenerateTable:
         df_rv = df_rv.loc[['SE','S','NE','N','SIN']]
         
         dif_pmo = df_rv - df_pmo
-        dif_rv = df_rv - df_last_rv
+        dif_rv  = df_rv - df_last_rv
+        colunas = [col for col in dif_pmo.columns if col != 'MENSAL'] + ['MENSAL'] 
+        dif_pmo = dif_pmo[colunas]  
+        dif_rv  = dif_rv[colunas] 
         dif_pmo.index.name = None    
-        dif_rv.index.name = None
-        dif_rv_html = dif_rv.style.format('{:.0f}')
-        dif_pmo_html = dif_pmo.style.format('{:.0f}')
+        dif_rv.index.name = None    
+        dif_rv_html  = dif_rv.style.format(na_rep='', precision=0)  
+        dif_pmo_html = dif_pmo.style.format(na_rep='', precision=0)  
        
         rv = int(SemanaOperativa(date_rv).current_revision)
         last_rv = int(SemanaOperativa(pd.to_datetime(date_last_rv)).current_revision)
@@ -382,7 +385,7 @@ class GenerateTable:
 if __name__ == '__main__':
     logger.info("Starting CargaPatamarDecomp script execution")
     try:
-        carga = CargaPatamarDecomp()
+        carga = GenerateTable()
         carga.run_workflow()
         logger.info("Script execution completed successfully")
     except Exception as e:
