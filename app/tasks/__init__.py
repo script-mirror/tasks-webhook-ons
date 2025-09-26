@@ -6,6 +6,7 @@ from .relatorio_resultados_finais_consistidos_pdp import RelatorioResultadosFina
 from .relatorio_acompanhamento_hidrologico import RelatorioAcompanhamentoHidrologico
 from .precipitacao_prevista import PreciptacaoPrevista
 from .resultados_preliminares_nao_consistidos import ResultadosPreliminaresNaoConsistidos
+from .ipdo import Ipdo
 
 __all__ = [
     "RelatorioAcompanhamentoHidrologico",
@@ -18,4 +19,5 @@ __all__ = [
     "CargaPatamarNewave",
     "PrecipitacaoPorSateliteONS",
     "PreciptacaoPrevista",
+    "Ipdo",
 ]
