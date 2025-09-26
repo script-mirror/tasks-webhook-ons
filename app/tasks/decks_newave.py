@@ -19,7 +19,6 @@ from app.schema import WebhookSintegreSchema # noqa: E402
 from middle.utils import ( # noqa: E402
     setup_logger,
     get_auth_header,
-    HtmlBuilder,
     Constants,
     extract_zip,
     SemanaOperativa,
@@ -28,7 +27,6 @@ from middle.airflow import trigger_dag # noqa: E402
 from app.tasks.previsoes_carga_mensal_patamar_newave import GenerateTable # noqa: E402
 constants = Constants()
 logger = setup_logger()
-html_builder = HtmlBuilder()
 
 
 class DecksNewave(WebhookProductsInterface):

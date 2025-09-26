@@ -15,7 +15,6 @@ from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from middle.utils import HtmlBuilder
 from bs4 import BeautifulSoup
 from middle.message import send_whatsapp_message, send_email_message
 from app.schema import WebhookSintegreSchema  # noqa: E402
