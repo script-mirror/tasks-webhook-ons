@@ -7,6 +7,7 @@ from .tasks import (
    PreciptacaoPrevista,
    ResultadosPreliminaresNaoConsistidos,
    RelatorioResultadosFinaisConsistidosPDP,
+   Ipdo,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -32,7 +33,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_de_previsao_de_carga_para_o_dessem": None,
    "decks_de_entrada_do_prevcargadessem": None,
    "previsoes_de_carga_mensal_e_por_patamar_newave": CargaPatamarNewave,
-   "ipdo_informativo_preliminar_diario_da_operacao": None,
+   "ipdo_informativo_preliminar_diario_da_operacao": Ipdo,
    "modelo_ecmwf":PreciptacaoPrevista,
    "dados_utilizados_na_previsao_de_geracao_eolica": None,
    "arquivos_de_previsao_de_carga_para_o_dessem_prevcargadessem": None,
