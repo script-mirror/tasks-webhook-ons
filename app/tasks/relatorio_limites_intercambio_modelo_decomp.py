@@ -178,7 +178,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
 
     def post_data(self, df: pd.DataFrame):
         res = requests.post(
-            f"{constants.BASE_URL}/api/v2/decks/restricoes-eletricas",
+            constants.POST_RESTRICOES_ELETRICAS,
             headers=get_auth_header(),
             json=df.to_dict(orient='records'),
         )
