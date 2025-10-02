@@ -3,7 +3,8 @@ import datetime
 import os
 import sys
 from typing import Optional
-
+from pdf2image import convert_from_path
+from io import BytesIO
 import pdfplumber
 import requests
 
@@ -15,7 +16,6 @@ from middle.message import send_whatsapp_message, send_email_message
 from middle.utils import (
     Constants,
     get_auth_header,
-    pdf_to_jpg,
     setup_logger,
 )
 
@@ -37,7 +37,7 @@ class Ipdo(WebhookProductsInterface):
     def run_process(self, filepath: str):
         body = self.process_file(filepath)
         self.post_data(body)
-        imagem = pdf_to_jpg(filepath, 2)
+        imagem = self.pdf_to_jpg(filepath, 2)
         mensagem = filepath[filepath.rfind("/")+1:-4].replace("-", " ", 1).replace("-", "/")
         send_whatsapp_message("condicao hidrica", mensagem, imagem)
         send_email_message(
@@ -82,7 +82,22 @@ class Ipdo(WebhookProductsInterface):
             "carga_n": carga_norte
             }
         
-    
+
+    def pdf_to_jpg(
+        self, 
+        path: str,
+        page_number: int,
+        path_output: str = None
+        ):
+        pages = convert_from_path(path, 100)
+        img = pages[page_number-1]
+        img_bytes = BytesIO()
+        img.save(img_bytes, 'JPEG')
+        img_bytes.seek(0)
+        if path_output is not None:
+            img.save(path_output, 'JPEG')
+        return img_bytes.getvalue()
+
 
         
 if __name__ == "__main__":
