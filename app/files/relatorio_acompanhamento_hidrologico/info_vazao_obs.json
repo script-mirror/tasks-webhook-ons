@@ -1,0 +1,1435 @@
+{
+    "AVERMELHA": {
+        "sheet": "Grande",
+        "iniciais": "VNM",
+        "codigoEstacao": "61998080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "A.VERMELHA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CAMARGOS": {
+        "sheet": "Grande",
+        "iniciais": "VIA",
+        "codigoEstacao": "61065080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "CAMARGOS": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CAPESCURO": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "61787000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "FAZENDA CAPÃO ESCURO": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "EDACUNHA": {
+        "sheet": "Grande",
+        "iniciais": "VIA",
+        "codigoEstacao": "61818080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "E.CUNHA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "FUNIL MG": {
+        "sheet": "Grande",
+        "iniciais": "VNM",
+        "codigoEstacao": "61146080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "FUNIL": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "FURNAS": {
+        "sheet": "Grande",
+        "iniciais": "VNS",
+        "codigoEstacao": "61661000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "FURNAS": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "MARIMBONDO": {
+        "sheet": "Grande",
+        "iniciais": "VNS",
+        "codigoEstacao": "61941080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "MARIMBONDO": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "PARAGUACU": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "61425000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "PARAGUAÇU": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "PASSAGEM": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "61915000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "PASSAGEM": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "PBUENOS": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "61537000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "PORTO DOS BUENOS": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "PCOLOMBIA": {
+        "sheet": "Grande",
+        "iniciais": "VNS",
+        "codigoEstacao": "61796080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "PORTO COLÔMBIA": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "SSIMAO2": {
+        "sheet": "Paranaiba",
+        "iniciais": "VNS",
+        "codigoEstacao": "60877080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "SÃO SIMÃO": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "RVERDE": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "60805100",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "RIO VERDE": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "SDOFACAO": {
+        "sheet": "Paranaiba",
+        "iniciais": "VIA",
+        "codigoEstacao": "60035000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "SERRA DO FACÃO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "NOVAPONTE": {
+        "sheet": "Paranaiba",
+        "iniciais": "VNA",
+        "codigoEstacao": "60330080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "NOVA PONTE": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "ITUMBIARA": {
+        "sheet": "Paranaiba",
+        "iniciais": "VIA",
+        "codigoEstacao": "60610080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "ITUMBIARA": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "EMBORCACAO": {
+        "sheet": "Paranaiba",
+        "iniciais": "VNM",
+        "codigoEstacao": "60160080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "EMBORCAÇÃO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CORUMBAIV": {
+        "sheet": "Paranaiba",
+        "iniciais": "VNA",
+        "codigoEstacao": "60444000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "CORUMBÁ IV": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CORUMBA1": {
+        "sheet": "Paranaiba",
+        "iniciais": "VIA",
+        "codigoEstacao": "60460000",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "CORUMBÁ": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "NAVANHANDA": {
+        "sheet": "Tiete",
+        "iniciais": "VIA",
+        "codigoEstacao": "62829580",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "NOVA AVANHANDAVA": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "IBITINGA": {
+        "sheet": "Tiete",
+        "iniciais": "VIA",
+        "codigoEstacao": "62790080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "IBITINGA": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "ESOUZA": {
+        "sheet": "Tiete",
+        "iniciais": "VNA",
+        "codigoEstacao": "62335001",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "EDGARD SOUZA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "BBONITA": {
+        "sheet": "Tiete",
+        "iniciais": "VNM",
+        "codigoEstacao": "62729080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "BARRA BONITA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "SJOAO": {
+        "sheet": "Uruguai",
+        "iniciais": "VIA",
+        "codigoEstacao": "75320100",
+        "bacia": "Sul",
+        "composicao": {
+            "PASSO SÃO JOÃO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "QQUEIXO": {
+        "sheet": "Uruguai",
+        "iniciais": "VNA",
+        "codigoEstacao": "73600580",
+        "bacia": "Sul",
+        "composicao": {
+            "QUEBRA QUEIXO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "MONJOLINHO": {
+        "sheet": "Uruguai",
+        "iniciais": "VIA",
+        "codigoEstacao": "73500080",
+        "bacia": "Sul",
+        "composicao": {
+            "MONJOLINHO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "MACHADINHO": {
+        "sheet": "Uruguai",
+        "iniciais": "VNM",
+        "codigoEstacao": "72690081",
+        "bacia": "Sul",
+        "composicao": {
+            "MACHADINHO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "ITA": {
+        "sheet": "Uruguai",
+        "iniciais": "VNM",
+        "codigoEstacao": "73200080",
+        "bacia": "Sul",
+        "composicao": {
+            "ITÁ": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "FOZCHAPECO": {
+        "sheet": "Uruguai",
+        "iniciais": "VNM",
+        "codigoEstacao": "74040080",
+        "bacia": "Sul",
+        "composicao": {
+            "FOZ DO CHAPECÓ": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CN": {
+        "sheet": "Uruguai",
+        "iniciais": "VIA",
+        "codigoEstacao": "71960080",
+        "bacia": "Sul",
+        "composicao": {
+            "CAMPOS NOVOS": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "BG": {
+        "sheet": "Uruguai",
+        "iniciais": "VNA",
+        "codigoEstacao": "70840080",
+        "bacia": "Sul",
+        "composicao": {
+            "BARRA GRANDE": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "RB-SMAP": {
+        "sheet": "Sao_Francisco",
+        "iniciais": "VNA",
+        "codigoEstacao": "40865180",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "RETIRO BAIXO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "TM-SMAP": {
+        "sheet": "Sao_Francisco",
+        "iniciais": "VNM",
+        "codigoEstacao": "40990080",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "TRÊS MARIAS": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "QM": {
+        "sheet": "Sao_Francisco",
+        "iniciais": "VNA",
+        "codigoEstacao": "42459080",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "QUEIMADO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "SMESA": {
+        "sheet": "Tocantins",
+        "iniciais": "VNA",
+        "codigoEstacao": "20920080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SERRA DA MESA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "ROSANA": {
+        "sheet": "Paranapanema",
+        "iniciais": "VIA",
+        "codigoEstacao": "64571080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "ROSANA": {
+                "tipoVazao": "VNM"
+            },
+            "TAQUARUÇU": {
+                "tipoVazao": "VNM",
+                "tempoViagem": 13.9
+            }
+        }
+    },
+    "MAUA": {
+        "sheet": "Paranapanema",
+        "iniciais": "VNA",
+        "codigoEstacao": "64490080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "GOV. JAYME CANET": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "JURUMIRIM": {
+        "sheet": "Paranapanema",
+        "iniciais": "VNA",
+        "codigoEstacao": "64215080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "JURUMIRIM": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CHAVANTES": {
+        "sheet": "Paranapanema",
+        "iniciais": "VIA",
+        "codigoEstacao": "64270080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "CHAVANTES": {
+                "tipoVazao": "VNM"
+            },
+            "PIRAJU": {
+                "tipoVazao": "VNM",
+                "tempoViagem": 10.5
+            }
+        }
+    },
+    "CAPIVARA": {
+        "sheet": "Paranapanema",
+        "iniciais": "VNM",
+        "codigoEstacao": "64516080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "CAPIVARA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CANOASI": {
+        "sheet": "Paranapanema",
+        "iniciais": "VIA",
+        "codigoEstacao": "64345080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "CANOAS I": {
+                "tipoVazao": "VNM"
+            },
+            "OURINHOS": {
+                "tipoVazao": "VNM",
+                "tempoViagem": 11
+            },
+            "LUCAS GARCEZ": {
+                "tipoVazao": "VNM",
+                "tempoViagem": 9
+            },
+            "CANOAS II": {
+                "tipoVazao": "VNM",
+                "tempoViagem": 7
+            }
+        }
+    },
+    "STACLARA": {
+        "sheet": "Iguacu",
+        "iniciais": "VNA",
+        "codigoEstacao": "65824950",
+        "bacia": "Sul",
+        "composicao": {
+            "SANTA CLARA PR": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "JORDSEG": {
+        "sheet": "Iguacu",
+        "iniciais": "VIA",
+        "codigoEstacao": "65826606",
+        "bacia": "Sul",
+        "composicao": {
+            "SEGREDO": {
+                "tipoVazao": "VNM"
+            },
+            "FUNDÃO": {
+                "tipoVazao": "VNM"
+            },
+            "JORDÃO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "UVITORIA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "65310001",
+        "bacia": "Sul",
+        "composicao": {
+            "UNIÃO DA VITÓRIA": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "FOA": {
+        "sheet": "Iguacu",
+        "iniciais": "VNS",
+        "codigoEstacao": "65774403",
+        "bacia": "Sul",
+        "composicao": {
+            "FOZ DO AREIA": {
+                "tipoVazao": "VNM"
+            },
+            "UNIÃO DA VITÓRIA": {
+                "tipoVazao": "VMD",
+                "sheet": "Dados_Fluviometricos",
+                "tempoViagem": 6.6
+            }
+        }
+    },
+    "BALSA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "64831000",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "BALSA SANTA MARIA": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "FLOR+ESTRA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "64999999",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "FLÓRIDA + ESTR. IGUATEMI": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "IVINHEMA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "64617000",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "IVINHEMA": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "PTAQUARA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "64693000",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "PORTO TAQUARA": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "ITAIPU": {
+        "sheet": "Parana",
+        "iniciais": "VNS",
+        "codigoEstacao": "64918980",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "ITAIPU": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "FOZCLARO": {
+        "sheet": "Paranaiba",
+        "iniciais": "VIA",
+        "codigoEstacao": "60906080",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "FOZ DO RIO CLARO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "ESPORA": {
+        "sheet": "Paranaiba",
+        "iniciais": "VNA",
+        "codigoEstacao": "60887200",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "ESPORA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SALTOVERDI": {
+        "sheet": "Paranaiba",
+        "iniciais": "VIA",
+        "codigoEstacao": "60921500",
+        "bacia": "GRD_PRNB",
+        "composicao": {
+            "SALTO VERDINHO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SDO": {
+        "sheet": "Parana",
+        "iniciais": "VNA",
+        "codigoEstacao": "63260000",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "SÃO DOMINGOS": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "JUPIA": {
+        "sheet": "Parana",
+        "iniciais": "VNM",
+        "codigoEstacao": "63007080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "JUPIÁ": {
+                "tipoVazao": "VIP"
+            }
+        }
+    },
+    "ILHAEQUIV": {
+        "sheet": "Parana",
+        "iniciais": "VIA",
+        "codigoEstacao": "63007079",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "ILHA SOLTEIRA": {
+                "tipoVazao": "VIP"
+            },
+            "TRÊS IRMÃOS": {
+                "tipoVazao": "VNM",
+                "sheet": "Tiete"
+            }
+        }
+    },
+    "PPRI": {
+        "sheet": "Parana",
+        "iniciais": "VNS",
+        "codigoEstacao": "63995080",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "PORTO PRIMAVERA": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "FZB": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "63968000",
+        "bacia": "Paranazao",
+        "quantidadeDias": 50,
+        "composicao": {
+            "FAZENDA BURITI": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "LAJEADO": {
+        "sheet": "Tocantins",
+        "iniciais": "VIA",
+        "codigoEstacao": "22490070",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "LAJEADO": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "BANDEIRANT": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "25700000",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "BANDEIRANTES": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "PORTO REAL": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "22910000",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "RIO DO SONO 1": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "C.ARAGUAIA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMS",
+        "codigoEstacao": "27500000",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "CONCEIÇÃO DO ARAGUAIA": {
+                "tipoVazao": "VMS"
+            }
+        }
+    },
+    "ESTREITO": {
+        "sheet": "Tocantins",
+        "iniciais": "VNS",
+        "codigoEstacao": "23700080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "ESTREITO": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "TUCURUI": {
+        "sheet": "Tocantins",
+        "iniciais": "VNS",
+        "codigoEstacao": "29680080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "TUCURUÍ": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "ERNESTINA": {
+        "sheet": "Jacui",
+        "iniciais": "VNA",
+        "codigoEstacao": "85050001",
+        "bacia": "Sul",
+        "composicao": {
+            "ERNESTINA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "PASSOREAL": {
+        "sheet": "Jacui",
+        "iniciais": "VNM",
+        "codigoEstacao": "85260001",
+        "bacia": "Sul",
+        "composicao": {
+            "PASSO REAL": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "DFRANC": {
+        "sheet": "Jacui",
+        "iniciais": "VIA",
+        "codigoEstacao": "85398000",
+        "bacia": "Sul",
+        "composicao": {
+            "JACUÍ": {
+                "tipoVazao": "VNM"
+            },
+            "ITAÚBA": {
+                "tipoVazao": "VNM"
+            },
+            "D. FRANCISCA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "CALVES": {
+        "sheet": "Jacui",
+        "iniciais": "VNA",
+        "codigoEstacao": "86290000",
+        "bacia": "Sul",
+        "composicao": {
+            "CASTRO ALVES": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "14JULHO": {
+        "sheet": "Jacui",
+        "iniciais": "VIA",
+        "codigoEstacao": "86450000",
+        "bacia": "Sul",
+        "composicao": {
+            "14 DE JULHO": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "GPSOUZA": {
+        "sheet": "Outras_Sul",
+        "iniciais": "VNA",
+        "codigoEstacao": "81301990",
+        "bacia": "Sul",
+        "composicao": {
+            "CAPIVARI CACHOEIRA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SALTOPILAO": {
+        "sheet": "Outras_Sul",
+        "iniciais": "VNA",
+        "codigoEstacao": "83458000",
+        "bacia": "Sul",
+        "composicao": {
+            "SALTO PILÃO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "S.ANTONIO": {
+        "sheet": "Amazonas",
+        "iniciais": "VNM",
+        "codigoEstacao": "15400200",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SANTO ANTÔNIO": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "GUAJ-MIRIM": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMS",
+        "codigoEstacao": "15250001",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "GUAJARÁ MIRIM": {
+                "tipoVazao": "VMS"
+            }
+        }
+    },
+    "JIRAU2": {
+        "sheet": "Amazonas",
+        "iniciais": "VNS",
+        "codigoEstacao": "15400100",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "JIRAU": {
+                "tipoVazao": "VNS"
+            }
+        }
+    },
+    "P_DA_BEIRA": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "15200010",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "PRÍNCIPE DA BEIRA": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    "GUAPORE": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "15072000",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "GUAPORÉ": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "DARDANELOS": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "15745010",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "DARDANELOS": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SAMUEL": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "15459080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SAMUEL": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "RONDONII": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "15552200",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "RONDON II": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "COLIDER": {
+        "sheet": "Amazonas",
+        "iniciais": "VIA",
+        "codigoEstacao": "17290000",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SINOP": {
+                "tipoVazao": "VNM"
+            },
+            "COLÍDER": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "PIMENTALT": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "18900090",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "PIMENTAL": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SMANOEL": {
+        "sheet": "Amazonas",
+        "iniciais": "VIA",
+        "codigoEstacao": "17396080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "TELES PIRES": {
+                "tipoVazao": "VNM"
+            },
+            "SÃO MANOEL": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "BALBINA": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "16070980",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "BALBINA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "CURUAUNA": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "18118080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "CURUÁ-UNA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "FGOMES": {
+        "sheet": "Araguari",
+        "iniciais": "VIA",
+        "codigoEstacao": "30500080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "CACHOEIRA CALDEIRÃO": {
+                "tipoVazao": "VNA"
+            },
+            "COARACY NUNES": {
+                "tipoVazao": "VNM"
+            },
+            "FERREIRA GOMES": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "STOANTJARI": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "19150080",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SANTO ANTÔNIO DO JARI": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "IRAPE": {
+        "sheet": "Jequitinhonha",
+        "iniciais": "VNA",
+        "codigoEstacao": "54145080",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "IRAPÉ": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "ITAPEBI": {
+        "sheet": "Jequitinhonha",
+        "iniciais": "VNM",
+        "codigoEstacao": "54960080",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "ITAPEBI": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "UBESP": {
+        "sheet": "Outras_Nordeste",
+        "iniciais": "VNA",
+        "codigoEstacao": "34450000",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "BOA ESPERANÇA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "ITIQUIRAI": {
+        "sheet": "Paraguai",
+        "iniciais": "VNA",
+        "codigoEstacao": "66099000",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "ITIQUIRA I": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "MANSO": {
+        "sheet": "Paraguai",
+        "iniciais": "VNA",
+        "codigoEstacao": "66240080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "MANSO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "PDEPEDRA": {
+        "sheet": "Paraguai",
+        "iniciais": "VNA",
+        "codigoEstacao": "66114500",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "PONTE DE PEDRA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "JAURU": {
+        "sheet": "Paraguai",
+        "iniciais": "VNA",
+        "codigoEstacao": "66055000",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "JAURU": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SCLARA": {
+        "sheet": "Outras_Sudeste",
+        "iniciais": "VNA",
+        "codigoEstacao": "55530000",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SANTA CLARA MG": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "ROSAL": {
+        "sheet": "Outras_Sudeste",
+        "iniciais": "VNA",
+        "codigoEstacao": "57760080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "ROSAL": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "PCAVALO": {
+        "sheet": "Outras_Nordeste",
+        "iniciais": "VNA",
+        "codigoEstacao": "51490080",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "PEDRA DO CAVALO": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "CANDONGA": {
+        "sheet": "Doce",
+        "iniciais": "VNA",
+        "codigoEstacao": "56338075",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "CANDONGA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "MASCARENHA": {
+        "sheet": "Doce",
+        "iniciais": "VIA",
+        "codigoEstacao": "56992280",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "MASCARENHAS": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "PTOESTRELA": {
+        "sheet": "Doce",
+        "iniciais": "VIA",
+        "codigoEstacao": "56820075",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "PORTO ESTRELA": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "SACARV": {
+        "sheet": "Doce",
+        "iniciais": "VIA",
+        "codigoEstacao": "56688085",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SÁ CARVALHO": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "BOQ": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMS",
+        "codigoEstacao": "46902000",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "BOQUEIRÃO": {
+                "tipoVazao": "VMS"
+            }
+        }
+    },
+    "SFR2": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMS",
+        "codigoEstacao": "44200000",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SÃO FRANCISCO": {
+                "tipoVazao": "VMS"
+            }
+        }
+    },
+    "SRM2": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMS",
+        "codigoEstacao": "43200000",
+        "bacia": "NE",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SÃO ROMÃO": {
+                "tipoVazao": "VMS"
+            }
+        }
+    },
+    "JAGUARI": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNA",
+        "codigoEstacao": "58128180",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "JAGUARI": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "STABRANCA": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VIA",
+        "codigoEstacao": "58093080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SANTA BRANCA": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "FUNIL": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNM",
+        "codigoEstacao": "58240080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "FUNIL": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "STACECILIA": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNM",
+        "codigoEstacao": "58318080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SANTA CECÍLIA": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "PICADA": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNA",
+        "codigoEstacao": "58512080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "PICADA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SOBRAGI": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNM",
+        "codigoEstacao": "58521080",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SOBRAGI": {
+                "tipoVazao": "VNM"
+            }
+        }
+    },
+    "ILHAP": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VIA",
+        "codigoEstacao": "58651980",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "ILHA POMBOS": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "LAJESTOCOS": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNA",
+        "codigoEstacao": "58342000",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "LAJES": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "BAIXOIG": {
+        "sheet": "Iguacu",
+        "iniciais": "VIA",
+        "codigoEstacao": "65985200",
+        "bacia": "Sul",
+        "quantidadeDias": 45,
+        "composicao": {
+            "BAIXO IGUAÇU": {
+                "tipoVazao": "VIA"
+            }
+        }
+    },
+    "BBRAUNA": {
+        "sheet": "Paraiba_Sul",
+        "iniciais": "VNA",
+        "codigoEstacao": "58788580",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "BARRA BRAUNA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    "SUICA": {
+        "sheet": "Outras_Sudeste",
+        "iniciais": "VNA",
+        "codigoEstacao": "57120050",
+        "bacia": "OSE",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SUIÇA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    
+    "AMARU_MAYU": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "15299999",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "AMARU MAYU": {
+                "tipoVazao": "VMD"
+            }
+        }
+    },
+    
+    "JURUENA": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "17091035",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "JURUENA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    
+    "SAPIACAS": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "17393500",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SALTO APIACÁS": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    
+    "SALTORS": {
+        "sheet": "Jacui",
+        "iniciais": "VNA",
+        "codigoEstacao": "87100000",
+        "bacia": "Sul",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SALTO RS": {
+                "tipoVazao": "VNA"
+            }
+        }
+    }
+    
+}

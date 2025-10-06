@@ -26,6 +26,7 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
         self.consts = Constants()
+        self.PATH_INFO_VAZOES_OBS_JSON = project_root / 'app' / 'files' / 'relatorio_acompanhamento_hidrologico' / 'info_vazao_obs.json'
         
         
     def run_workflow(self):
@@ -53,7 +54,7 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
             
             df_load = pd.ExcelFile(file_path)
             
-            with open(self.consts.PATH_INFO_VAZOES_OBS_JSON, encoding='utf-8') as f:
+            with open(self.PATH_INFO_VAZOES_OBS_JSON, encoding='utf-8') as f:
                 infoTrechos = json.load(f)
             
             process_result = []	
@@ -89,10 +90,9 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
                     else:
                         if 'tempoViagem' in infoTrechos[station_info]['composicao'][comp]:
                             tempoViagem = infoTrechos[station_info]['composicao'][comp]['tempoViagem']
-                            # Dias de viagem arredondados para cima (Ex: 13.9h = 1 dia)
+
                             diasViagem = math.ceil(tempoViagem/24)
 
-                            # Condicao especial para FOA
                             if nomeArquivoSaida == 'FOA':
                                 vaz_out -= (tempoViagem/(diasViagem*24))*vazComp + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp.shift(periods=diasViagem)
                             else:
@@ -113,7 +113,7 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
             process_result['cd_estacao'] = process_result['cd_estacao'].astype(int)
             process_result['dt_referente'] = pd.to_datetime(process_result['dt_referente']).dt.strftime('%Y-%m-%d')
             process_result['vl_vaz'] = process_result['vl_vaz'].astype(float)
-            
+
             return process_result
             
         except Exception as e:
