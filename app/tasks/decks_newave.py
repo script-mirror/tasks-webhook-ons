@@ -85,7 +85,7 @@ class DecksNewave(WebhookProductsInterface):
                 self.logger.info("Successfully posted data for key: %s", chave)
             
             self.logger.info("Triggering Airflow DAG: 1.17-NEWAVE_ONS-TO-CCEE")
-            #self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf={})
+            self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf={})
             self.logger.info("DAG triggered successfully")
             
             self.logger.info("Running GenerateTable process")
