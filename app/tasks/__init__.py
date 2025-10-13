@@ -2,6 +2,7 @@ from .relatorio_limites_intercambio_modelo_decomp import RelatorioLimitesInterca
 from .carga_patamar_decomp import CargaPatamarDecomp
 from .previsoes_carga_mensal_patamar_newave import CargaPatamarNewave
 from .decks_newave import DecksNewave
+from .deck_decomp import DeckDecomp
 from .relatorio_resultados_finais_consistidos_pdp import RelatorioResultadosFinaisConsistidosPDP
 from .relatorio_acompanhamento_hidrologico import RelatorioAcompanhamentoHidrologico
 from .precipitacao_prevista import PreciptacaoPrevista
@@ -16,6 +17,7 @@ __all__ = [
     "CargaPatamarDecomp",
     "CargaPatamarNewave",
     "DecksNewave",
+    "DeckDecomp",
     "CargaPatamarNewave",
     "PrecipitacaoPorSateliteONS",
     "PreciptacaoPrevista",
