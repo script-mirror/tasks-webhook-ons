@@ -15,7 +15,7 @@ from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils import html_to_image, get_auth_header, setup_logger, Constants
 from middle.message import send_whatsapp_message, send_email_message
 from middle.utils.date_utils import SemanaOperativa
-
+from middle.airflow import trigger_dag
 constants = Constants()
 logger = setup_logger()
 
@@ -39,6 +39,7 @@ class Weol(WebhookProductsInterface):
         self.gerar_tabela_mensal({'data': data_produto})
         self.gerar_tabela_semanal({'data': data_produto})
         self.gerar_tabela_diferenca({'data': data_produto})
+        trigger_dag("1.18-PROSPEC_UPDATE", {"produto": "EOLICA"})
 
     def ler_csv_prev_weol_para_dicionario(self, file):
         reader = csv.reader(file, delimiter=';')
