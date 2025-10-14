@@ -1,7 +1,7 @@
 from .tasks import (
    RelatorioAcompanhamentoHidrologico,
    RelatorioLimitesIntercambioDecomp,
-   DeckResultadosDECOMP,
+   # DeckResultadosDECOMP,
    CargaPatamarDecomp,
    DecksNewave,
    DeckDecomp,
@@ -10,6 +10,7 @@ from .tasks import (
    ResultadosPreliminaresNaoConsistidos,
    RelatorioResultadosFinaisConsistidosPDP,
    Ipdo,
+   NotasTecnicasMedioPrazo,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -18,7 +19,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "modelo_gefs":PreciptacaoPrevista,
    "resultados_preliminares_nao_consistidos_vazoes_semanais_pmo": ResultadosPreliminaresNaoConsistidos,
    "relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_pdp": RelatorioResultadosFinaisConsistidosPDP,
-   "deck_e_resultados_decomp_valor_esperado": DeckResultadosDECOMP,
+   # "deck_e_resultados_decomp_valor_esperado": DeckResultadosDECOMP,
    "resultados_finais_consistidos_vazoes_diarias_pdp": None,
    "resultados_preliminares_consistidos_vazoes_semanais_pmo": None,
    "arquivos_dos_modelos_de_previsao_de_vazoes_semanais_pmo": None,
@@ -42,6 +43,6 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": None,
    "preliminar_relatorio_mensal_de_limites_de_intercambio": RelatorioLimitesIntercambioDecomp,
    "relatorio_mensal_de_limites_de_intercambio_para_o_modelo_decomp": RelatorioLimitesIntercambioDecomp,
-   "notas_tecnicas_medio_prazo": NotasTecnicasMedioPrazo
+   "notas_tecnicas_medio_prazo": NotasTecnicasMedioPrazo,
 }
 
