@@ -11,6 +11,7 @@ from .tasks import (
    RelatorioResultadosFinaisConsistidosPDP,
    Ipdo,
    NotasTecnicasMedioPrazo,
+   Weol,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -40,7 +41,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_de_previsao_de_carga_para_o_dessem_prevcargadessem": None,
    "deck_newave_preliminar": DecksNewave,
    "deck_newave_definitivo": DecksNewave,
-   "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": None,
+   "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": Weol,
    "preliminar_relatorio_mensal_de_limites_de_intercambio": RelatorioLimitesIntercambioDecomp,
    "relatorio_mensal_de_limites_de_intercambio_para_o_modelo_decomp": RelatorioLimitesIntercambioDecomp,
    "notas_tecnicas_medio_prazo": NotasTecnicasMedioPrazo,

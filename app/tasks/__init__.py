@@ -10,6 +10,7 @@ from .resultados_preliminares_nao_consistidos import ResultadosPreliminaresNaoCo
 from .ipdo import Ipdo
 # from .deck_resultados_decomp import DeckResultadosDECOMP
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
+from .weol import Weol
 
 __all__ = [
     "RelatorioAcompanhamentoHidrologico",
@@ -26,4 +27,5 @@ __all__ = [
     "Ipdo",
     # "DeckResultadosDECOMP",
     "NotasTecnicasMedioPrazo",
+    "Weol",
 ]
