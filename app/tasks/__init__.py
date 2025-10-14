@@ -11,6 +11,7 @@ from .ipdo import Ipdo
 # from .deck_resultados_decomp import DeckResultadosDECOMP
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
 from .weol import Weol
+from .psat import Psat
 
 __all__ = [
     "RelatorioAcompanhamentoHidrologico",
@@ -28,4 +29,5 @@ __all__ = [
     # "DeckResultadosDECOMP",
     "NotasTecnicasMedioPrazo",
     "Weol",
+    "Psat",
 ]
