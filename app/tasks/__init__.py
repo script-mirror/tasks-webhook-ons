@@ -9,6 +9,8 @@ from .precipitacao_prevista import PreciptacaoPrevista
 from .resultados_preliminares_nao_consistidos import ResultadosPreliminaresNaoConsistidos
 from .ipdo import Ipdo
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
+from .weol import Weol
+from .psat import Psat
 
 __all__ = [
     "RelatorioAcompanhamentoHidrologico",
@@ -23,5 +25,8 @@ __all__ = [
     "PrecipitacaoPorSateliteONS",
     "PreciptacaoPrevista",
     "Ipdo",
-    "NotasTecnicasMedioPrazo"
+    # "DeckResultadosDECOMP",
+    "NotasTecnicasMedioPrazo",
+    "Weol",
+    "Psat",
 ]

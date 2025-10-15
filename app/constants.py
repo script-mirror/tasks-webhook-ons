@@ -9,7 +9,9 @@ from .tasks import (
    ResultadosPreliminaresNaoConsistidos,
    RelatorioResultadosFinaisConsistidosPDP,
    Ipdo,
-   NotasTecnicasMedioPrazo
+   NotasTecnicasMedioPrazo,
+   Weol,
+   Psat,
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -25,6 +27,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_dos_modelos_de_previsao_de_vazoes_diarias_pdp": None,
    "acomph": None,
    "rdh": None,
+   "preciptacao_por_satelite_ons": Psat,
    "historico_de_precipitacao_por_satelite_pmo": None,
    "modelo_eta":PreciptacaoPrevista,
    "carga_por_patamar_decomp": CargaPatamarDecomp,
@@ -39,9 +42,9 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_de_previsao_de_carga_para_o_dessem_prevcargadessem": None,
    "deck_newave_preliminar": DecksNewave,
    "deck_newave_definitivo": DecksNewave,
-   "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": None,
+   "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": Weol,
    "preliminar_relatorio_mensal_de_limites_de_intercambio": RelatorioLimitesIntercambioDecomp,
    "relatorio_mensal_de_limites_de_intercambio_para_o_modelo_decomp": RelatorioLimitesIntercambioDecomp,
-   "notas_tecnicas_medio_prazo": NotasTecnicasMedioPrazo
+   "notas_tecnicas_medio_prazo": NotasTecnicasMedioPrazo,
 }
 
