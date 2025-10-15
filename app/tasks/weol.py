@@ -150,7 +150,7 @@ class Weol(WebhookProductsInterface):
         imagem = html_to_image(html)
 
         mensagem = f"WEOL Mensal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
-        send_whatsapp_message("debug", mensagem, imagem)
+        send_whatsapp_message("weol", mensagem, imagem)
         # send_email_message(
             # user="WEOL",
             # destinatario=[constants.EMAIL_MIDDLE if hasattr(constants, 'EMAIL_MIDDLE') else "middle@example.com", 
@@ -171,7 +171,7 @@ class Weol(WebhookProductsInterface):
         imagem = html_to_image(html)
 
         mensagem = f"WEOL Semanal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
-        send_whatsapp_message("debug", mensagem, imagem)
+        send_whatsapp_message("weol", mensagem, imagem)
         # send_email_message(
         #     user="WEOL",
         #     destinatario=[constants.EMAIL_MIDDLE if hasattr(constants, 'EMAIL_MIDDLE') else "middle@example.com", 
@@ -192,7 +192,7 @@ class Weol(WebhookProductsInterface):
         imagem = html_to_image(html)
 
         mensagem = f"WEOL (D-1) ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
-        send_whatsapp_message("debug", mensagem, imagem)
+        send_whatsapp_message("weol", mensagem, imagem)
         # send_email_message(
         #     user="WEOL",
         #     destinatario=[constants.EMAIL_MIDDLE if hasattr(constants, 'EMAIL_MIDDLE') else "middle@example.com", 
