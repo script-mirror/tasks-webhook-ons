@@ -43,7 +43,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_de_previsao_de_carga_para_o_dessem_prevcargadessem": None,
    "deck_newave_preliminar": DecksNewave,
    "deck_newave_definitivo": DecksNewave,
-   "decks_da_previsao_de_geracao_eolica_semanal_weol_sm": Weol,
+   "decks_da_previsao_de_geracao_eolica_semanal_weolsm": Weol,
    "preliminar_relatorio_mensal_de_limites_de_intercambio": RelatorioLimitesIntercambioDecomp,
    "relatorio_mensal_de_limites_de_intercambio_para_o_modelo_decomp": RelatorioLimitesIntercambioDecomp,
    "notas_tecnicas_medio_prazo": NotasTecnicasMedioPrazo,
