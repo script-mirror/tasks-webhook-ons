@@ -27,7 +27,7 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_dos_modelos_de_previsao_de_vazoes_diarias_pdp": None,
    "acomph": None,
    "rdh": None,
-   "preciptacao_por_satelite_ons": Psat,
+   "precipitacao_por_satelite_ons": Psat,
    "historico_de_precipitacao_por_satelite_pmo": None,
    "modelo_eta":PreciptacaoPrevista,
    "carga_por_patamar_decomp": CargaPatamarDecomp,
