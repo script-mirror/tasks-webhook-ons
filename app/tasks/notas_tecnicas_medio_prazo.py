@@ -31,15 +31,15 @@ class NotasTecnicasMedioPrazo(WebhookProductsInterface):
         
         
     def run_workflow(self):
-        logger.info("Iniciando workflow do produto Resultados Preliminares Nao Consistidos...")
+        logger.info("Iniciando workflow do produto Notas Técnicas - Medio Prazo...")
         try:
             file_path = self.download_files()
             
             self.run_process(file_path)
             
-            logger.info("Workflow do produto Resultados Preliminares Nao Consistidos finalizado com sucesso!  ")
+            logger.info("Workflow do produto Notas Técnicas - Medio Prazo finalizado com sucesso!  ")
         except Exception as e:
-            logger.error("Erro no workflow do produto Resultados Preliminares Nao Consistidos")
+            logger.error("Erro no workflow do produto Notas Técnicas - Medio Prazo")
             raise
         
     def run_process(self, file_path):
@@ -79,7 +79,7 @@ class NotasTecnicasMedioPrazo(WebhookProductsInterface):
           
           
 if __name__ == '__main__':
-    logger.info("Iniciando manualmente o workflow do produto Resultados Preliminares Nao Consistidos...")
+    logger.info("Iniciando manualmente o workflow do produto Notas Técnicas - Medio Prazo...")
     try:
         payload = {
             "dataProduto": "10/2025",

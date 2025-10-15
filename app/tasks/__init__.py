@@ -8,7 +8,6 @@ from .relatorio_acompanhamento_hidrologico import RelatorioAcompanhamentoHidrolo
 from .precipitacao_prevista import PreciptacaoPrevista
 from .resultados_preliminares_nao_consistidos import ResultadosPreliminaresNaoConsistidos
 from .ipdo import Ipdo
-from .deck_resultados_decomp import DeckResultadosDECOMP
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
 
 __all__ = [
@@ -24,6 +23,5 @@ __all__ = [
     "PrecipitacaoPorSateliteONS",
     "PreciptacaoPrevista",
     "Ipdo",
-    "DeckResultadosDECOMP",
     "NotasTecnicasMedioPrazo"
 ]
