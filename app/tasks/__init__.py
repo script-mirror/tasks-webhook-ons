@@ -25,7 +25,6 @@ __all__ = [
     "PrecipitacaoPorSateliteONS",
     "PreciptacaoPrevista",
     "Ipdo",
-    # "DeckResultadosDECOMP",
     "NotasTecnicasMedioPrazo",
     "Weol",
     "Psat",
