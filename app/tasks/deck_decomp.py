@@ -8,13 +8,13 @@ current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
 from middle.message import send_whatsapp_message
-from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string  # noqa: E402
+from middle.utils import setup_logger, Constants, html_style # noqa: E402
 from middle.utils.file_manipulation import extract_zip
 from middle.s3 import ( # noqa: E402
     handle_webhook_file,
     get_latest_webhook_product,
 )
-
+from middle.airflow import trigger_dag  # noqa: E402
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
 from app.schema import WebhookSintegreSchema  # noqa: E402
 # Configura o logger globalmente uma única vez
@@ -25,6 +25,7 @@ class DeckDecomp(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)    
         self.read_cmo = ReadResultsDecomp()
+        self.trigger_dag = trigger_dag
         logger.debug("Initialized DeckDecomp instance")
     
     def run_workflow(self):
@@ -39,6 +40,7 @@ class DeckDecomp(WebhookProductsInterface):
         logger.info("Executing DeckDecomp process")
         try:
             self.read_cmo.run_workflow()
+            self.trigger_dag(dag_id="1.16-DECOMP_ONS-TO-CCEE", conf={})
         except Exception as e:
             logger.error("DeckDecomp process failed: %s", str(e), exc_info=True)
             raise
@@ -157,6 +159,7 @@ class ReadResultsDecomp:
             df_cmo = df_cmo.set_caption(f'CMO ONS Decomp Preliminar - REV {rev} ')
             logger.debug("Converting DataFrame to HTML")
             html = df_cmo.to_html()
+            html = html.replace('<style type="text/css">\n</style>\n', html_style())
             logger.info("Converting HTML to image")
             image_binary = html_to_image(html)
             msg = f'CMO ONS Decomp Preliminar - REV {rev} '
