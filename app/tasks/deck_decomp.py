@@ -42,6 +42,9 @@ class DeckDecomp(WebhookProductsInterface):
         except Exception as e:
             logger.error("DeckDecomp process failed: %s", str(e), exc_info=True)
             raise
+    def post_data(self):
+        pass
+      
        
      
 class ReadResultsDecomp:
