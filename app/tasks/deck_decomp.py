@@ -2,6 +2,7 @@ import sys
 import os
 import pandas as pd
 from middle.utils import html_to_image
+from typing import Optional, Dict, Any
 from pathlib import Path
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
@@ -14,13 +15,15 @@ from middle.s3 import ( # noqa: E402
     get_latest_webhook_product,
 )
 
+from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
+from app.schema import WebhookSintegreSchema  # noqa: E402
 # Configura o logger globalmente uma única vez
 logger = setup_logger()
 constants = Constants()
 
-class DeckDecomp:
+class DeckDecomp(WebhookProductsInterface):
+    def __init__(self, payload: Optional[WebhookSintegreSchema]):
     
-    def __init__(self):
         self.read_cmo = ReadResultsDecomp()
         logger.debug("Initialized DeckDecomp instance")
     
