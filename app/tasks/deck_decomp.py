@@ -23,7 +23,7 @@ constants = Constants()
 
 class DeckDecomp(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
-    
+        super().__init__(payload)    
         self.read_cmo = ReadResultsDecomp()
         logger.debug("Initialized DeckDecomp instance")
     
