@@ -4,6 +4,7 @@ import requests
 import shutil
 import pandas as pd
 import glob
+import datetime
 from datetime import timedelta
 from middle.utils import SemanaOperativa
 from middle.utils import html_to_image, html_style
