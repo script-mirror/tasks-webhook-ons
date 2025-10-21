@@ -2,7 +2,7 @@ import sys
 import pdb
 import io
 import requests
-import datetime 
+from datetime import datetime, date
 import pdfplumber
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -36,7 +36,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
     
-    def run_workflow(self, filepath: Optional[str] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         if not filepath:
             filepath = self.download_files()
         tipo = "preliminar" if "preliminar" in filepath.lower() else "definitivo"
@@ -48,7 +48,8 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         analyzer = GenerateTable()
         analyzer.run_workflow()
            
-    def get_data_produto(self, path_produto: str) -> datetime.date:
+    def get_data_produto(self, path_produto: str) -> date:
+        pass
         with pdfplumber.open(path_produto) as pdf:
             data_produto = extrair_mes_ano(pdf.pages[0].extract_text())
         return data_produto
@@ -91,7 +92,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
                 return None
 
 
-    def reformat_df_database(self, df:pd.DataFrame, dict_num, data_produto: datetime.date):
+    def reformat_df_database(self, df:pd.DataFrame, dict_num, data_produto: date):
         first_month_year, second_month_year = data_produto, (data_produto + datetime.timedelta(days=31)).replace(day=1)
 
         reformatted_data = []    
@@ -146,7 +147,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     def run_process(
         self,
         pdf_path: str,
-        data_produto: datetime.date,
+        data_produto: date,
         table_name: str = "Tabela 4-1: Resultados dos Limites Elétricos",
     ):
         dict_num = {
@@ -196,7 +197,7 @@ class GenerateTable:
         self.consts = Constants()
         self.header = get_auth_header()
 
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Executando análise principal")
         try:
             self.calculate_differences()

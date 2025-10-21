@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import glob
 import pdb
-import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from typing import Optional
 from pathlib import Path
@@ -34,16 +34,12 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.gerar_tabela = GenerateTable()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Iniciando workflow do produto Previsões de Carga Mensal e por Patamar...")
         try:
             file_path = self.download_files()
             logger.debug("Downloaded file path: %s", file_path)  
             self.run_process(file_path)
-            logger.info("Workflow do produto Previsões de Carga Mensal e por Patamar finalizado com sucesso!")
-        except Exception as e:
-            logger.error("Erro no fluxo de processamento das Previsões de Carga Mensal por Patamar do Newave: %s", str(e), exc_info=True)
-            raise
         
     def run_process(self, file_path):
         logger.debug("Starting run_process with file: %s", file_path)  

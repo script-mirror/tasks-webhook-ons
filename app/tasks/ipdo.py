@@ -1,5 +1,5 @@
 import pdb
-import datetime
+from datetime import datetime
 import os
 import sys
 from typing import Optional
@@ -27,7 +27,7 @@ class Ipdo(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
         
-    def run_workflow(self, filepath: Optional[str] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         if not filepath:
             filepath = self.download_files()
     

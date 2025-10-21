@@ -2,7 +2,7 @@ import os
 import sys
 import pdb
 import requests
-import datetime 
+from datetime import datetime, timedelta
 import pandas as pd
 from typing import Optional
 from pathlib import Path
@@ -30,8 +30,8 @@ class PreciptacaoPrevista(WebhookProductsInterface):
         super().__init__(payload)
         self.trigger_dag = trigger_dag
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
-        logger.info("Iniciando execucao do workflow de Precipitacao Prevista")
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
+        logger.info("Iniciando workflow do produto Precipitacao Prevista")
         
         if not filepath and not self.payload:
             raise ValueError("É necessário fornecer um filepath ou um payload válido")
@@ -43,7 +43,7 @@ class PreciptacaoPrevista(WebhookProductsInterface):
             logger.info(f"Download concluido, arquivos salvos em: {filepath}")
         else:
             logger.info(f"Usando caminho de arquivo fornecido: {filepath}")
-            if isinstance(manually_date, datetime.datetime):
+            if isinstance(manually_date, datetime):
                 manually_date = manually_date.strftime('%Y-%m-%d')
             
         logger.info("Iniciando processamento do produto Precipitacao Prevista")
@@ -68,10 +68,10 @@ class PreciptacaoPrevista(WebhookProductsInterface):
         logger.info(f"Arquivo extraído com sucesso para {filepath}")
         
         arquivo = [x for x in os.popen(f'ls {filepath}').read().split("\n")[:-1] if '_m_' in x][0]
-        data_rodada = datetime.datetime.strptime(arquivo[-10:-4], '%d%m%y')
+        data_rodada = datetime.strptime(arquivo[-10:-4], '%d%m%y')
         df = pd.read_fwf(os.path.join(filepath, arquivo), header=None)
         df.columns = ["cd_subbacia", "lat", "lon", *[
-            f'{(data_rodada+datetime.timedelta(days=x+1)).date()}' for x in range(
+            f'{(data_rodada+timedelta(days=x+1)).date()}' for x in range(
                 len(df.columns.to_list()[3:])
             )]]
         df.drop(columns=["lat", "lon"], inplace=True)
@@ -112,4 +112,4 @@ if __name__ == "__main__":
         filepath= "/home/diogopolastrine/Downloads/ECMWF_precipitacao14d_20251018.zip"
         preciptacao_prevista = PreciptacaoPrevista()
         
-        preciptacao_prevista.run_workflow(filepath=filepath, manually_date=datetime.datetime(2025,10,18))
+        preciptacao_prevista.run_workflow(filepath=filepath, manually_date=datetime(2025,10,18))

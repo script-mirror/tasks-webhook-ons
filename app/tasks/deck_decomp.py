@@ -1,7 +1,7 @@
 import sys
 import os
 import pandas as pd
-import datetime
+from datetime import datetime
 from middle.utils import html_to_image
 from typing import Optional, Dict, Any
 from pathlib import Path
@@ -29,7 +29,7 @@ class DeckDecomp(WebhookProductsInterface):
         self.trigger_dag = trigger_dag
         logger.debug("Initialized DeckDecomp instance")
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Starting DeckDecomp workflow")
         try:
             self.run_process()
@@ -56,7 +56,7 @@ class ReadResultsDecomp:
         self.logger = logger  # Usa o logger global
         logger.debug("Initialized ReadResultsDecomp instance")
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Starting ReadResultsDecomp workflow")
         try:
             logger.debug("Creating temporary directory: %s", constants.PATH_TMP)

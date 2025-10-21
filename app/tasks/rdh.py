@@ -5,7 +5,7 @@ import pandas as pd
 import glob
 import locale
 import openpyxl
-import datetime
+from datetime import datetime
 from typing import Optional
 from pathlib import Path
 current_file = Path(__file__).resolve()
@@ -28,7 +28,7 @@ class Rdh(WebhookProductsInterface):
 
         logger.info("Initialized RDH with payload: %s", payload)
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Starting run_workflow for RDH")
         try:
             os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)            

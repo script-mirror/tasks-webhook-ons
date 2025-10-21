@@ -1,7 +1,12 @@
 import pandas as pd
 from typing import Optional
 from pathlib import Path
-import datetime
+from datetime import datetime
+import pdb
+import sys
+import glob
+import os
+import requests
 import pdb
 import sys
 import glob
@@ -32,7 +37,7 @@ class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
         self.headers = get_auth_header()
         
         
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Iniciando workflow do produto Precipitação por Satélite - ONS...")
         try:
             file_path = self.download_files()
@@ -49,7 +54,7 @@ class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
         diaPrevisao = int(filename_splited[3])
         mesPrevisao = int(filename_splited[4])
         anoPrevisao = int(filename_splited[5])
-        dt_previsao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
+        dt_previsao = datetime(anoPrevisao, mesPrevisao, diaPrevisao)
         
         df_load = self.process_file(file_path, dt_previsao)
         

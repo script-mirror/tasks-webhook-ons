@@ -8,7 +8,7 @@ import os
 import json
 import requests
 import math
-import datetime
+from datetime import datetime
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -29,7 +29,7 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
         self.PATH_INFO_VAZOES_OBS_JSON = project_root / 'app' / 'files' / 'relatorio_acompanhamento_hidrologico' / 'info_vazao_obs.json'
         
         
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Iniciando workflow do produto Relatório de Acompanhamento Hídrico...")
         try:
             file_path = self.download_files()

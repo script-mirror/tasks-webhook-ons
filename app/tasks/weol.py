@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import os
 import sys
 import zipfile
@@ -24,7 +24,7 @@ class Weol(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
         
-    def run_workflow(self, filepath: Optional[str] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         if not filepath:
             filepath = self.download_files()
     

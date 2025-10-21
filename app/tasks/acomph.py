@@ -2,7 +2,7 @@ import os
 import sys
 import pdb
 import requests
-import datetime 
+from datetime import datetime
 import pandas as pd
 from typing import Optional
 from pathlib import Path
@@ -29,7 +29,7 @@ class Acomph(WebhookProductsInterface):
         super().__init__(payload)
         self.trigger_dag = trigger_dag
     
-    def run_workflow(self, filepath: Optional[str] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         pass
 
     def post_data(self, df: pd.DataFrame) -> dict:

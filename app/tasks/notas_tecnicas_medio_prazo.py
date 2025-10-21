@@ -5,7 +5,7 @@ import pdb
 import sys
 import glob
 import os
-import datetime
+from datetime import datetime
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent

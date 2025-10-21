@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any
 import struct
 import pandas as pd
 import numpy as np
-import datetime
+from datetime import datetime
 import requests
 from inewave.newave import Patamar, Cadic, Sistema, Dger
 
@@ -44,6 +44,7 @@ class DecksNewave(WebhookProductsInterface):
         self.logger.info("DecksNewave initialized successfully")
 
     def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None) -> Dict[str, Any]:
+        pass
         self.logger.info("Starting workflow for file: %s", self.file_name)
         try:
             file_path = self.download_files()

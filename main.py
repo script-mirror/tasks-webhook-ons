@@ -1,5 +1,4 @@
 import sys
-import datetime
 from middle.utils import setup_logger
 from app.constants import PRODUCT_MAPPING
 from app.schema import WebhookSintegreSchema
