@@ -5,7 +5,6 @@ import shutil
 import pandas as pd
 import glob
 import datetime
-from datetime import timedelta
 from middle.utils import SemanaOperativa
 from middle.utils import html_to_image, html_style
 from pathlib import Path
@@ -97,7 +96,7 @@ class ReadCargaPatamar:
             df_week_load = pd.read_excel(week_load_path)
             self.logger.debug("Read weekly load data with %d rows", len(df_week_load))
             
-            df_week_load['SO'] = pd.to_datetime(df_week_load['SO']) - timedelta(days=6)
+            df_week_load['SO'] = pd.to_datetime(df_week_load['SO']) - datetime.timedelta(days=6)
             self.logger.debug("Adjusted SO column in weekly data by subtracting 6 days")
             
             deck_date = SemanaOperativa(min(df_week_load['SO'].unique()))

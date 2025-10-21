@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import glob
 import pdb
-from datetime import datetime, timedelta
+import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Optional
 from pathlib import Path
@@ -113,7 +113,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
                 delta_days = 15
                 logger.debug("Set delta_days to %d for quadrimestral file", delta_days)  
             
-            date = pd.to_datetime(df_load['data_revisao'].unique()[0]) + timedelta(days=delta_days)
+            date = pd.to_datetime(df_load['data_revisao'].unique()[0]) + datetime.timedelta(days=delta_days)
             date_produto = (date + relativedelta(months=1)).replace(day=1).strftime('%Y-%m-%d')
             df_load['data_produto'] = date_produto
             df_load['quadrimestral'] = LOAD_QUADRI
