@@ -43,7 +43,7 @@ class DecksNewave(WebhookProductsInterface):
         self.constants = Constants()
         self.logger.info("DecksNewave initialized successfully")
 
-    def run_workflow(self) -> Dict[str, Any]:
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None) -> Dict[str, Any]:
         self.logger.info("Starting workflow for file: %s", self.file_name)
         try:
             file_path = self.download_files()

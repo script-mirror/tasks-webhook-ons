@@ -34,7 +34,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.gerar_tabela = GenerateTable()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Iniciando workflow do produto Previsões de Carga Mensal e por Patamar...")
         try:
             file_path = self.download_files()
@@ -448,7 +448,7 @@ class GenerateTable:
         self.url_ande = self.constants.GET_NEWAVE_CADIC_TOTAL_ANDE
         logger.info("Initialized GerarTabelaDiferenca")  
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.debug("Starting run_workflow for GerarTabelaDiferenca")  
         self.run_process()
         logger.info("Completed run_workflow for GerarTabelaDiferenca")  

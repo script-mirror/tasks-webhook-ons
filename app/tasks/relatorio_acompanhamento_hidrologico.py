@@ -29,7 +29,7 @@ class RelatorioAcompanhamentoHidrologico(WebhookProductsInterface):
         self.PATH_INFO_VAZOES_OBS_JSON = project_root / 'app' / 'files' / 'relatorio_acompanhamento_hidrologico' / 'info_vazao_obs.json'
         
         
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Iniciando workflow do produto Relatório de Acompanhamento Hídrico...")
         try:
             file_path = self.download_files()

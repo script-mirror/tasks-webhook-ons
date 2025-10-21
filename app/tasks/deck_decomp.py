@@ -28,7 +28,7 @@ class DeckDecomp(WebhookProductsInterface):
         self.trigger_dag = trigger_dag
         logger.debug("Initialized DeckDecomp instance")
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Starting DeckDecomp workflow")
         try:
             self.run_process()
@@ -55,7 +55,7 @@ class ReadResultsDecomp:
         self.logger = logger  # Usa o logger global
         logger.debug("Initialized ReadResultsDecomp instance")
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Starting ReadResultsDecomp workflow")
         try:
             logger.debug("Creating temporary directory: %s", constants.PATH_TMP)

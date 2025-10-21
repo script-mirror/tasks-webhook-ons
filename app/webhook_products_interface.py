@@ -56,25 +56,15 @@ class WebhookProductsInterface(ABC):
             
             logger.error(f"Erro ao baixar arquivo do S3: {e}")
             raise Exception(f"Erro ao baixar arquivo do S3: {e}")
-     
-    def extract_files(self, filepath) -> str:
-        try:
-            extracted_path = extract_zip(filepath)
-            logger.info(f"Arquivo extraído com sucesso para {extracted_path}")
-            return extracted_path
-        except Exception as e:
-            logger.error(f"Erro ao extrair arquivo: {e}")
-            raise Exception(f"Erro ao extrair arquivo: {e}")
-        
-    def process_file(self, basepath) -> str:
+    
+    @abstractmethod 
+    def process_file(self, filepath) -> str:
         """
         Método responsável pela leitura do arquivo baixado
 
         Args:
             basepath: caminho do arquivo extraido do webhook
         """
-        pass
-        
         
     @abstractmethod
     def post_data(self, process_result: pd.DataFrame) -> dict:

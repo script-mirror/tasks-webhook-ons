@@ -34,7 +34,7 @@ class CargaPatamarDecomp():
         self.read_carga_semanal = ReadCargaSemanal()
         self.generate_table = GenerateTable()
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Starting workflow for CargaPatamarDecomp")
         self.run_process()
    
@@ -54,7 +54,7 @@ class ReadCargaPatamar:
         self.logger = logger  # Usa o logger global
         self.logger.info("Initialized ReadCargaPatamar")
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         self.logger.info("Starting run_workflow for ReadCargaPatamar")
         try:
             os.makedirs(constants.PATH_TMP, exist_ok=True)
@@ -169,7 +169,7 @@ class ReadCargaSemanal:
         self.logger = logger  # Usa o logger global
         self.logger.info("Initialized ReadCargaSemanal")
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         self.logger.info("Starting run_workflow for ReadCargaSemanal")
         try:
             os.makedirs(constants.PATH_TMP, exist_ok=True)
@@ -286,7 +286,7 @@ class GenerateTable:
         self.logger = logger  # Usa o logger global
         self.logger.info("Initialized GenerateTable")
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         self.logger.info("Starting run_workflow for GenerateTable")
         self.run_process()
 

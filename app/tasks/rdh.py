@@ -28,7 +28,7 @@ class Rdh(WebhookProductsInterface):
 
         logger.info("Initialized RDH with payload: %s", payload)
     
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Starting run_workflow for RDH")
         try:
             os.makedirs(constants.PATH_ARQUIVOS_TEMP, exist_ok=True)            

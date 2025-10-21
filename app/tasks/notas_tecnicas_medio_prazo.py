@@ -30,7 +30,7 @@ class NotasTecnicasMedioPrazo(WebhookProductsInterface):
 
         
         
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Iniciando workflow do produto Notas Técnicas - Medio Prazo...")
         try:
             file_path = self.download_files()

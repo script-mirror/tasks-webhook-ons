@@ -196,7 +196,7 @@ class GenerateTable:
         self.consts = Constants()
         self.header = get_auth_header()
 
-    def run_workflow(self):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
         logger.info("Executando análise principal")
         try:
             self.calculate_differences()
