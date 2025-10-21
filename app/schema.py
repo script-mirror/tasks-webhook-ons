@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-import datetime
+from datetime import datetime
 from typing import Optional
 
 
@@ -8,8 +8,8 @@ class WebhookSintegreSchema(BaseModel):
     filename: str
     macroProcesso: str
     nome: str
-    periodicidade: datetime.datetime
-    periodicidadeFinal: Optional[datetime.datetime] = None
+    periodicidade: datetime
+    periodicidadeFinal: Optional[datetime] = None
     processo: str
     s3Key: str
     url: str
