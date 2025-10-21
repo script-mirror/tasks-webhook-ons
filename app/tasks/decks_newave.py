@@ -43,7 +43,7 @@ class DecksNewave(WebhookProductsInterface):
         self.constants = Constants()
         self.logger.info("DecksNewave initialized successfully")
 
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None) -> Dict[str, Any]:
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None) -> Dict[str, Any]:
         pass
         self.logger.info("Starting workflow for file: %s", self.file_name)
         try:
@@ -189,7 +189,7 @@ class DeckProcessor:
         self.logger.info("Processing cadic file: %s", cadic_file_path)
         try:
             product_date_str = self.product_date
-            product_date = datetime.datetime.strptime(product_date_str, '%m/%Y')
+            product_date = datetime.strptime(product_date_str, '%m/%Y')
             self.logger.debug("Parsed product_date: %s", product_date)
             version = self._get_version_by_file_name(self.file_name)
 
@@ -245,7 +245,7 @@ class DeckProcessor:
         self.logger.info("Processing system file: %s", system_file_path)
         try:
             product_date_str = self.product_date
-            product_date = datetime.datetime.strptime(product_date_str, '%m/%Y')
+            product_date = datetime.strptime(product_date_str, '%m/%Y')
             self.logger.debug("Parsed product_date: %s", product_date)
             version = self._get_version_by_file_name(self.file_name)
 
@@ -339,7 +339,7 @@ class DeckProcessor:
         self.logger.info("Processing load_level file: %s", load_level_file_path)
         try:
             product_date_str = self.product_date
-            product_date = datetime.datetime.strptime(product_date_str, '%m/%Y')
+            product_date = datetime.strptime(product_date_str, '%m/%Y')
             self.logger.debug("Parsed product_date: %s", product_date)
             version = self._get_version_by_file_name(self.file_name)
 
@@ -552,7 +552,7 @@ class NewaveUpdater:
             update_count = 0
             dger = Dger.read(os.path.join(os.path.dirname(system_file_path), 'dger.dat'))
             system = Sistema.read(system_file_path)
-            deck_date = datetime.datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
+            deck_date = datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
             self.logger.debug("Study start date from dger.dat: %s", deck_date)
 
             df_non_simulated = system.geracao_usinas_nao_simuladas

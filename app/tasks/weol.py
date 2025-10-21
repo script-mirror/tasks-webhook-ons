@@ -34,7 +34,7 @@ class Weol(WebhookProductsInterface):
         self.deck_prev_eolica_semanal_previsao_final(filepath)
         self.deck_prev_eolica_semanal_patamares(filepath)
         
-        data_produto = datetime.datetime.strptime(self.payload.dataProduto, "%d/%m/%Y").date()
+        data_produto = datetime.strptime(self.payload.dataProduto, "%d/%m/%Y").date()
         
         self.gerar_tabela_mensal({'data': data_produto})
         self.gerar_tabela_semanal({'data': data_produto})
@@ -78,8 +78,8 @@ class Weol(WebhookProductsInterface):
             content = file.read()
             info_weol = self.ler_csv_prev_weol_para_dicionario(io.StringIO(content.decode("latin-1")))
             for data in info_weol.keys():
-                data_inicio: datetime.datetime = datetime.datetime.strptime(data.split(" ")[0], "%d/%m/%Y")
-                data_fim: datetime.datetime = datetime.datetime.strptime(data.split(" ")[1], "%d/%m/%Y")
+                data_inicio: datetime = datetime.strptime(data.split(" ")[0], "%d/%m/%Y")
+                data_fim: datetime = datetime.strptime(data.split(" ")[1], "%d/%m/%Y")
                 for submercado in info_weol[data].keys():                
                     for patamar in info_weol[data][submercado].keys():
                         body_weol.append({
@@ -90,7 +90,7 @@ class Weol(WebhookProductsInterface):
                             "submercado": submercado,
                             "patamar": patamar,
                             "valor": info_weol[data][submercado][patamar],
-                            "data_produto": str(datetime.datetime.strptime(self.payload.dataProduto, "%d/%m/%Y").date())
+                            "data_produto": str(datetime.strptime(self.payload.dataProduto, "%d/%m/%Y").date())
                         })
             
         self.post_data(body_weol)

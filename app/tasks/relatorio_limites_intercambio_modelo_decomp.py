@@ -276,8 +276,8 @@ class GenerateTable:
             df_dif.index.name = 'RE' 
             df_dif.index.name = None 
             
-            data_pmo = datetime.datetime.strptime(df_datas[0]['data_produto'], '%Y-%m-%d')
-            data_ant = datetime.datetime.strptime(df_datas[1]['data_produto'], '%Y-%m-%d')          
+            data_pmo = datetime.strptime(df_datas[0]['data_produto'], '%Y-%m-%d')
+            data_ant = datetime.strptime(df_datas[1]['data_produto'], '%Y-%m-%d')          
             msg = f"Limites de intercambio {df_datas[0]['tipo']} para o PMO {data_pmo.month}/{data_pmo.year}"           
             msg_dif = f"Diferença dos Limites de intercambio ({str(data_pmo.month).zfill(2)}/{data_pmo.year} {df_datas[0]['tipo']} - {str(data_ant.month).zfill(2)}/{data_ant.year} {df_datas[1]['tipo']})"
             df_dif = df_dif.style.format(na_rep='', precision=0)

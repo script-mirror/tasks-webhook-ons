@@ -32,7 +32,7 @@ class ResultadosPreliminaresNaoConsistidos(WebhookProductsInterface):
 
         
         
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Iniciando workflow do produto Resultados Preliminares Nao Consistidos...")
         try:
             file_path = self.download_files()
