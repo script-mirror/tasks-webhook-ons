@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import glob
 import pdb
-import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from typing import Optional
 from pathlib import Path
@@ -34,7 +34,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
         self.gerar_tabela = GenerateTable()
         logger.info("Initialized CargaPatamarNewave with payload: %s", payload)
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.info("Iniciando workflow do produto Previsões de Carga Mensal e por Patamar...")
         try:
             file_path = self.download_files()
@@ -113,7 +113,7 @@ class CargaPatamarNewave(WebhookProductsInterface):
                 delta_days = 15
                 logger.debug("Set delta_days to %d for quadrimestral file", delta_days)  
             
-            date = pd.to_datetime(df_load['data_revisao'].unique()[0]) + datetime.timedelta(days=delta_days)
+            date = pd.to_datetime(df_load['data_revisao'].unique()[0]) + timedelta(days=delta_days)
             date_produto = (date + relativedelta(months=1)).replace(day=1).strftime('%Y-%m-%d')
             df_load['data_produto'] = date_produto
             df_load['quadrimestral'] = LOAD_QUADRI
@@ -448,7 +448,7 @@ class GenerateTable:
         self.url_ande = self.constants.GET_NEWAVE_CADIC_TOTAL_ANDE
         logger.info("Initialized GerarTabelaDiferenca")  
     
-    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime.datetime] = None):
+    def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         logger.debug("Starting run_workflow for GerarTabelaDiferenca")  
         self.run_process()
         logger.info("Completed run_workflow for GerarTabelaDiferenca")  
