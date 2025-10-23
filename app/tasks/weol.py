@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import os
 import sys
 import zipfile
@@ -137,7 +137,7 @@ class Weol(WebhookProductsInterface):
             logger.error(f"Erro ao inserir patamares. status code: {post_patamates.status_code}")
         
     def gerar_tabela_mensal(self, parametros):
-        data: datetime.date = parametros['data']
+        data: date = parametros['data']
         
         res = requests.get(
             "https://tradingenergiarz.com/api/v2/decks/weol/weighted-average/month/table",
@@ -158,7 +158,7 @@ class Weol(WebhookProductsInterface):
         # )
 
     def gerar_tabela_semanal(self, parametros):
-        data: datetime.date = parametros['data']
+        data: date = parametros['data']
         
         res = requests.get(
             "https://tradingenergiarz.com/api/v2/decks/weol/weighted-average/week/table",
@@ -179,7 +179,7 @@ class Weol(WebhookProductsInterface):
         # )
 
     def gerar_tabela_diferenca(self, parametros):
-        data: datetime.date = parametros['data']
+        data: date = parametros['data']
         
         res = requests.get(
             "https://tradingenergiarz.com/api/v2/decks/weol/diff-table",

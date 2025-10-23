@@ -5,7 +5,7 @@ import pdb
 import sys
 import glob
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
@@ -48,7 +48,7 @@ class NotasTecnicasMedioPrazo(WebhookProductsInterface):
         
         self.enviar_whatsapp(html=excel_file, assunto=f"Notas Técnicas - Médio Prazo({self.dt_produto})")
         
-        if f"GTMIN_CCEE_{(datetime.date.today().replace(day=1, month=datetime.date.today().month+1)).strftime('%m%Y')}" in excel_file.upper():
+        if f"GTMIN_CCEE_{(date.today().replace(day=1, month=date.today().month+1)).strftime('%m%Y')}" in excel_file.upper():
             self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf=payload)
     
     def process_file(self, file_path):

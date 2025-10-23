@@ -2,7 +2,7 @@ import sys
 import pdb
 import io
 import requests
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import pdfplumber
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -93,7 +93,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
 
 
     def reformat_df_database(self, df:pd.DataFrame, dict_num, data_produto: date):
-        first_month_year, second_month_year = data_produto, (data_produto + datetime.timedelta(days=31)).replace(day=1)
+        first_month_year, second_month_year = data_produto, (data_produto + timedelta(days=31)).replace(day=1)
 
         reformatted_data = []    
         data = df.iloc[2:, :].copy()
