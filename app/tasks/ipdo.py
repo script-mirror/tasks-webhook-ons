@@ -1,5 +1,5 @@
 import pdb
-from datetime import datetime
+from datetime import datetime, date
 import os
 import sys
 from typing import Optional
@@ -68,7 +68,7 @@ class Ipdo(WebhookProductsInterface):
         data_str = linhas[1].split(',')[1].strip()
         dia, mes_nome, _, ano = data_str.split(' ')
         mes = meses[mes_nome]
-        data_final = datetime.date(int(ano), mes, int(dia))
+        data_final = date(int(ano), mes, int(dia))
 
         carga_sul = int(linhas[40].split()[1].replace('.', ''))
         carga_sudeste = int(linhas[41].split()[3].replace('.', ''))
