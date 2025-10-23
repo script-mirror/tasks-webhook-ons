@@ -170,7 +170,7 @@ class Weol(WebhookProductsInterface):
         html = res.json()["html"]
         imagem = html_to_image(html)
 
-        mensagem = f"WEOL Semanal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
+        mensagem = f"WEOL Semanal ({(data + timedelta(days=1)).strftime('%d/%m/%Y')})"
         send_whatsapp_message("weol", mensagem, imagem)
         # send_email_message(
         #     user="WEOL",
@@ -191,7 +191,7 @@ class Weol(WebhookProductsInterface):
         html = res.json()["html"]
         imagem = html_to_image(html)
 
-        mensagem = f"WEOL (D-1) ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
+        mensagem = f"WEOL (D-1) ({(data + timedelta(days=1)).strftime('%d/%m/%Y')})"
         send_whatsapp_message("weol", mensagem, imagem)
         # send_email_message(
         #     user="WEOL",
