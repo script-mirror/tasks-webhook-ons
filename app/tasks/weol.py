@@ -7,9 +7,7 @@ import csv
 import pandas as pd
 import requests
 from typing import Optional
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
 from app.schema import WebhookSintegreSchema
 from app.webhook_products_interface import WebhookProductsInterface
 from middle.utils import html_to_image, get_auth_header, setup_logger, Constants
