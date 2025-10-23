@@ -57,21 +57,4 @@ class WebhookProductsInterface(ABC):
             logger.error(f"Erro ao baixar arquivo do S3: {e}")
             raise Exception(f"Erro ao baixar arquivo do S3: {e}")
     
-    @abstractmethod 
-    def process_file(self, filepath) -> str:
-        """
-        Método responsável pela leitura do arquivo baixado
-
-        Args:
-            basepath: caminho do arquivo extraido do webhook
-        """
-        
-    @abstractmethod
-    def post_data(self, process_result: pd.DataFrame) -> dict:
-        """
-        Método responsável por inserir os dados lidos e processados no banco através da nossa API
-
-        Args:
-            process_result: dados processados para inserção
-        """
         
