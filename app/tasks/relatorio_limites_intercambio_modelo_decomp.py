@@ -23,6 +23,8 @@ from middle.utils import ( # noqa: E402
 )
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
 from middle.message import send_whatsapp_message
+from middle.airflow import trigger_dag
+
 logger = setup_logger()
 constants = Constants()
 
@@ -35,6 +37,7 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
+        self.trigger_dag = trigger_dag  
     
     def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
         if not filepath:
