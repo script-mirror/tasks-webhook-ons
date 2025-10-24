@@ -45,6 +45,8 @@ class RelatorioLimitesIntercambioDecomp(WebhookProductsInterface):
         df = self.sanitaze_dataframe(df)
         df['tipo'] = tipo
         self.post_data(df)
+        logger.debug("Triggering DAG 1.18-PROSPEC_UPDATE with conf: {'produto': 'RE-DECOMP'}")
+        self.trigger_dag(dag_id="1.18-PROSPEC_UPDATE", conf={"produto": 'RE-DECOMP'})
         analyzer = GenerateTable()
         analyzer.run_workflow()
            
@@ -308,5 +310,5 @@ class GenerateTable:
 
 
 if __name__ == "__main__":
-    analyzer = GenerateTable()
+    analyzer = RelatorioLimitesIntercambioDecomp(WebhookProductsInterface)
     analyzer.run_workflow()
