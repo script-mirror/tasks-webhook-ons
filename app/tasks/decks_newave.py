@@ -103,7 +103,7 @@ class DecksNewave(WebhookProductsInterface):
 
             if 'preliminar' in self.file_name.lower():
                 self.logger.info("Updating wind data for preliminary deck")
-                self.wind_updater.update_wind_data(dict_file_paths['dger'])
+                self.wind_updater.update_wind_data(dict_file_paths)
                 self.logger.info("Wind data update completed")
 
             df_cadic = self.deck_processor.process_cadic_deck(dict_file_paths['cadic'])
@@ -546,18 +546,18 @@ class NewaveUpdater:
             self.logger.error("Error calculating monthly wind averages: %s", str(e))
             raise
 
-    def update_wind_data(self, system_file_path: str):
+    def update_wind_data(self, system_file_path: dict):
         dict_submarket_map = {'SE': 1, 'S': 2, 'NE': 3, 'N': 4}
-        self.logger.info("Updating wind generation for system file: %s", system_file_path)
+        self.logger.info("Updating wind generation for system file: %s", system_file_path['system'])
         try:
             df_data = self.get_database_data(constants.ENDPOINT_WEOL_PONDERADO)
             update_count = 0
-            dger = Dger.read(os.path.join(os.path.dirname(system_file_path), 'dger.dat'))
+            dger = Dger.read(system_file_path['dger'])
             self.logger.debug("Atributos do objeto dger: %s", dir(dger))
             self.logger.debug("Valores do dger: ano=%s, mes=%s", 
                   getattr(dger, 'ano_inicio_estudo', 'N/A'),
                   getattr(dger, 'mes_inicio_estudo', 'N/A'))
-            system = Sistema.read(system_file_path)
+            system = Sistema.read(system_file_path['system'])
             deck_date = datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
             self.logger.debug("Study start date from dger.dat: %s", deck_date)
 
@@ -584,10 +584,10 @@ class NewaveUpdater:
                                             submarket, month_year, old_value, new_value)
 
             system.geracao_usinas_nao_simuladas = df_non_simulated
-            self.logger.info("Writing updated system to %s with %s value updates", system_file_path, update_count)
-            system.write(system_file_path)
+            self.logger.info("Writing updated system to %s with %s value updates", system_file_path['system'], update_count)
+            system.write(system_file_path['system'])
         except Exception as e:
-            self.logger.error("Error updating wind data for file %s: %s", system_file_path, str(e))
+            self.logger.error("Error updating wind data for file %s: %s", system_file_path['system'], str(e))
             raise
 
 
