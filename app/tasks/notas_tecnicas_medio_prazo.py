@@ -46,7 +46,7 @@ class NotasTecnicasMedioPrazo(WebhookProductsInterface):
         
         excel_file = self.process_file(file_path)
         
-        self.enviar_whatsapp(html=excel_file, assunto=f"Notas Técnicas - Médio Prazo({self.dt_produto})")
+        self.enviar_whatsapp(excel_file, assunto=f"Notas Técnicas - Médio Prazo({self.dt_produto})")
         
         if f"GTMIN_CCEE_{(date.today().replace(day=1, month=date.today().month+1)).strftime('%m%Y')}" in excel_file.upper():
             self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf=payload)
