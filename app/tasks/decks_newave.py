@@ -553,6 +553,10 @@ class NewaveUpdater:
             df_data = self.get_database_data(constants.ENDPOINT_WEOL_PONDERADO)
             update_count = 0
             dger = Dger.read(os.path.join(os.path.dirname(system_file_path), 'dger.dat'))
+            self.logger.debug("Atributos do objeto dger: %s", dir(dger))
+            self.logger.debug("Valores do dger: ano=%s, mes=%s", 
+                  getattr(dger, 'ano_inicio_estudo', 'N/A'),
+                  getattr(dger, 'mes_inicio_estudo', 'N/A'))
             system = Sistema.read(system_file_path)
             deck_date = datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
             self.logger.debug("Study start date from dger.dat: %s", deck_date)
