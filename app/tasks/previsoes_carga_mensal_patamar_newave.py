@@ -545,6 +545,9 @@ class GenerateTable:
 
 if __name__ == '__main__':
     logger.info("Iniciando workflow do produto manualmente...")
+    
+    table =  GenerateTable()
+    table.run_workflow()
     try:
         payload = {
             "dataProduto": "10/2025",

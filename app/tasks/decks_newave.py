@@ -667,17 +667,17 @@ if __name__ == "__main__":
     logger = setup_logger()
     logger.debug("Starting main execution")
     payload = {
-        "dataProduto": "10/2025",
+        "dataProduto": "11/2025",
         "filename": "Deck NEWAVE Preliminar.zip",
         "macroProcesso": "Programação da Operação",
         "nome": "Deck NEWAVE Preliminar",
-        "periodicidade": "2025-10-01T00:00:00",
-        "periodicidadeFinal": "2025-10-31T23:59:59",
+        "periodicidade": "2025-11-01T00:00:00",
+        "periodicidadeFinal": "2025-11-30T23:59:59",
         "processo": "Médio Prazo",
-        "s3Key": "webhooks/Deck NEWAVE Preliminar/68d166d4668482a24061e32f_Deck NEWAVE Preliminar.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjItMDktMjAyNV8xMjA2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1ODY0MDQ1MSwibmJmIjoxNzU4NTUzODExfQ.yp5GkfD7XC9jn2YiaNLsq8UMfmGOZBT9Pnvt9V1Wqzo",
-        "webhookId": "68d166d4668482a24061e32f"
-    }
+        "s3Key": "webhooks/Deck NEWAVE Preliminar/4c9a79bd-d515-436e-b849-95b49061b27c_Deck NEWAVE Preliminar.zip",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjctMTAtMjAyNV8xMjA2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2MTY2NzExNiwibmJmIjoxNzYxNTgwNDc2fQ.zQlSC5JCd6SHytwuwFXwvZZhzHWccgONerg_HG3Wje4",
+        "webhookId": "4c9a79bd-d515-436e-b849-95b49061b27c"
+        }
     logger.debug("Payload: %s", payload)
 
     payload = WebhookSintegreSchema(**payload)
