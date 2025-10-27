@@ -103,7 +103,7 @@ class DecksNewave(WebhookProductsInterface):
 
             if 'preliminar' in self.file_name.lower():
                 self.logger.info("Updating wind data for preliminary deck")
-                self.wind_updater.update_wind_data(dict_file_paths['system'])
+                self.wind_updater.update_wind_data(dict_file_paths['dger'])
                 self.logger.info("Wind data update completed")
 
             df_cadic = self.deck_processor.process_cadic_deck(dict_file_paths['cadic'])
@@ -179,6 +179,8 @@ class DeckProcessor:
                     dict_file_paths['system'] = os.path.join(extracted_path, file)
                 if file.lower().startswith('patamar'):
                     dict_file_paths['load_level'] = os.path.join(extracted_path, file)
+                if file.lower().startswith('dger'):
+                    dict_file_paths['dger'] = os.path.join(extracted_path, file)
             self.logger.info("Extracted DAT file paths: %s", dict_file_paths)
             return dict_file_paths
         except Exception as e:
