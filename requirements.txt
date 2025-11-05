@@ -12,3 +12,4 @@ openpyxl
 pdf2image
 aspose-words
 beautifulsoup4
+xlrd
