@@ -269,7 +269,7 @@ class GeradorTabela:
 
             html = self.gerar_html(df_load, rev)   
 
-            # self.enviar_email(html, assunto)
+            self.enviar_email(html, assunto)
 
             self.enviar_whatsapp(html, assunto)
             
@@ -357,7 +357,7 @@ class GeradorTabela:
             
             image_binary = html_to_image(html)
 
-            send_whatsapp_message(destinatario='Debug',mensagem=assunto,arquivo=image_binary)
+            send_whatsapp_message(destinatario=self.destinatario_whatsapp,mensagem=assunto,arquivo=image_binary)
             
         except Exception as e:
             logger.error("Falha ao enviar mensagem WhatsApp: %s", str(e), exc_info=True)
@@ -367,18 +367,30 @@ if __name__ == '__main__':
     logger.info("Iniciando manualmente o workflow dos produtos de vazão semanal prevista...")
     try:
         payload = {
-            "dataProduto": "01/11/2025 - 07/11/2025",
-            "filename": "Nao_Consistido_202511_PMO.zip",
-            "macroProcesso": "Programação da Operação",
-            "nome": "Resultados preliminares não consistidos  (vazões semanais - PMO)",
-            "periodicidade": "2025-11-01T00:00:00",
-            "periodicidadeFinal": "2025-11-07T23:59:59",
-            "processo": "Previsão de Vazões e Geração de Cenários - PMO",
-            "s3Key": "webhooks/Resultados preliminares não consistidos  (vazões semanais - PMO)/c3d081cb-d190-4e12-9219-413e18d72966_Nao_Consistido_202511_PMO.zip",
-            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDYvTmFvX0NvbnNpc3RpZG9fMjAyNTExX1BNTy56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVzdWx0YWRvcyBwcmVsaW1pbmFyZXMgbsOjbyBjb25zaXN0aWRvcyAgKHZhesO1ZXMgc2VtYW5haXMgLSBQTU8pIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NjE5NDY3MTUsIm5iZiI6MTc2MTg2MDA3NX0.HaZ3eYcFVdmKr_xhlGYKr2G1y7N32beJ4-frSJgQo4k",
-            "webhookId": "c3d081cb-d190-4e12-9219-413e18d72966"
-        }
-        
+  "dataProduto": "25/10/2025 - 31/10/2025",
+  "filename": "Consistido_202510_REV4.zip",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Resultados preliminares consistidos (vazões semanais - PMO)",
+  "periodicidade": "2025-10-25T00:00:00",
+  "periodicidadeFinal": "2025-10-31T23:59:59",
+  "processo": "Previsão de Vazões e Geração de Cenários - PMO",
+  "s3Key": "webhooks/Resultados preliminares consistidos (vazões semanais - PMO)/3262c74b-3a97-456b-8cbf-17ed8ede725a_Consistido_202510_REV4.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDUvQ29uc2lzdGlkb18yMDI1MTBfUkVWNC56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVzdWx0YWRvcyBwcmVsaW1pbmFyZXMgY29uc2lzdGlkb3MgKHZhesO1ZXMgc2VtYW5haXMgLSBQTU8pIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NjEzNDE1NTMsIm5iZiI6MTc2MTI1NDkxM30.kw2CjN7KqBm9CJ_SImJ_Lvu98-2lah0c75L4ytT1NcA",
+  "webhookId": "3262c74b-3a97-456b-8cbf-17ed8ede725a"
+}
+
+# {
+#   "dataProduto": "27/09/2025 - 03/10/2025",
+#   "filename": "Consistido_202510_PMO.zip",
+#   "macroProcesso": "Programação da Operação",
+#   "nome": "Resultados preliminares consistidos (vazões semanais - PMO)",
+#   "periodicidade": "2025-09-27T00:00:00",
+#   "periodicidadeFinal": "2025-10-03T23:59:59",
+#   "processo": "Previsão de Vazões e Geração de Cenários - PMO",
+#   "s3Key": "webhooks/Resultados preliminares consistidos (vazões semanais - PMO)/68d5c041b128ca9a97ee5e68_Consistido_202510_PMO.zip",
+#   "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDUvQ29uc2lzdGlkb18yMDI1MTBfUE1PLnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZXN1bHRhZG9zIHByZWxpbWluYXJlcyBjb25zaXN0aWRvcyAodmF6w7VlcyBzZW1hbmFpcyAtIFBNTykiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1ODkyNTQ4OSwibmJmIjoxNzU4ODM4ODQ5fQ.MPZqzCw-0aDe-_MogGKXaw6lYMRlVHeMs6WY686iLmU",
+#   "webhookId": "68d5c041b128ca9a97ee5e68"
+# }
         
         payload = WebhookSintegreSchema(**payload)
         
