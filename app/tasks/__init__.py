@@ -6,7 +6,8 @@ from .deck_decomp import DeckDecomp
 from .relatorio_resultados_finais_consistidos_pdp import RelatorioResultadosFinaisConsistidosPDP
 from .relatorio_acompanhamento_hidrologico import RelatorioAcompanhamentoHidrologico
 from .precipitacao_prevista import PreciptacaoPrevista
-from .resultados_preliminares_nao_consistidos import ResultadosPreliminaresNaoConsistidos
+from .vazoes_semanais_previstas import VazoesSemanaisPrevistasPMO
+from .vazoes_diarias_previstas import VazoesDiariasPrevistasPDP
 from .ipdo import Ipdo
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
 from .weol import Weol
@@ -28,4 +29,6 @@ __all__ = [
     "NotasTecnicasMedioPrazo",
     "Weol",
     "Psat",
+    "VazoesSemanaisPrevistasPMO",
+    "VazoesDiariasPrevistasPDP",
 ]
