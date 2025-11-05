@@ -378,19 +378,6 @@ if __name__ == '__main__':
   "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDUvQ29uc2lzdGlkb18yMDI1MTBfUkVWNC56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVzdWx0YWRvcyBwcmVsaW1pbmFyZXMgY29uc2lzdGlkb3MgKHZhesO1ZXMgc2VtYW5haXMgLSBQTU8pIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NjEzNDE1NTMsIm5iZiI6MTc2MTI1NDkxM30.kw2CjN7KqBm9CJ_SImJ_Lvu98-2lah0c75L4ytT1NcA",
   "webhookId": "3262c74b-3a97-456b-8cbf-17ed8ede725a"
 }
-
-# {
-#   "dataProduto": "27/09/2025 - 03/10/2025",
-#   "filename": "Consistido_202510_PMO.zip",
-#   "macroProcesso": "Programação da Operação",
-#   "nome": "Resultados preliminares consistidos (vazões semanais - PMO)",
-#   "periodicidade": "2025-09-27T00:00:00",
-#   "periodicidadeFinal": "2025-10-03T23:59:59",
-#   "processo": "Previsão de Vazões e Geração de Cenários - PMO",
-#   "s3Key": "webhooks/Resultados preliminares consistidos (vazões semanais - PMO)/68d5c041b128ca9a97ee5e68_Consistido_202510_PMO.zip",
-#   "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDUvQ29uc2lzdGlkb18yMDI1MTBfUE1PLnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZXN1bHRhZG9zIHByZWxpbWluYXJlcyBjb25zaXN0aWRvcyAodmF6w7VlcyBzZW1hbmFpcyAtIFBNTykiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1ODkyNTQ4OSwibmJmIjoxNzU4ODM4ODQ5fQ.MPZqzCw-0aDe-_MogGKXaw6lYMRlVHeMs6WY686iLmU",
-#   "webhookId": "68d5c041b128ca9a97ee5e68"
-# }
         
         payload = WebhookSintegreSchema(**payload)
         
