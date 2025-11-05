@@ -50,7 +50,7 @@ class NotasTecnicasMedioPrazo(WebhookProductsInterface):
         self.enviar_whatsapp(arquivo=excel_file, assunto=f"Notas Técnicas - Médio Prazo({self.dt_produto})")
         
         if f"GTMIN_CCEE_{(date.today().replace(day=1, month=date.today().month+1)).strftime('%m%Y')}" in excel_file.upper():
-            self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf=self.payload)
+            self.trigger_dag(dag_id="1.17-NEWAVE_ONS-TO-CCEE", conf={})
     
     def process_file(self, file_path):
         logger.info("Processando arquivos do produto... Arquivo encontrado: %s", file_path)
