@@ -11,7 +11,6 @@ from .tasks import (
    NotasTecnicasMedioPrazo,
    Ipdo,
    Weol,
-   Psat,
    HistoricoPreciptacao,
    ArquivosModelosPDP
 )
@@ -29,7 +28,6 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "arquivos_dos_modelos_de_previsao_de_vazoes_diarias_pdp": ArquivosModelosPDP,
    "acomph": None,
    "rdh": None,
-   "precipitacao_por_satelite_ons": Psat,
    "historico_de_precipitacao_por_satelite_pmo": HistoricoPreciptacao,
    "carga_por_patamar_decomp": CargaPatamarDecomp,
    "deck_preliminar_decomp_valor_esperado": DeckDecomp,

@@ -8,7 +8,6 @@ from .precipitacao_prevista import PreciptacaoPrevista
 from .ipdo import Ipdo
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
 from .weol import Weol
-from .psat import Psat
 from .vazoes_semanais_previstas import VazoesSemanaisPrevistasPMO
 from .vazoes_diarias_previstas import VazoesDiariasPrevistasPDP
 from .historico_preciptacao import HistoricoPreciptacao
@@ -28,7 +27,6 @@ __all__ = [
     "Ipdo",
     "NotasTecnicasMedioPrazo",
     "Weol",
-    "Psat",
     "VazoesSemanaisPrevistasPMO",
     "VazoesDiariasPrevistasPDP",
     "HistoricoPreciptacao",
