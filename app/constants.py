@@ -12,6 +12,8 @@ from .tasks import (
    Ipdo,
    Weol,
    Psat,
+   HistoricoPreciptacao,
+   ArquivosModelosPDP
 )
 from typing import Dict, Type
 from .webhook_products_interface import WebhookProductsInterface
@@ -24,12 +26,11 @@ PRODUCT_MAPPING: Dict[str, Type[WebhookProductsInterface]]  = {
    "resultados_preliminares_consistidos_vazoes_semanais_pmo": VazoesSemanaisPrevistasPMO,
    "resultados_finais_consistidos_vazoes_diarias_pdp": VazoesDiariasPrevistasPDP,
    "deck_e_resultados_decomp_valor_esperado": DeckDecomp,
-   "arquivos_dos_modelos_de_previsao_de_vazoes_diarias_pdp": None,
-   "arquivos_dos_modelos_de_previsao_de_vazoes_semanais_pmo": None,
+   "arquivos_dos_modelos_de_previsao_de_vazoes_diarias_pdp": ArquivosModelosPDP,
    "acomph": None,
    "rdh": None,
    "precipitacao_por_satelite_ons": Psat,
-   "historico_de_precipitacao_por_satelite_pmo": None,
+   "historico_de_precipitacao_por_satelite_pmo": HistoricoPreciptacao,
    "carga_por_patamar_decomp": CargaPatamarDecomp,
    "deck_preliminar_decomp_valor_esperado": DeckDecomp,
    "decks_de_entrada_e_saida_modelo_dessem": None,

@@ -229,7 +229,7 @@ class VazoesSemanaisPrevistasPMO(WebhookProductsInterface):
                 json=df_tb_ve.to_dict(orient='records')
             )
             res.raise_for_status()
-            if res.status_code == 200:
+            if res.status_code >= 200 and res.status_code < 300:
                 logger.info("Dados da tabela TB_VE enviados com sucesso. Status Code: %s", res.status_code)
             else:
                 raise Exception("Falha ao enviar dados da tabela TB_VE. Status Code: {}".format(res.status_code)) 
@@ -241,7 +241,7 @@ class VazoesSemanaisPrevistasPMO(WebhookProductsInterface):
                 json=df_tb_ve_bacias.to_dict(orient='records')
             )
             res_bacias.raise_for_status()
-            if res_bacias.status_code == 200:
+            if res_bacias.status_code >= 200 and res.status_code < 300:
                 logger.info("Dados da tabela TB_VE_BACIAS enviados com sucesso. Status Code: %s", res_bacias.status_code)
             else:
                 raise Exception("Falha ao enviar dados da tabela TB_VE_BACIAS. Status Code: {}".format(res_bacias.status_code))

@@ -5,12 +5,14 @@ from .decks_newave import DecksNewave
 from .deck_decomp import DeckDecomp
 from .relatorio_acompanhamento_hidrologico import RelatorioAcompanhamentoHidrologico
 from .precipitacao_prevista import PreciptacaoPrevista
-from .vazoes_semanais_previstas import VazoesSemanaisPrevistasPMO
-from .vazoes_diarias_previstas import VazoesDiariasPrevistasPDP
 from .ipdo import Ipdo
 from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
 from .weol import Weol
 from .psat import Psat
+from .vazoes_semanais_previstas import VazoesSemanaisPrevistasPMO
+from .vazoes_diarias_previstas import VazoesDiariasPrevistasPDP
+from .historico_preciptacao import HistoricoPreciptacao
+from .arquivos_modelo_pdp import ArquivosModelosPDP
 
 __all__ = [
     "RelatorioAcompanhamentoHidrologico",
@@ -22,7 +24,6 @@ __all__ = [
     "DecksNewave",
     "DeckDecomp",
     "CargaPatamarNewave",
-    "PrecipitacaoPorSateliteONS",
     "PreciptacaoPrevista",
     "Ipdo",
     "NotasTecnicasMedioPrazo",
@@ -30,4 +31,6 @@ __all__ = [
     "Psat",
     "VazoesSemanaisPrevistasPMO",
     "VazoesDiariasPrevistasPDP",
+    "HistoricoPreciptacao",
+    "ArquivosModelosPDP"
 ]
