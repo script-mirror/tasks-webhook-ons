@@ -49,9 +49,9 @@ class VazoesDiariasPrevistasPDP(WebhookProductsInterface):
         
     def run_process(self, file_path):
         filename_splited = os.path.basename(file_path).split('_')
-        diaPrevisao = int(filename_splited[3])
-        mesPrevisao = int(filename_splited[4])
-        anoPrevisao = int(filename_splited[5])
+        diaPrevisao = int(filename_splited[-3])
+        mesPrevisao = int(filename_splited[-2])
+        anoPrevisao = int(filename_splited[-1].split('.')[0])
         dt_previsao = datetime(anoPrevisao, mesPrevisao, diaPrevisao)
         
         df_load = self.process_file(file_path, dt_previsao)
@@ -287,17 +287,18 @@ if __name__ == '__main__':
     logger.info("Iniciando manualmente o workflow do produto Precipitação por Satélite - ONS...")
     try:
         payload = {
-  "dataProduto": "07/11/2025",
-  "filename": "Relatorio_previsao_diaria_05_11_2025_para_07_11_2025.xls",
-  "macroProcesso": "Programação da Operação",
-  "nome": "Relatório dos resultados finais consistidos da previsão diária (PDP)",
-  "periodicidade": "2025-11-07T00:00:00",
-  "periodicidadeFinal": "2025-11-07T23:59:59",
-  "processo": "Previsão de Vazões Diárias - PDP",
-  "s3Key": "webhooks/Relatório dos resultados finais consistidos da previsão diária (PDP)/02e099e2-7194-4c48-854e-fa77c675e1a8_Relatorio_previsao_diaria_05_11_2025_para_07_11_2025.xls",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy81NDgvUmVsYXRvcmlvX3ByZXZpc2FvX2RpYXJpYV8wNV8xMV8yMDI1X3BhcmFfMDdfMTFfMjAyNS54bHMiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBkb3MgcmVzdWx0YWRvcyBmaW5haXMgY29uc2lzdGlkb3MgZGEgcHJldmlzw6NvIGRpw6FyaWEgKFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2MjQ1NDcyMSwibmJmIjoxNzYyMzY4MDgxfQ.0j8n82VFzAW3B9siALLYBmwubVwWbbTVtcHAwz4AE9Q",
-  "webhookId": "02e099e2-7194-4c48-854e-fa77c675e1a8"
+    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy8yNDMvUmVzdWx0YWRvX0ZpbmFsXzExXzExXzIwMjVfcGFyYV8xM18xMV8yMDI1LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZXN1bHRhZG9zIGZpbmFpcyBjb25zaXN0aWRvcyAodmF6w7VlcyBkacOhcmlhcyAtIFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2Mjk3MTU5MiwibmJmIjoxNzYyODg0OTUyfQ.2ApYP53bb-akaU6Gh1lcZ0hwisMl7_osoGEFufXigRo",
+    "nome": "Resultados finais consistidos (vazões diárias - PDP)",
+    "s3Key": "webhooks/Resultados finais consistidos (vazões diárias - PDP)/b9fbd336-d63c-4d44-84c3-c0bc5fdb8ee7_Resultado_Final_11_11_2025_para_13_11_2025.zip",
+    "filename": "Resultado_Final_11_11_2025_para_13_11_2025.zip",
+    "processo": "Previsão de Vazões Diárias - PDP",
+    "webhookId": "b9fbd336-d63c-4d44-84c3-c0bc5fdb8ee7",
+    "dataProduto": "13/11/2025",
+    "macroProcesso": "Programação da Operação",
+    "periodicidade": "2025-11-13T03:00:00.000Z",
+    "periodicidadeFinal": "2025-11-14T02:59:59.000Z"
 }
+        
         
         payload = WebhookSintegreSchema(**payload)
         
