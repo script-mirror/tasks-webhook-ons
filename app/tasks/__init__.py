@@ -10,7 +10,6 @@ from .notas_tecnicas_medio_prazo import NotasTecnicasMedioPrazo
 from .weol import Weol
 from .vazoes_semanais_previstas import VazoesSemanaisPrevistasPMO
 from .vazoes_diarias_previstas import VazoesDiariasPrevistasPDP
-from .historico_preciptacao import HistoricoPreciptacao
 from .arquivos_modelo_pdp import ArquivosModelosPDP
 
 __all__ = [
@@ -29,6 +28,5 @@ __all__ = [
     "Weol",
     "VazoesSemanaisPrevistasPMO",
     "VazoesDiariasPrevistasPDP",
-    "HistoricoPreciptacao",
     "ArquivosModelosPDP"
 ]

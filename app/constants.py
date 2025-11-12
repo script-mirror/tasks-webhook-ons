@@ -11,7 +11,6 @@ from .tasks import (
    NotasTecnicasMedioPrazo,
    Ipdo,
    Weol,
-   HistoricoPreciptacao,
    ArquivosModelosPDP
 )
 from typing import Dict, Type
