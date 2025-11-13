@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Optional
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import pdb
 import sys
 import os
@@ -120,6 +120,7 @@ class VazoesDiariasPrevistasPDP(WebhookProductsInterface):
                 json=process_result.to_dict('records'),
                 headers=self.headers
             )
+            pdb.set_trace() 
             if res.status_code != 200:
                 res.raise_for_status()
                     
@@ -137,7 +138,7 @@ class GeradorTabela:
     def run_process(self, dt_previsao):
         html = self.gerar_html(dt_previsao)
         
-        assunto = '[ENAS] DESSEM ONS - {}'.format((dt_previsao + datetime.timedelta(days=2)).strftime('%d/%m/%Y'))
+        assunto = '[ENAS] DESSEM ONS - {}'.format((dt_previsao + timedelta(days=2)).strftime('%d/%m/%Y'))
         
         self.enviar_email(assunto, html)
         pass
