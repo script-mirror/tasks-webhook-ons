@@ -6,10 +6,7 @@ import pdb
 import sys
 import os
 import requests
-import pdb
-import sys
-import os
-import requests
+import glob
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
@@ -17,7 +14,7 @@ sys.path.insert(0, str(project_root))
 from app.webhook_products_interface import WebhookProductsInterface
 from app.schema import WebhookSintegreSchema
 
-from middle.utils import setup_logger, Constants
+from middle.utils import setup_logger, extract_zip, Constants
 from middle.message.sender import send_email_message
 from middle.utils import ( 
     get_auth_header
@@ -65,6 +62,10 @@ class VazoesDiariasPrevistasPDP(WebhookProductsInterface):
     def process_file(self, file_path, dt_previsao):
         logger.info("Processando arquivos do produto... Arquivo encontrado: %s", file_path)
         try:
+            unzip_path = extract_zip(file_path) 
+            unzip_path = glob.glob(os.path.join(unzip_path, '*'))[0]
+            unzip_path = glob.glob(os.path.join(unzip_path, '*xls'))[0]
+
             info_planilha = {
                 'SUDESTE': {'sheet_name':'Diária_6', 'posicao_info':[168, 169]},
                 'SUL': {'sheet_name':'Diária_7', 'posicao_info':[56, 57]},
@@ -287,16 +288,16 @@ if __name__ == '__main__':
     logger.info("Iniciando manualmente o workflow do produto Precipitação por Satélite - ONS...")
     try:
         payload = {
-    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy8yNDMvUmVzdWx0YWRvX0ZpbmFsXzExXzExXzIwMjVfcGFyYV8xM18xMV8yMDI1LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZXN1bHRhZG9zIGZpbmFpcyBjb25zaXN0aWRvcyAodmF6w7VlcyBkacOhcmlhcyAtIFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2Mjk3MTU5MiwibmJmIjoxNzYyODg0OTUyfQ.2ApYP53bb-akaU6Gh1lcZ0hwisMl7_osoGEFufXigRo",
-    "nome": "Resultados finais consistidos (vazões diárias - PDP)",
-    "s3Key": "webhooks/Resultados finais consistidos (vazões diárias - PDP)/b9fbd336-d63c-4d44-84c3-c0bc5fdb8ee7_Resultado_Final_11_11_2025_para_13_11_2025.zip",
-    "filename": "Resultado_Final_11_11_2025_para_13_11_2025.zip",
-    "processo": "Previsão de Vazões Diárias - PDP",
-    "webhookId": "b9fbd336-d63c-4d44-84c3-c0bc5fdb8ee7",
-    "dataProduto": "13/11/2025",
-    "macroProcesso": "Programação da Operação",
-    "periodicidade": "2025-11-13T03:00:00.000Z",
-    "periodicidadeFinal": "2025-11-14T02:59:59.000Z"
+  "dataProduto": "14/11/2025",
+  "filename": "Resultado_Final_12_11_2025_para_14_11_2025.zip",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Resultados finais consistidos (vazões diárias - PDP)",
+  "periodicidade": "2025-11-14T00:00:00",
+  "periodicidadeFinal": "2025-11-14T23:59:59",
+  "processo": "Previsão de Vazões Diárias - PDP",
+  "s3Key": "webhooks/Resultados finais consistidos (vazões diárias - PDP)/210926c5-3586-4be2-9414-dc2edefb9e0f_Resultado_Final_12_11_2025_para_14_11_2025.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy8yNDMvUmVzdWx0YWRvX0ZpbmFsXzEyXzExXzIwMjVfcGFyYV8xNF8xMV8yMDI1LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZXN1bHRhZG9zIGZpbmFpcyBjb25zaXN0aWRvcyAodmF6w7VlcyBkacOhcmlhcyAtIFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2MzA1OTc5MiwibmJmIjoxNzYyOTczMTUyfQ.BNySORSHgaLWCm1xuQr12f6wjtoFR4X6neHr-cTAtuU",
+  "webhookId": "210926c5-3586-4be2-9414-dc2edefb9e0f"
 }
         
         
