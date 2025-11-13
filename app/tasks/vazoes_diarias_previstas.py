@@ -120,7 +120,7 @@ class VazoesDiariasPrevistasPDP(WebhookProductsInterface):
                 json=process_result.to_dict('records'),
                 headers=self.headers
             )
-            pdb.set_trace() 
+
             if res.status_code != 200:
                 res.raise_for_status()
                     
