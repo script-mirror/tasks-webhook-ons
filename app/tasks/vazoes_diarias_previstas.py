@@ -77,7 +77,7 @@ class VazoesDiariasPrevistasPDP(WebhookProductsInterface):
             
             values_to_insert = []
             for submercado in info_planilha.keys():
-                df_load = pd.read_excel(file_path, sheet_name=info_planilha[submercado]['sheet_name'], skiprows=4)
+                df_load = pd.read_excel(unzip_path, sheet_name=info_planilha[submercado]['sheet_name'], skiprows=4)
                 
                 colunas = df_load.columns.tolist()
                 
