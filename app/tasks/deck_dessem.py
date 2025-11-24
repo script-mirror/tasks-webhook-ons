@@ -13,7 +13,6 @@ from middle.airflow import trigger_dag
 
 class DeckDessem():
     def __init__(self):
-        self.ons_to_ccee = DessemOnsToCcee()
         self.trigger_dag = trigger_dag
         self.consts = Constants()
         self.logger = setup_logger()    
@@ -29,7 +28,6 @@ class DeckDessem():
     def run_process(self):
         self.logger.info("Executing DeckDessem process")
         try:
-            #self.trigger_dag(dag_id="-DESSEM_ONS-TO-CCEE", conf={})
             payload = get_latest_webhook_product(self.consts.WEBHOOK_DECK_DESSEM)[0]
             base_path = handle_webhook_file(payload, self.consts.PATH_TMP)
             path_deck_unzip = extract_zip(base_path)
