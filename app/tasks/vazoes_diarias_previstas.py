@@ -1,17 +1,12 @@
 import pandas as pd
 from typing import Optional
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import pdb
 import sys
-import glob
 import os
 import requests
-import pdb
-import sys
 import glob
-import os
-import requests
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
@@ -19,8 +14,8 @@ sys.path.insert(0, str(project_root))
 from app.webhook_products_interface import WebhookProductsInterface
 from app.schema import WebhookSintegreSchema
 
-from middle.utils import setup_logger, Constants
-from middle.message.sender import send_email_message, send_whatsapp_message
+from middle.utils import setup_logger, extract_zip, Constants
+from middle.message.sender import send_email_message
 from middle.utils import ( 
     get_auth_header
 )
@@ -28,7 +23,7 @@ logger = setup_logger()
 constants = Constants()
 
 
-class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
+class VazoesDiariasPrevistasPDP(WebhookProductsInterface):
     
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)
@@ -51,9 +46,9 @@ class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
         
     def run_process(self, file_path):
         filename_splited = os.path.basename(file_path).split('_')
-        diaPrevisao = int(filename_splited[3])
-        mesPrevisao = int(filename_splited[4])
-        anoPrevisao = int(filename_splited[5])
+        diaPrevisao = int(filename_splited[-3])
+        mesPrevisao = int(filename_splited[-2])
+        anoPrevisao = int(filename_splited[-1].split('.')[0])
         dt_previsao = datetime(anoPrevisao, mesPrevisao, diaPrevisao)
         
         df_load = self.process_file(file_path, dt_previsao)
@@ -67,6 +62,10 @@ class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
     def process_file(self, file_path, dt_previsao):
         logger.info("Processando arquivos do produto... Arquivo encontrado: %s", file_path)
         try:
+            unzip_path = extract_zip(file_path) 
+            unzip_path = glob.glob(os.path.join(unzip_path, '*'))[0]
+            unzip_path = glob.glob(os.path.join(unzip_path, '*xls'))[0]
+
             info_planilha = {
                 'SUDESTE': {'sheet_name':'Diária_6', 'posicao_info':[168, 169]},
                 'SUL': {'sheet_name':'Diária_7', 'posicao_info':[56, 57]},
@@ -78,7 +77,7 @@ class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
             
             values_to_insert = []
             for submercado in info_planilha.keys():
-                df_load = pd.read_excel(file_path, sheet_name=info_planilha[submercado]['sheet_name'], skiprows=4)
+                df_load = pd.read_excel(unzip_path, sheet_name=info_planilha[submercado]['sheet_name'], skiprows=4)
                 
                 colunas = df_load.columns.tolist()
                 
@@ -121,6 +120,7 @@ class RelatorioResultadosFinaisConsistidosPDP(WebhookProductsInterface):
                 json=process_result.to_dict('records'),
                 headers=self.headers
             )
+
             if res.status_code != 200:
                 res.raise_for_status()
                     
@@ -138,7 +138,7 @@ class GeradorTabela:
     def run_process(self, dt_previsao):
         html = self.gerar_html(dt_previsao)
         
-        assunto = '[ENAS] DESSEM ONS - {}'.format((dt_previsao + datetime.timedelta(days=2)).strftime('%d/%m/%Y'))
+        assunto = '[ENAS] DESSEM ONS - {}'.format((dt_previsao + timedelta(days=2)).strftime('%d/%m/%Y'))
         
         self.enviar_email(assunto, html)
         pass
@@ -289,23 +289,24 @@ if __name__ == '__main__':
     logger.info("Iniciando manualmente o workflow do produto Precipitação por Satélite - ONS...")
     try:
         payload = {
-  "dataProduto": "09/10/2025",
-  "filename": "Relatorio_previsao_diaria_07_10_2025_para_09_10_2025.xls",
+  "dataProduto": "14/11/2025",
+  "filename": "Resultado_Final_12_11_2025_para_14_11_2025.zip",
   "macroProcesso": "Programação da Operação",
-  "nome": "Relatório dos resultados finais consistidos da previsão diária (PDP)",
-  "periodicidade": "2025-10-09T00:00:00",
-  "periodicidadeFinal": "2025-10-09T23:59:59",
+  "nome": "Resultados finais consistidos (vazões diárias - PDP)",
+  "periodicidade": "2025-11-14T00:00:00",
+  "periodicidadeFinal": "2025-11-14T23:59:59",
   "processo": "Previsão de Vazões Diárias - PDP",
-  "s3Key": "webhooks/Relatório dos resultados finais consistidos da previsão diária (PDP)/68e556b03117c0758d2f0a89_Relatorio_previsao_diaria_07_10_2025_para_09_10_2025.xls",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy81NDgvUmVsYXRvcmlvX3ByZXZpc2FvX2RpYXJpYV8wN18xMF8yMDI1X3BhcmFfMDlfMTBfMjAyNS54bHMiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBkb3MgcmVzdWx0YWRvcyBmaW5haXMgY29uc2lzdGlkb3MgZGEgcHJldmlzw6NvIGRpw6FyaWEgKFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1OTk0NzA0MCwibmJmIjoxNzU5ODYwNDAwfQ.A3rzF-tTrQf6K9I5zWEhzJoY5FAz69zg6nSBb9czAkQ",
-  "webhookId": "68e556b03117c0758d2f0a89"
+  "s3Key": "webhooks/Resultados finais consistidos (vazões diárias - PDP)/210926c5-3586-4be2-9414-dc2edefb9e0f_Resultado_Final_12_11_2025_para_14_11_2025.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy8yNDMvUmVzdWx0YWRvX0ZpbmFsXzEyXzExXzIwMjVfcGFyYV8xNF8xMV8yMDI1LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZXN1bHRhZG9zIGZpbmFpcyBjb25zaXN0aWRvcyAodmF6w7VlcyBkacOhcmlhcyAtIFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2MzA1OTc5MiwibmJmIjoxNzYyOTczMTUyfQ.BNySORSHgaLWCm1xuQr12f6wjtoFR4X6neHr-cTAtuU",
+  "webhookId": "210926c5-3586-4be2-9414-dc2edefb9e0f"
 }
+        
         
         payload = WebhookSintegreSchema(**payload)
         
-        relatorio_resultados = RelatorioResultadosFinaisConsistidosPDP(payload)
+        vazoes_diarias = VazoesDiariasPrevistasPDP(payload)
         
-        relatorio_resultados.run_workflow()
+        vazoes_diarias.run_workflow()
         
 
     except Exception as e:
