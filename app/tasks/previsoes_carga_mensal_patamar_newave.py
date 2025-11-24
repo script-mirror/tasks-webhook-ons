@@ -481,7 +481,7 @@ class GenerateTable:
             html = ""
             for data in dict_data:
                 logger.debug("Generating difference table for %s", data)  
-                html += self.generate_dif(dict_data[data][1]['data'], dict_data[data][0]['data'], dict_caption[data])
+                html += self.generate_dif(dict_data[data][0]['data'], dict_data[data][1]['data'], dict_caption[data])
                 html += '<br><br>'
             
             html = html.replace('<style type="text/css">\n</style>\n', html_style())

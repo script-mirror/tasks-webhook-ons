@@ -202,15 +202,15 @@ class Weol(WebhookProductsInterface):
 
 if __name__ == "__main__":
     teste = Weol(WebhookSintegreSchema(**{
-  "dataProduto": "13/10/2025",
-  "filename": "Deck_PrevMes_20251013.zip",
+  "dataProduto": "23/11/2025",
+  "filename": "Deck_PrevMes_20251123.zip",
   "macroProcesso": "Planejamento da Operação",
   "nome": "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM",
-  "periodicidade": "2025-10-13T00:00:00",
-  "periodicidadeFinal": "2025-10-13T23:59:59",
+  "periodicidade": "2025-11-23T00:00:00",
+  "periodicidadeFinal": "2025-11-23T23:59:59",
   "processo": "Modelos Fontes Intermitentes",
-  "s3Key": "webhooks/DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM/6fe5214a-7166-4b6f-b504-be144eb1a643_Deck_PrevMes_20251013.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOC8xMDMvMTA1L1Byb2R1dG9zLzc4NS9EZWNrX1ByZXZNZXNfMjAyNTEwMTMuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkRFQ0tTIERBIFBSRVZJU8ODTyBERSBHRVJBw4fDg08gRcOTTElDQSBTRU1BTkFMIFdFT0wtU00iLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2MDUzNTIyMCwibmJmIjoxNzYwNDQ4NTgwfQ.IshI9gocj33WILQ6QRIpE86kVdQ4hsXk5qZdo5Vhfn0",
-  "webhookId": "6fe5214a-7166-4b6f-b504-be144eb1a643"
+  "s3Key": "webhooks/DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM/1ca15456-8132-4538-8209-45529ab5aff3_Deck_PrevMes_20251123.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOC8xMDMvMTA1L1Byb2R1dG9zLzc4NS9EZWNrX1ByZXZNZXNfMjAyNTExMjMuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkRFQ0tTIERBIFBSRVZJU8ODTyBERSBHRVJBw4fDg08gRcOTTElDQSBTRU1BTkFMIFdFT0wtU00iLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc2NDA3ODA4MCwibmJmIjoxNzYzOTkxNDQwfQ.DnjKHBsbgGl8ybCIxNo_F-l6S8NCzZh6zwTy0Ca6VfQ",
+  "webhookId": "1ca15456-8132-4538-8209-45529ab5aff3"
 }))
     teste.run_workflow()
