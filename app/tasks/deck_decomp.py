@@ -18,32 +18,31 @@ from middle.s3 import ( # noqa: E402
 from middle.airflow import trigger_dag  # noqa: E402
 from app.webhook_products_interface import WebhookProductsInterface  # noqa: E402
 from app.schema import WebhookSintegreSchema  # noqa: E402
-# Configura o logger globalmente uma única vez
-logger = setup_logger()
-constants = Constants()
 
 class DeckDecomp(WebhookProductsInterface):
     def __init__(self, payload: Optional[WebhookSintegreSchema]):
         super().__init__(payload)    
         self.read_cmo = ReadResultsDecomp()
         self.trigger_dag = trigger_dag
-        logger.debug("Initialized DeckDecomp instance")
+        self.logger = setup_logger()  
+        self.consts = Constants()
+        self.logger.debug("Initialized DeckDecomp instance")
     
     def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
-        logger.info("Starting DeckDecomp workflow")
+        self.logger.info("Starting DeckDecomp workflow")
         try:
             self.run_process()
         except Exception as e:
-            logger.error("DeckDecomp workflow failed: %s", str(e), exc_info=True)
+            self.logger.error("DeckDecomp workflow failed: %s", str(e), exc_info=True)
             raise
    
     def run_process(self):
-        logger.info("Executing DeckDecomp process")
+        self.logger.info("Executing DeckDecomp process")
         try:
             self.read_cmo.run_workflow()
             self.trigger_dag(dag_id="1.16-DECOMP_ONS-TO-CCEE", conf={})
         except Exception as e:
-            logger.error("DeckDecomp process failed: %s", str(e), exc_info=True)
+            self.logger.error("DeckDecomp process failed: %s", str(e), exc_info=True)
             raise
     def post_data(self):
         pass
@@ -53,51 +52,51 @@ class DeckDecomp(WebhookProductsInterface):
 class ReadResultsDecomp:
     
     def __init__(self):
-        self.logger = logger  # Usa o logger global
-        logger.debug("Initialized ReadResultsDecomp instance")
-    
+        self.logger = setup_logger()  # Usa o self.logger global
+        self.logger.debug("Initialized ReadResultsDecomp instance")
+        self.consts = Constants()
     def run_workflow(self, filepath: Optional[str] = None, manually_date: Optional[datetime] = None):
-        logger.info("Starting ReadResultsDecomp workflow")
+        self.logger.info("Starting ReadResultsDecomp workflow")
         try:
-            logger.debug("Creating temporary directory: %s", constants.PATH_TMP)
-            os.makedirs(constants.PATH_TMP, exist_ok=True)           
-            logger.debug("Fetching latest webhook product for %s", constants.WEBHOOK_DECK_DECOMP_PRELIMINAR)
-            payload = get_latest_webhook_product(constants.WEBHOOK_DECK_DECOMP_PRELIMINAR)[0]
-            logger.info("Processing webhook file from payload")
-            base_path = handle_webhook_file(payload, constants.PATH_TMP)
+            self.logger.debug("Creating temporary directory: %s", self.consts.PATH_TMP)
+            os.makedirs(self.consts.PATH_TMP, exist_ok=True)           
+            self.logger.debug("Fetching latest webhook product for %s", self.consts.WEBHOOK_DECK_DECOMP_PRELIMINAR)
+            payload = get_latest_webhook_product(self.consts.WEBHOOK_DECK_DECOMP_PRELIMINAR)[0]
+            self.logger.info("Processing webhook file from payload")
+            base_path = handle_webhook_file(payload, self.consts.PATH_TMP)
             
             self.run_process(base_path)
            
         except Exception as e:
-            self.logger.error("ReadResultsDecomp workflow failed: %s", str(e), exc_info=True)
+            self.self.logger.error("ReadResultsDecomp workflow failed: %s", str(e), exc_info=True)
             raise
 
     def run_process(self, base_path):
-        logger.info("Processing file at path: %s", base_path)
+        self.logger.info("Processing file at path: %s", base_path)
         try:
-            logger.debug("Extracting zip file")
+            self.logger.debug("Extracting zip file")
             unzip_path = extract_zip(base_path)
-            logger.debug("Listing files in unzipped directory: %s", unzip_path)
+            self.logger.debug("Listing files in unzipped directory: %s", unzip_path)
             results_file = [file for file in os.listdir(unzip_path) if "resultados" in file.lower()]
             if not results_file:
-                logger.error("No results file found in %s", unzip_path)
+                self.logger.error("No results file found in %s", unzip_path)
                 raise FileNotFoundError("No file containing 'resultados' found")
-            logger.info("Found results file: %s", results_file[0])
+            self.logger.info("Found results file: %s", results_file[0])
             unzip_path = extract_zip(os.path.join(unzip_path, results_file[0]))
             self.read_cmo(unzip_path)
         except Exception as e:
-            logger.error("File processing failed: %s", str(e), exc_info=True)
+            self.logger.error("File processing failed: %s", str(e), exc_info=True)
             raise
         
     def read_cmo(self, unzip_path):
-        logger.info("Reading CMO data from: %s", unzip_path)
+        self.logger.info("Reading CMO data from: %s", unzip_path)
         try:
-            logger.debug("Searching for summary files")
+            self.logger.debug("Searching for summary files")
             flow_files = [file for file in os.listdir(unzip_path) if "sumario" in file.lower()]
             if not flow_files:
-                logger.error("No summary file found in %s", unzip_path)
+                self.logger.error("No summary file found in %s", unzip_path)
                 raise FileNotFoundError("No file containing 'sumario' found")
-            logger.info("Reading summary file: %s", flow_files[0])
+            self.logger.info("Reading summary file: %s", flow_files[0])
             
             with open(os.path.join(unzip_path, flow_files[0]), 'r', encoding='utf-8') as file:
                 text = file.read()
@@ -106,30 +105,30 @@ class ReadResultsDecomp:
             cost_data = []
             cost_headers = []
             in_cost_section = False
-            logger.debug("Parsing summary file content")
+            self.logger.debug("Parsing summary file content")
             for line in lines:
                 line_normalized = ' '.join(line.split()).upper() 
                 
                 if 'PMO' in line_normalized:
                     try:
                         rev = int(line.split('REV')[1].split('-')[0])
-                        logger.info("Found revision number: %d", rev)
+                        self.logger.info("Found revision number: %d", rev)
                     except (IndexError, ValueError) as e:
-                        logger.error("Failed to parse revision number: %s", str(e))
+                        self.logger.error("Failed to parse revision number: %s", str(e))
                         raise
                              
                 if "CUSTO MARGINAL DE OPERACAO" in line_normalized:
-                    logger.debug("Entering CMO section")
+                    self.logger.debug("Entering CMO section")
                     in_cost_section = True
                     continue 
                 if in_cost_section:
                     if "SSIS" in line_normalized and "SEM_01" in line_normalized:
                         cost_headers = line.split()
-                        logger.debug("Found cost headers: %s", cost_headers)
+                        self.logger.debug("Found cost headers: %s", cost_headers)
                         continue
                     if "X----X" in line_normalized and not line.strip().startswith("Ssis"):
                         if cost_data:
-                            logger.debug("Exiting CMO section")
+                            self.logger.debug("Exiting CMO section")
                             break
                     if line.strip() and not "X----X" in line_normalized:
                         values = line.split()
@@ -140,45 +139,42 @@ class ReadResultsDecomp:
                             if ssis_value.startswith("Med_") and ssis_value in desired_med:
                                 cost_entry['Ssis'] = cost_entry['Ssis'].replace("Med_", "")
                                 cost_data.append(cost_entry)
-                                logger.debug("Added cost entry: %s", cost_entry)
+                                self.logger.debug("Added cost entry: %s", cost_entry)
                         else:
-                            logger.warning("Skipping line with mismatched values: %s", line)
+                            self.logger.warning("Skipping line with mismatched values: %s", line)
 
             if rev is None:
-                logger.error("Revision number (REV) not found in the summary file")
+                self.logger.error("Revision number (REV) not found in the summary file")
                 raise ValueError("Revision number (REV) not found in the summary file.")
             
             if not cost_data:
-                logger.warning("No cost data extracted from summary file")
+                self.logger.warning("No cost data extracted from summary file")
             
-            logger.info("Creating DataFrame from %d cost entries", len(cost_data))
+            self.logger.info("Creating DataFrame from %d cost entries", len(cost_data))
             df_cmo = pd.DataFrame(cost_data)
             df_cmo.columns.name = 'SUBMERCADO'
             df_cmo = df_cmo.set_index("Ssis")
             df_cmo.index.name = None  
             df_cmo = df_cmo.style.format(precision=0)
             df_cmo = df_cmo.set_caption(f'CMO ONS Decomp Preliminar - REV {rev} ')
-            logger.debug("Converting DataFrame to HTML")
+            self.logger.debug("Converting DataFrame to HTML")
             html = df_cmo.to_html()
             html = html.replace('<style type="text/css">\n</style>\n', html_style())
-            logger.info("Converting HTML to image")
+            self.logger.info("Converting HTML to image")
             image_binary = html_to_image(html)
             msg = f'CMO ONS Decomp Preliminar - REV {rev} '
-            logger.info("Sending WhatsApp message for REV %d", rev)
-            send_whatsapp_message(constants.WHATSAPP_PMO, msg, image_binary)
-            logger.info("Successfully processed and sent CMO data for REV %d", rev)
+            self.logger.info("Sending WhatsApp message for REV %d", rev)
+            send_whatsapp_message(self.consts.WHATSAPP_PMO, msg, image_binary)
+            self.logger.info("Successfully processed and sent CMO data for REV %d", rev)
             
         except Exception as e:
-            logger.error("Failed to read CMO data: %s", str(e), exc_info=True)
+            self.logger.error("Failed to read CMO data: %s", str(e), exc_info=True)
             raise
 
 
 if __name__ == '__main__':
-    logger.info("Starting ReadResultsDecomp script execution")
     try:
         obj = ReadResultsDecomp()
         obj.run_workflow()
-        logger.info("Script execution completed successfully")
     except Exception as e:
-        logger.error("Script execution failed: %s", str(e), exc_info=True)
         raise
